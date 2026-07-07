@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { getCategories } from "@/services/api";
 import { getSettings } from "@/services/settingsApi";
 import { useRouter, usePathname } from "next/navigation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Category {
   id: number;
@@ -28,13 +29,59 @@ interface Settings {
   phone: string;
 }
 
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      categories: "Categories",
+      new: "New",
+      leastPrice: "Least Price",
+      discounts: "Discounts",
+      help: "Help",
+      terms: "Terms & Conditions",
+      privacy: "Privacy Policy",
+      contactUs: "Contact Us",
+      callUs: "Call Us",
+      email: "Email",
+      loading: "Loading...",
+      noCategories: "No categories",
+    };
+  }
+  // Arabic (default)
+  return {
+    categories: "الاقسام",
+    new: "جديدنا",
+    leastPrice: "اقل الاسعار",
+    discounts: "الخصومات",
+    help: "المساعدة",
+    terms: "الشروط والاحكام",
+    privacy: "سياسة الخصوصية",
+    contactUs: "تواصل معنا",
+    callUs: "اتصل بنا",
+    email: "البريد الإلكتروني",
+    loading: "جاري التحميل...",
+    noCategories: "لا توجد فئات",
+  };
+};
+
 export function Footer() {
+  const { language } = useLanguage();
+  const t = getTranslations(language);
+  
+  // ✅ إضافة state لمنع Hydration Error
+  const [isMounted, setIsMounted] = useState(false);
+  
   const router = useRouter();
   const pathname = usePathname();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
+
+  // ✅ تعيين isMounted بعد تحميل العميل
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // جلب الفئات والإعدادات من API
   useEffect(() => {
@@ -68,22 +115,18 @@ export function Footer() {
 
   // ✅ دالة موثوقة للتمرير مع الانتظار حتى ظهور العنصر
   const scrollToElement = (targetId: string) => {
-    // محاولة العثور على العنصر
     let targetElement = document.getElementById(targetId);
     
-    // إذا لم يتم العثور على العنصر، ننتظر قليلاً ونحاول مرة أخرى
     if (!targetElement) {
-      console.log(`⏳ انتظار ظهور العنصر: #${targetId}`);
+     
       
-      // استخدام setInterval للتحقق المستمر
       const intervalId = setInterval(() => {
         targetElement = document.getElementById(targetId);
         
         if (targetElement) {
-          console.log(`✅ تم العثور على العنصر: #${targetId}`);
+         
           clearInterval(intervalId);
           
-          // التمرير إلى العنصر
           const navbarHeight = document.querySelector('header')?.getBoundingClientRect().height || 80;
           const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
           
@@ -92,12 +135,10 @@ export function Footer() {
             behavior: 'smooth'
           });
           
-          // تنظيف الـ hash من الرابط
           window.history.pushState(null, '', '/');
         }
-      }, 100); // التحقق كل 100ms
+      }, 100);
       
-      // إيقاف المحاولة بعد 5 ثواني إذا لم يتم العثور على العنصر
       setTimeout(() => {
         clearInterval(intervalId);
         console.warn(`⚠️ لم يتم العثور على العنصر: #${targetId} بعد 5 ثواني`);
@@ -106,7 +147,6 @@ export function Footer() {
       return;
     }
     
-    // إذا تم العثور على العنصر مباشرة
     const navbarHeight = document.querySelector('header')?.getBoundingClientRect().height || 80;
     const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
     
@@ -122,18 +162,15 @@ export function Footer() {
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
     e.preventDefault();
     
-    console.log(`🔄 النقر على: ${targetId}, المسار الحالي: ${pathname}`);
+   
     
     if (pathname === '/') {
-      // إذا كنا في الصفحة الرئيسية، نمرر مباشرة
-      console.log(`📍 التمرير إلى: #${targetId}`);
+    
       scrollToElement(targetId);
     } else {
-      // إذا كنا في صفحة أخرى، ننتقل إلى الصفحة الرئيسية
-      console.log(`🚀 الانتقال إلى الصفحة الرئيسية مع hash: #${targetId}`);
+   
       router.push(`/#${targetId}`);
       
-      // ننتظر قليلاً ثم نحاول التمرير
       setTimeout(() => {
         scrollToElement(targetId);
       }, 300);
@@ -145,19 +182,15 @@ export function Footer() {
     const handleHashChange = () => {
       if (pathname === '/' && window.location.hash) {
         const targetId = window.location.hash.replace('#', '');
-        console.log(`📌 تم تحميل الصفحة مع hash: #${targetId}`);
+      
         
-        // ننتظر حتى تكتمل الصفحة
         setTimeout(() => {
           scrollToElement(targetId);
         }, 500);
       }
     };
 
-    // تنفيذ الفحص عند تحميل الصفحة
     handleHashChange();
-
-    // الاستماع لتغيرات الـ hash
     window.addEventListener('hashchange', handleHashChange);
     
     return () => {
@@ -165,43 +198,32 @@ export function Footer() {
     };
   }, [pathname]);
 
-  // ✅ دالة بديلة باستخدام requestAnimationFrame
-  const scrollToElementWithRAF = (targetId: string) => {
-    const tryScroll = () => {
-      const targetElement = document.getElementById(targetId);
-      
-      if (targetElement) {
-        const navbarHeight = document.querySelector('header')?.getBoundingClientRect().height || 80;
-        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
-        
-        window.scrollTo({
-          top: targetPosition,
-          behavior: 'smooth'
-        });
-        
-        window.history.pushState(null, '', '/');
-        return true;
-      }
-      return false;
-    };
-
-    // محاولة التمرير فوراً
-    if (tryScroll()) return;
-
-    // إذا فشلت، استخدام requestAnimationFrame
-    let attempts = 0;
-    const maxAttempts = 50; // 50 * 100ms = 5 ثواني
-    
-    const intervalId = setInterval(() => {
-      attempts++;
-      if (tryScroll() || attempts >= maxAttempts) {
-        clearInterval(intervalId);
-        if (attempts >= maxAttempts) {
-          console.warn(`⚠️ فشل العثور على العنصر: #${targetId}`);
-        }
-      }
-    }, 100);
-  };
+  // ✅ عرض النصوص المترجمة فقط بعد تحميل العميل
+  if (!isMounted) {
+    // ✅ عرض نسخة مبسطة أثناء التحميل على السيرفر (بدون نصوص مترجمة)
+    return (
+      <footer className="border-t mt-auto bg-[#112B40] text-white pt-5">
+        <div className="container mx-auto px-4 py-12 bg-[#112B40]">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-[#23A6F0] text-[84px] font-bold mb-4">
+                <div className="w-48 h-48 bg-gray-700 animate-pulse rounded-lg"></div>
+              </h3>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg mb-4">Loading...</h3>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg mb-4">Loading...</h3>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg mb-4">Loading...</h3>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className="border-t mt-auto bg-[#112B40] text-white pt-5">
@@ -226,7 +248,7 @@ export function Footer() {
 
           {/* Quick Links - Categories from API */}
           <div>
-            <h3 className="font-bold text-lg mb-4">الاقسام</h3>
+            <h3 className="font-bold text-lg mb-4">{t.categories}</h3>
             <ul className="space-y-4 text-sm">
               <li>
                 <Link
@@ -234,7 +256,16 @@ export function Footer() {
                   className="text-muted-foreground hover:text-primary transition-colors"
                   onClick={(e) => handleLinkClick(e, 'new')}
                 >
-                  الجديد
+                  {t.new}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/#least_price"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  onClick={(e) => handleLinkClick(e, 'least_price')}
+                >
+                  {t.leastPrice}
                 </Link>
               </li>
               <li>
@@ -243,14 +274,14 @@ export function Footer() {
                   className="text-muted-foreground hover:text-primary transition-colors"
                   onClick={(e) => handleLinkClick(e, 'discount')}
                 >
-                  الخصومات
+                  {t.discounts}
                 </Link>
               </li>
               {loadingCategories ? (
                 <li className="text-muted-foreground text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-gray-300 border-t-white rounded-full animate-spin"></div>
-                    جاري التحميل...
+                    {t.loading}
                   </div>
                 </li>
               ) : categories.length > 0 ? (
@@ -265,21 +296,21 @@ export function Footer() {
                   </li>
                 ))
               ) : (
-                <li className="text-muted-foreground text-sm">لا توجد فئات</li>
+                <li className="text-muted-foreground text-sm">{t.noCategories}</li>
               )}
             </ul>
           </div>
 
           {/* Contact Info */}
           <div>
-            <h3 className="font-bold text-lg mb-4">المساعدة</h3>
+            <h3 className="font-bold text-lg mb-4">{t.help}</h3>
             <ul className="space-y-4 text-sm">
               <li>
                 <Link
                   href="/terms"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  {loadingSettings ? 'جاري التحميل...' : settings?.terms_and_conditions || 'الشروط والاحكام'}
+                  {loadingSettings ? t.loading : settings?.terms_and_conditions || t.terms}
                 </Link>
               </li>
               <li>
@@ -287,7 +318,7 @@ export function Footer() {
                   href="/privacy"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  {loadingSettings ? 'جاري التحميل...' : settings?.privacy_policy || 'سياسة الخصوصية'}
+                  {loadingSettings ? t.loading : settings?.privacy_policy || t.privacy}
                 </Link>
               </li>
             </ul>
@@ -295,30 +326,30 @@ export function Footer() {
 
           {/* Social Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4">تواصل معنا</h3>
+            <h3 className="font-bold text-lg mb-4">{t.contactUs}</h3>
             <ul className="space-y-4 text-sm">
               <li className="flex items-center gap-3">
                 <MdPhone className="h-5 w-5 text-primary flex-shrink-0" />
                 <div>
-                  <p className="text-sm">اتصل بنا</p>
+                  <p className="text-sm">{t.callUs}</p>
                   <a 
                     href={`tel:${loadingSettings ? '' : settings?.phone || '0987654333'}`}
                     className="text-muted-foreground hover:text-primary transition-colors"
                     dir="ltr"
                   >
-                    {loadingSettings ? 'جاري التحميل...' : settings?.phone || '0987654333'}
+                    {loadingSettings ? t.loading : settings?.phone || '0987654333'}
                   </a>
                 </div>
               </li>
               <li className="flex items-center gap-3">
                 <MdEmail className="h-5 w-5 text-primary flex-shrink-0" />
                 <div>
-                  <p className="text-sm">البريد الإلكتروني</p>
+                  <p className="text-sm">{t.email}</p>
                   <a 
                     href={`mailto:${loadingSettings ? '' : settings?.email || 'ecommerce@gmail.com'}`}
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {loadingSettings ? 'جاري التحميل...' : settings?.email || 'ecommerce@gmail.com'}
+                    {loadingSettings ? t.loading : settings?.email || 'ecommerce@gmail.com'}
                   </a>
                 </div>
               </li>

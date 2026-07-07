@@ -2,23 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import PhoneInput from "@/components/contact/PhoneInput";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function LoginWithPhone() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginWithPhone, loading, isAuthenticated } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     phoneNumber: "",
     countryCode: "+20",
-    password: "",
-    email: "",
   });
 
   const [errors, setErrors] = useState<{
@@ -37,12 +36,12 @@ export default function LoginWithPhone() {
   useEffect(() => {
     const registered = searchParams.get("registered");
     if (registered === "true") {
-      toast.success("تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول ✅", {
+      toast.success(t("auth.registerSuccess"), {
         duration: 5000,
         position: "top-center",
       });
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   // معالج تغيير رقم الهاتف
   const handlePhoneChange = (phoneNumber: string, countryCode: string) => {
@@ -51,7 +50,7 @@ export default function LoginWithPhone() {
       phoneNumber: phoneNumber,
       countryCode: countryCode,
     });
-    
+
     if (errors.phone) {
       setErrors((prev) => ({ ...prev, phone: undefined }));
     }
@@ -62,7 +61,7 @@ export default function LoginWithPhone() {
 
     // ✅ التحقق من رقم الهاتف - فقط أن الحقل ليس فارغاً
     if (!formData.phoneNumber) {
-      newErrors.phone = "رقم الهاتف مطلوب";
+      newErrors.phone = t("auth.phoneRequired");
     }
 
     setErrors(newErrors);
@@ -71,7 +70,7 @@ export default function LoginWithPhone() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       const firstError = Object.values(errors)[0];
       if (firstError) {
@@ -85,23 +84,24 @@ export default function LoginWithPhone() {
     // استخدام API حقيقي عبر الـ Context
     const result = await loginWithPhone(
       formData.phoneNumber,
-      formData.password,
       formData.countryCode,
     );
 
     if (result.success) {
-      toast.success(result.message || "تم إرسال رمز التحقق إلى هاتفك! ✅", {
+      toast.success(result.message || t("auth.loginSuccess"), {
         duration: 3000,
         position: "top-center",
       });
-      
+
       // ✅ التوجيه إلى صفحة OTP بعد تسجيل الدخول
       const fullPhone = `${formData.countryCode}${formData.phoneNumber}`;
       setTimeout(() => {
-        router.push(`/auth/verify-otp/phone?phone=${encodeURIComponent(fullPhone)}&isLogin=true`);
+        router.push(
+          `/auth/verify-otp/phone?phone=${encodeURIComponent(fullPhone)}&isLogin=true`,
+        );
       }, 1500);
     } else {
-      toast.error(result.message || "فشل تسجيل الدخول. يرجى التحقق من بياناتك", {
+      toast.error(result.message || t("auth.loginError"), {
         duration: 4000,
         position: "top-center",
       });
@@ -110,28 +110,10 @@ export default function LoginWithPhone() {
     setIsSubmitting(false);
   };
 
-  const clearPasswordError = () => {
-    if (errors.password) {
-      setErrors((prev) => ({ ...prev, password: undefined }));
-    }
-  };
-
   const isLoading = loading || isSubmitting;
 
   return (
     <>
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            fontSize: '14px',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            direction: 'rtl',
-          },
-        }}
-      />
-      
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
         <div className="container mx-auto px-4 py-6 md:py-12">
           <div className="max-w-md mx-auto">
@@ -139,15 +121,20 @@ export default function LoginWithPhone() {
             <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
               {/* العنوان */}
               <div className="text-center mb-8">
-                <h1 className="text-xl font-bold text-gray-800 mb-2">تسجيل الدخول</h1>
-                <p className="text-gray-500 text-sm">يرجى إدخال رقم الهاتف</p>
+                <h1 className="text-xl font-bold text-gray-800 mb-2">
+                  {t("auth.loginTitle")}
+                </h1>
+                <p className="text-gray-500 text-sm">
+                  {t("auth.loginSubtitle")}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit}>
                 {/* رقم الهاتف */}
                 <div className="mb-5">
                   <label className="block text-gray-700 font-medium mb-2">
-                    رقم الهاتف <span className="text-red-500">*</span>
+                    {t("auth.phoneLabel")}{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <PhoneInput
                     value={`${formData.countryCode}${formData.phoneNumber}`}
@@ -170,23 +157,23 @@ export default function LoginWithPhone() {
                   {isLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      جاري تسجيل الدخول...
+                      {t("auth.loggingIn")}
                     </>
                   ) : (
-                    "تسجيل الدخول"
+                    t("auth.login")
                   )}
                 </button>
 
                 {/* رابط إنشاء حساب جديد */}
                 <div className="text-center mt-6 pt-4 border-t border-gray-200">
                   <p className="text-gray-600 text-sm">
-                    ليس لديك حساب؟{" "}
+                    {t("auth.noAccount")}{" "}
                     <button
                       type="button"
                       onClick={() => router.push("/auth/register/phone")}
                       className="text-[#23A6F0] font-medium hover:underline"
                     >
-                      إنشاء حساب جديد
+                      {t("auth.createAccount")}
                     </button>
                   </p>
                 </div>

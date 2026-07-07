@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
-import { Button } from "../ui/button";
 import { getOffersSection, ProductData } from "@/services/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ✅ تعريف واجهات الفاريانتات
 interface VariantAttribute {
@@ -48,7 +48,6 @@ interface Product {
   rating?: number;
   reviewsCount?: number;
   isBestSeller?: boolean;
-  // ✅ إضافة خصائص الفاريانتات
   hasVariants?: boolean;
   variants?: ProductVariant[];
   variantId?: number | null;
@@ -84,6 +83,24 @@ const extractColorsFromVariants = (
   }));
 };
 
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      viewMore: "View More",
+      loading: "Loading...",
+      failedToLoad: "Failed to load products",
+      noProducts: "No products available",
+    };
+  }
+  return {
+    viewMore: "عرض المزيد",
+    loading: "جاري التحميل...",
+    failedToLoad: "فشل في تحميل المنتجات",
+    noProducts: "لا توجد منتجات حالياً",
+  };
+};
+
 // ✅ تحويل البيانات من API إلى شكل المنتج المطلوب مع دعم الفاريانتات
 const transformProduct = (product: ProductData): Product => {
   const cleanImageUrl = (url: string) => {
@@ -116,7 +133,6 @@ const transformProduct = (product: ProductData): Product => {
     originalPrice = product.pricing.price;
   }
 
-  // ✅ استخراج معلومات الفاريانتات
   let colors: Array<{ color: string; name: string }> = [];
   let hasVariants = false;
   let variants: ProductVariant[] = [];
@@ -142,7 +158,6 @@ const transformProduct = (product: ProductData): Product => {
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
     isBestSeller: product.is_active,
-    // ✅ إضافة معلومات الفاريانتات
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
@@ -150,110 +165,340 @@ const transformProduct = (product: ProductData): Product => {
 };
 
 export function BestDiscounts() {
+  const { language } = useLanguage();
+  const t = getTranslations(language);
+  const isRTL = language === 'ar';
+  
   const [products, setProducts] = useState<Product[]>([]);
-  const [sectionName, setSectionName] = useState<string>("أقوي الخصومات"); // ✅ قيمة افتراضية
+  const [sectionName, setSectionName] = useState<string>("أقوي الخصومات");
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [displayCount, setDisplayCount] = useState(8);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalProducts, setTotalProducts] = useState(0);
-
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(4.5);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [currentTranslate, setCurrentTranslate] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [maxIndex, setMaxIndex] = useState(0);
+  
   const isMounted = useRef(true);
   const fetchingRef = useRef(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number>(0);
+  const velocityRef = useRef(0);
+  const lastMoveXRef = useRef(0);
+  const lastMoveTimeRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const startTranslateRef = useRef(0);
 
-  const fetchProducts = useCallback(
-    async (page: number, append: boolean = false) => {
-      if (fetchingRef.current) return;
+  // جلب المنتجات من API
+  const fetchProducts = useCallback(async () => {
+    if (fetchingRef.current) return;
 
-      try {
-        fetchingRef.current = true;
+    try {
+      fetchingRef.current = true;
+      setIsInitialLoading(true);
 
-        if (page === 1) {
-          setIsInitialLoading(true);
-        } else {
-          setIsLoadingMore(true);
-        }
+      const section = await getOffersSection();
 
-        // ✅ جلب السكشن بدلاً من المنتجات فقط
-        const section = await getOffersSection();
+      if (!isMounted.current) return;
 
-        if (!isMounted.current) return;
-
-        if (!section) {
-          setError("لا توجد خصومات حالياً");
-          setProducts([]);
-          setHasMore(false);
-          return;
-        }
-
-        // ✅ تحديث اسم السكشن
-        setSectionName(section.name);
-
-        const productsData = section.products || [];
-        
-        if (productsData.length === 0) {
-          setHasMore(false);
-        }
-
-        const transformedProducts = productsData.map(transformProduct);
-
-        // ✅ تطبيق pagination يدوياً (لأن الـ API لا يدعم pagination للأقسام)
-        const startIndex = (page - 1) * 12;
-        const endIndex = startIndex + 12;
-        const paginatedProducts = transformedProducts.slice(startIndex, endIndex);
-
-        if (append) {
-          setProducts((prev) => [...prev, ...paginatedProducts]);
-        } else {
-          setProducts(paginatedProducts);
-        }
-
-        setTotalProducts(transformedProducts.length);
-        setHasMore(endIndex < transformedProducts.length);
-        
-      } catch (err) {
-        console.error("Error fetching products:", err);
-        if (!isMounted.current) return;
-        setError("فشل في تحميل المنتجات");
+      if (!section) {
+        setError(t.noProducts);
         setProducts([]);
-      } finally {
-        if (!isMounted.current) return;
-        setIsInitialLoading(false);
-        setIsLoadingMore(false);
-        fetchingRef.current = false;
+        return;
       }
-    },
-    []
-  );
+
+      setSectionName(section.name);
+
+      const productsData = section.products || [];
+      
+      if (productsData.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      const transformedProducts = productsData.map(transformProduct);
+      setProducts(transformedProducts);
+      
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      if (!isMounted.current) return;
+      setError(t.failedToLoad);
+      setProducts([]);
+    } finally {
+      if (!isMounted.current) return;
+      setIsInitialLoading(false);
+      fetchingRef.current = false;
+    }
+  }, [t.failedToLoad, t.noProducts]);
+
+  // تحديث عدد العناصر المعروضة حسب حجم الشاشة
+  const updateItemsPerView = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    const width = window.innerWidth;
+    if (width < 640) {
+      setItemsPerView(2);
+    } else if (width < 1024) {
+      setItemsPerView(3);
+    } else {
+      setItemsPerView(4.5);
+    }
+  }, []);
+
+  // حساب max index
+  const calculateMaxIndex = useCallback(() => {
+    if (products.length === 0 || itemsPerView === 0) return 0;
+    const max = Math.max(0, Math.ceil(products.length - itemsPerView));
+    setMaxIndex(max);
+    return max;
+  }, [products.length, itemsPerView]);
 
   useEffect(() => {
     isMounted.current = true;
-
+    
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    
     const timeoutId = setTimeout(() => {
-      fetchProducts(1, false);
+      fetchProducts();
     }, 0);
 
     return () => {
       isMounted.current = false;
+      window.removeEventListener('resize', updateItemsPerView);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       clearTimeout(timeoutId);
     };
-  }, [fetchProducts]);
+  }, [fetchProducts, updateItemsPerView]);
 
-  const handleLoadMore = useCallback(() => {
-    if (hasMore && !isLoadingMore && !fetchingRef.current) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      fetchProducts(nextPage, true);
+  // تحديث maxIndex بعد تحميل المنتجات
+  useEffect(() => {
+    if (products.length > 0) {
+      setTimeout(() => {
+        calculateMaxIndex();
+        setCurrentIndex(0);
+        setCurrentTranslate(0);
+      }, 100);
     }
-  }, [hasMore, isLoadingMore, currentPage, fetchProducts]);
+  }, [products, itemsPerView, calculateMaxIndex]);
 
-  const visibleProducts = products.slice(0, displayCount);
-  const showLoadMoreButton =
-    hasMore &&
-    products.length >= displayCount &&
-    products.length < totalProducts;
+  // حساب عرض الكارت الواحد مع المسافات
+  const getCardWidthWithGap = useCallback(() => {
+    if (!containerRef.current) return 0;
+    const containerWidth = containerRef.current.offsetWidth;
+    const gap = window.innerWidth < 640 ? 8 : 16;
+    return (containerWidth - (itemsPerView - 1) * gap) / itemsPerView + gap;
+  }, [itemsPerView]);
+
+  // الانتقال لشريحة محددة
+  const goToSlide = useCallback((index: number, animate: boolean = true) => {
+    const max = calculateMaxIndex();
+    const targetIndex = Math.max(0, Math.min(index, max));
+    setCurrentIndex(targetIndex);
+    const translate = isRTL 
+      ? targetIndex * getCardWidthWithGap()
+      : -targetIndex * getCardWidthWithGap();
+    setCurrentTranslate(translate);
+    if (animate) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 350);
+    }
+  }, [calculateMaxIndex, getCardWidthWithGap, isRTL]);
+
+  // التنقل بالسهمين
+  const scrollByAmount = useCallback((direction: 'left' | 'right') => {
+    if (isDraggingRef.current) return;
+    const max = calculateMaxIndex();
+    let newIndex;
+    
+    if (direction === 'right') {
+      newIndex = Math.min(currentIndex + 1, max);
+    } else {
+      newIndex = Math.max(currentIndex - 1, 0);
+    }
+    goToSlide(newIndex, true);
+  }, [currentIndex, calculateMaxIndex, goToSlide]);
+
+  // سحب بالماوس
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    setStartX(e.pageX);
+    lastMoveXRef.current = e.pageX;
+    lastMoveTimeRef.current = Date.now();
+    velocityRef.current = 0;
+    setIsAnimating(false);
+    startTranslateRef.current = currentTranslate;
+    
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+    
+    const now = Date.now();
+    const deltaX = e.pageX - lastMoveXRef.current;
+    const deltaTime = now - lastMoveTimeRef.current;
+    
+    if (deltaTime > 0 && deltaTime < 100) {
+      velocityRef.current = (deltaX / deltaTime) * 8;
+    }
+    
+    const diff = e.pageX - startX;
+    const cardWidth = getCardWidthWithGap();
+    const max = calculateMaxIndex();
+    const maxTranslate = isRTL ? max * cardWidth : -max * cardWidth;
+    
+    let newTranslate = startTranslateRef.current + diff;
+    if (isRTL) {
+      if (newTranslate < -20) newTranslate = -20;
+      if (newTranslate > maxTranslate + 20) newTranslate = maxTranslate + 20;
+    } else {
+      if (newTranslate > 20) newTranslate = 20;
+      if (newTranslate < maxTranslate - 20) newTranslate = maxTranslate - 20;
+    }
+    
+    setCurrentTranslate(newTranslate);
+    
+    lastMoveXRef.current = e.pageX;
+    lastMoveTimeRef.current = now;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    
+    const cardWidth = getCardWidthWithGap();
+    const max = calculateMaxIndex();
+    
+    let currentIndexValue;
+    if (isRTL) {
+      currentIndexValue = Math.round(currentTranslate / cardWidth);
+    } else {
+      currentIndexValue = Math.round(-currentTranslate / cardWidth);
+    }
+    const clampedIndex = Math.max(0, Math.min(currentIndexValue, max));
+    
+    if (Math.abs(velocityRef.current) > 2) {
+      let nextIndex = clampedIndex;
+      if (isRTL) {
+        if (velocityRef.current > 1) {
+          nextIndex = Math.min(clampedIndex + 1, max);
+        } else if (velocityRef.current < -1) {
+          nextIndex = Math.max(clampedIndex - 1, 0);
+        }
+      } else {
+        if (velocityRef.current < -1) {
+          nextIndex = Math.min(clampedIndex + 1, max);
+        } else if (velocityRef.current > 1) {
+          nextIndex = Math.max(clampedIndex - 1, 0);
+        }
+      }
+      goToSlide(nextIndex, true);
+    } else {
+      goToSlide(clampedIndex, true);
+    }
+    
+    velocityRef.current = 0;
+  };
+
+  // سحب باللمس
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    setStartX(touch.pageX);
+    lastMoveXRef.current = touch.pageX;
+    lastMoveTimeRef.current = Date.now();
+    velocityRef.current = 0;
+    setIsAnimating(false);
+    startTranslateRef.current = currentTranslate;
+    
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingRef.current || !e.touches.length) return;
+    
+    const touch = e.touches[0];
+    const now = Date.now();
+    const deltaX = touch.pageX - lastMoveXRef.current;
+    const deltaTime = now - lastMoveTimeRef.current;
+    
+    if (deltaTime > 0 && deltaTime < 100) {
+      velocityRef.current = (deltaX / deltaTime) * 8;
+    }
+    
+    const diff = touch.pageX - startX;
+    const cardWidth = getCardWidthWithGap();
+    const max = calculateMaxIndex();
+    const maxTranslate = isRTL ? max * cardWidth : -max * cardWidth;
+    
+    let newTranslate = startTranslateRef.current + diff;
+    if (isRTL) {
+      if (newTranslate < -20) newTranslate = -20;
+      if (newTranslate > maxTranslate + 20) newTranslate = maxTranslate + 20;
+    } else {
+      if (newTranslate > 20) newTranslate = 20;
+      if (newTranslate < maxTranslate - 20) newTranslate = maxTranslate - 20;
+    }
+    
+    setCurrentTranslate(newTranslate);
+    
+    lastMoveXRef.current = touch.pageX;
+    lastMoveTimeRef.current = now;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    
+    const cardWidth = getCardWidthWithGap();
+    const max = calculateMaxIndex();
+    
+    let currentIndexValue;
+    if (isRTL) {
+      currentIndexValue = Math.round(currentTranslate / cardWidth);
+    } else {
+      currentIndexValue = Math.round(-currentTranslate / cardWidth);
+    }
+    const clampedIndex = Math.max(0, Math.min(currentIndexValue, max));
+    
+    if (Math.abs(velocityRef.current) > 2) {
+      let nextIndex = clampedIndex;
+      if (isRTL) {
+        if (velocityRef.current > 1) {
+          nextIndex = Math.min(clampedIndex + 1, max);
+        } else if (velocityRef.current < -1) {
+          nextIndex = Math.max(clampedIndex - 1, 0);
+        }
+      } else {
+        if (velocityRef.current < -1) {
+          nextIndex = Math.min(clampedIndex + 1, max);
+        } else if (velocityRef.current > 1) {
+          nextIndex = Math.max(clampedIndex - 1, 0);
+        }
+      }
+      goToSlide(nextIndex, true);
+    } else {
+      goToSlide(clampedIndex, true);
+    }
+    
+    velocityRef.current = 0;
+  };
 
   if (isInitialLoading) {
     return (
@@ -263,9 +508,8 @@ export function BestDiscounts() {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#2DA5F3] border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#2D93CA] border-t-transparent rounded-full animate-spin"></div>
               </div>
-             
             </div>
           </div>
         </div>
@@ -276,130 +520,153 @@ export function BestDiscounts() {
   if (error && products.length === 0) {
     return (
       <section className="py-6 md:py-12 bg-white">
-        {/* <div className="container-custom">
+        <div className="container-custom">
           <div className="text-center py-12">
-            <p className="text-red-600 mb-4">{error}</p>
-            <button
-              onClick={() => fetchProducts(1, false)}
-              className="px-4 py-2 bg-[#23856D] text-white rounded-lg hover:bg-[#1a6b58] transition"
-            >
-              إعادة المحاولة
-            </button>
+            <p className="text-gray-500">{error}</p>
           </div>
-        </div> */}
+        </div>
       </section>
     );
   }
 
   return (
-    ( products.length > 0 &&   <section className="py-6 md:py-12 bg-white" id="discount">
-      <div className="container-custom">
-        {/* Header */}
-        <div className="mb-2 md:mb-5 flex justify-between items-center">
-          <div>
-            <h2
-              className="text-lg md:text-xl font-bold"
-              style={{ color: "#112B40" }}
-            >
-              {sectionName} {/* ✅ استخدام اسم السكشن من الـ API */}
+    products.length > 0 && (
+      <section className="py-6 md:py-12 bg-white overflow-hidden" id="discount">
+        <div className="container-custom">
+          {/* Header */}
+          <div className="mb-2 md:mb-5 flex justify-between items-center px-1 relative">
+            <h2 className="text-lg md:text-xl font-bold" style={{ color: '#112B40' }}>
+              {sectionName}
             </h2>
-          </div>
-          <Link
-            href="/products"
-            className="text-[#2D93CA] text-[14px] font-bold hover:underline transition-all duration-300"
-          >
-            عرض المزيد
-          </Link>
-        </div>
+            {/* <Link 
+              href="/products" 
+              className="text-[#2D93CA] text-[14px] font-bold hover:underline transition-all duration-300"
+            >
+              {t.viewMore}
+            </Link> */}
+            {/* Left Navigation Button */}
+            {currentIndex >= 0 && (
+              <button
+                onClick={() => scrollByAmount('left')}
+                className={` ${language=='en'?'end-8 md:end-5':'end-7 md:end-5'} absolute  top-1/3 md:top-1/2 -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-sm hover:shadow-lg rounded-[8px] p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
+                style={{ transform: 'translate(-50%, -50%)' }}
+                aria-label="السابق"
+              >
+                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-[#112B40]" />
+              </button>
+            )}
 
-        {/* ✅ مؤشر تحميل عند تحميل المزيد */}
-        {isLoadingMore && (
-          <div className="flex justify-center py-4 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-[#2DA5F3] rounded-full animate-spin"></div>
-              <span className="text-gray-500 text-sm">جاري تحميل المزيد...</span>
-            </div>
+            {/* Right Navigation Button */}
+            {currentIndex <= maxIndex && (
+              <button
+                onClick={() => scrollByAmount('right')}
+                className={` ${language=='en'?'end-6 md:end-3':'end-10 md:end-7'} absolute top-1/3 md:top-1/2 -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-sm hover:shadow-lg rounded-[8px] p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
+                style={{ transform: 'translate(50%, -50%)' }}
+                aria-label="التالي"
+              >
+                <ChevronRight className={`w-5 h-5 md:w-6 md:h-6 text-[#112B40]`} />
+              </button>
+            )}
           </div>
-        )}
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-2 md:mb-5">
-          {visibleProducts.map((product, index) => (
+          {/* Slider Container */}
+          <div className="relative">
+            {/* Slider Track */}
             <div
-              key={product.id}
-              className="animate-in fade-in zoom-in duration-500 flex justify-center w-full relative"
-              style={{
-                animationFillMode: "both",
-                animationDelay: `${index * 100}ms`,
-              }}
+              ref={containerRef}
+              className="overflow-hidden"
             >
-              
-
-              <ProductCard
-                id={product.id}
-                name={product.name}
-                price={product.price}
-                image={product.image}
-                hoverImage={product.hoverImage}
-                href={product.href}
-                originalPrice={product.originalPrice}
-                discount={product.discount}
-                colors={product.colors}
-                rating={product.rating}
-                reviewsCount={product.reviewsCount}
-                isBestSeller={product.isBestSeller}
-                // ✅ تمرير معلومات الفاريانتات
-                hasVariants={product.hasVariants || false}
-                variants={product.variants || []}
-                variantId={product.variantId || null}
-              />
+              <div
+                ref={sliderRef}
+                className="flex gap-3 md:gap-5 cursor-grab active:cursor-grabbing select-none"
+                style={{
+                  transform: `translateX(${currentTranslate}px)`,
+                  transition: isAnimating && !isDragging ? 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                  willChange: 'transform',
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
+              >
+                {products.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="flex-shrink-0"
+                    style={{ 
+                      width: itemsPerView >= 4 
+                        ? 'calc((100% / 4.5) - 10px)' 
+                        : itemsPerView >= 3 
+                        ? 'calc((100% / 3) - 10px)'
+                        : 'calc((100% / 2) - 8px)',
+                      minWidth: itemsPerView >= 4 
+                        ? 'calc((100% / 4.5) - 10px)' 
+                        : itemsPerView >= 3 
+                        ? 'calc((100% / 3) - 10px)'
+                        : 'calc((100% / 2) - 8px)',
+                    }}
+                  >
+                    <div className="animate-in fade-in zoom-in duration-500 flex justify-center w-full"
+                      style={{ 
+                        animationFillMode: 'both',
+                        animationDelay: `${index * 50}ms`
+                      }}
+                    >
+                      <ProductCard 
+                        id={product.id}
+                        name={product.name}
+                        price={product.price}
+                        image={product.image}
+                        hoverImage={product.hoverImage}
+                        href={product.href}
+                        originalPrice={product.originalPrice}
+                        discount={product.discount}
+                        colors={product.colors}
+                        rating={product.rating}
+                        reviewsCount={product.reviewsCount}
+                        isBestSeller={product.isBestSeller}
+                        hasVariants={product.hasVariants || false}
+                        variants={product.variants || []}
+                        variantId={product.variantId || null}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* Load More Button */}
-        {showLoadMoreButton && !isLoadingMore && (
-          <div className="text-center mt-4">
-            <Button
-              onClick={handleLoadMore}
-              className="px-6 py-2 text-sm font-semibold transition-all duration-300 hover:scale-105"
-              style={{
-                backgroundColor: "transparent",
-                color: "#2DA5F3",
-                border: "2px solid #2DA5F3",
-                borderRadius: "8px",
-              }}
-            >
-              عرض المزيد
-            </Button>
-          </div>
-        )}
-
-        {/* No Products Message */}
-        {products.length === 0 && !isInitialLoading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">لا توجد خصومات حالياً</p>
-          </div>
-        )}
-      </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
+        <style jsx>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
           }
-          to {
-            opacity: 1;
-            transform: scale(1);
+          
+          .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
           }
-        }
 
-        .animate-in {
-          animation: fadeIn 0.5s ease-out forwards;
-        }
-      `}</style>
-    </section>)
-  
+          .cursor-grabbing {
+            cursor: grabbing;
+          }
+          
+          .select-none {
+            user-select: none;
+            -webkit-user-select: none;
+          }
+        `}</style>
+      </section>
+    )
   );
 }

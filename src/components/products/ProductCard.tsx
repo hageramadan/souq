@@ -10,6 +10,7 @@ import { useCartContext } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ColorOption {
   color: string;
@@ -30,9 +31,34 @@ interface ProductCardProps {
   reviewsCount?: number;
   isBestSeller?: boolean;
   variantId?: number | null;
-  hasVariants?: boolean; // ✅ إضافة prop جديدة
-  variants?: Array<{ id: number }>; // ✅ إضافة prop للفاريانتات
+  hasVariants?: boolean;
+  variants?: Array<{ id: number }>;
 }
+
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      loginRequired: "Please login first to add products to favorites",
+      errorAdding: "Error adding to favorites",
+      bestSeller: "Best Seller",
+      quickView: "Quick View",
+      addToCart: "Add to Cart",
+      removeFromFavorites: "Remove from favorites",
+      addToFavorites: "Add to favorites",
+    };
+  }
+  // Arabic (default)
+  return {
+    loginRequired: "يرجى تسجيل الدخول أولاً لإضافة المنتجات إلى المفضلة",
+    errorAdding: "حدث خطأ أثناء إضافة المنتج إلى المفضلة",
+    bestSeller: "الاكثر طلبا",
+    quickView: "معاينة سريعة",
+    addToCart: "أضف إلى السلة",
+    removeFromFavorites: "إزالة من المفضلة",
+    addToFavorites: "إضافة إلى المفضلة",
+  };
+};
 
 export function ProductCard({ 
   id, 
@@ -46,11 +72,14 @@ export function ProductCard({
   colors = [],
   rating = 0,
   reviewsCount = 0,
-  isBestSeller ,
+  isBestSeller,
   variantId = null,
-  hasVariants = false, // ✅ default false
-  variants = [], // ✅ default empty array
+  hasVariants = false,
+  variants = [],
 }: ProductCardProps) {
+  const { language } = useLanguage();
+  const t = getTranslations(language);
+  
   const [isHovered, setIsHovered] = useState(false);
   const [currentImage, setCurrentImage] = useState(image);
   const [isLocalMutating, setIsLocalMutating] = useState(false);
@@ -75,7 +104,7 @@ export function ProductCard({
     
     // التحقق من تسجيل الدخول
     if (!isAuthenticated) {
-      toast.error("يرجى تسجيل الدخول أولاً لإضافة المنتجات إلى المفضلة", {
+      toast.error(t.loginRequired, {
         duration: 3000,
         position: "top-center",
         icon: "❤️",
@@ -96,14 +125,14 @@ export function ProductCard({
     
     if (!success) {
       setLocalFavorite(previousState);
-      toast.error("حدث خطأ أثناء إضافة المنتج إلى المفضلة", {
+      toast.error(t.errorAdding, {
         duration: 3000,
         position: "top-center",
       });
     }
     
     setIsLocalMutating(false);
-  }, [id, name, localFavorite, isLocalMutating, isLoading, toggleFavorite, isAuthenticated, router]);
+  }, [id, name, localFavorite, isLocalMutating, isLoading, toggleFavorite, isAuthenticated, router, t]);
 
   // ✅ دالة الإضافة إلى السلة (تدعم الضيوف - بدون تسجيل دخول)
   const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
@@ -115,9 +144,7 @@ export function ProductCard({
     const productId = parseInt(id);
     const quantity = 1;
     
-    // ✅ الشرط الجديد: التحقق من وجود فاريانتات
     if (hasVariants && variants.length > 0) {
-      // ✅ المنتج له فاريانتات → استخدم أول فاريانت
       const firstVariantId = variants[0].id;
       
       setIsAddingToCart(true);
@@ -134,7 +161,6 @@ export function ProductCard({
       return;
     }
     
-    // ✅ المنتج ليس له فاريانتات → استخدم null
     setIsAddingToCart(true);
     try {
       const finalVariantId = variantId || null;
@@ -152,8 +178,8 @@ export function ProductCard({
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Quick view:", id);
-     router.push(`/product/${id}`);
+  
+    router.push(`/product/${id}`);
   };
 
   const handleMouseEnter = () => {
@@ -193,9 +219,9 @@ export function ProductCard({
           <button
             onClick={handleFavoriteClick}
             disabled={isLocalMutating || isLoading}
-            className="block md:hidden absolute top-[-5px] left-1 z-10 bg-white rounded-full p-1.5 shadow-md hover: bg-blue-50  transition-all duration-200 hover:scale-110 disabled:opacity-50"
+            className="block md:hidden absolute top-[-5px] left-1 z-10 bg-white rounded-full p-1.5 shadow-md hover:bg-blue-50 transition-all duration-200 hover:scale-110 disabled:opacity-50"
             style={{ color: localFavorite ? '#ef4444' : '#112B40' }}
-            aria-label={localFavorite ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
+            aria-label={localFavorite ? t.removeFromFavorites : t.addToFavorites}
             aria-pressed={localFavorite}
           >
             {isLocalMutating ? (
@@ -209,31 +235,32 @@ export function ProductCard({
           {isBestSeller && (
             <div className="absolute top-2 right-2 z-10">
               <p className="text-[9px] sm:text-xs font-bold text-white bg-[#FF7700] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                الاكثر طلبا
+                {t.bestSeller}
               </p>
             </div>
           )}
-            {discount && discount > 0 && (
+          
+          {discount && discount > 0 && (
             <div className="absolute top-10 right-2 z-10">
-             <p className="text-[9px] sm:text-xs font-bold text-[#195073] bg-[#FFDB00] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                    {discount}% OFF
-                  </p>
+              <p className="text-[9px] sm:text-xs font-bold text-[#195073] bg-[#FFDB00] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
+                {discount}% OFF
+              </p>
             </div>
           )}
 
-         <Image
-  src={currentImage}
-  alt={name}
-  loading="eager"
-  fill
-  className="object-contain w-full md:p-4 transition-transform duration-300 group-hover:scale-105"
-  sizes="(max-width: 768px) 99vw, (max-width: 1200px) 50vw, 33vw"
-  quality={100}
-  priority={true}
-  unoptimized={false}
-  placeholder="blur"
-  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAADAAQDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCQAA//Z"
-/>
+          <Image
+            src={currentImage}
+            alt={name}
+            loading="eager"
+            fill
+            className="object-contain w-full md:p-4 transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 99vw, (max-width: 1200px) 50vw, 33vw"
+            quality={100}
+            priority={true}
+            unoptimized={false}
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAADAAQDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCQAA//Z"
+          />
 
           {/* الطبقة المظللة التي تظهر عند hover */}
           {isHovered && (
@@ -251,18 +278,18 @@ export function ProductCard({
                 onClick={handleQuickView}
                 className="bg-white rounded-full p-2 shadow-lg hover:bg-[#23A6F0] transition-all duration-200 hover:scale-110"
                 style={{ color: '#112B40' }}
-                aria-label="معاينة سريعة"
+                aria-label={t.quickView}
               >
                 <Eye className="h-5 w-5 hover:text-white" />
               </button>
 
-              {/* Shopping Cart Icon - Add to Cart (يدعم الضيوف) */}
+              {/* Shopping Cart Icon - Add to Cart */}
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart || cartLoading}
                 className="bg-white rounded-full p-2 shadow-lg hover:bg-[#23A6F0] transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ color: '#112B40' }}
-                aria-label="أضف إلى السلة"
+                aria-label={t.addToCart}
               >
                 {isAddingToCart ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-[#23A6F0]" />
@@ -277,7 +304,7 @@ export function ProductCard({
                 disabled={isLocalMutating || isLoading}
                 className="bg-white md:block hidden rounded-full p-2 shadow-lg hover:bg-[#23A6F0] transition-all duration-200 hover:scale-110 disabled:opacity-50"
                 style={{ color: localFavorite ? '#ef4444' : '#112B40' }}
-                aria-label="أضف إلى المفضلة"
+                aria-label={localFavorite ? t.removeFromFavorites : t.addToFavorites}
               >
                 {isLocalMutating ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-500" />
@@ -300,11 +327,10 @@ export function ProductCard({
           <div className="flex items-center gap-1 text-sm">
             {originalPrice && originalPrice > price ? (
               <>
-               
                 <span className="text-xs md:text-sm line-through text-gray-400 relative">
                   {originalPrice.toLocaleString()} 
                 </span>
-                 <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
+                <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
                   {price.toLocaleString()} EGP
                 </span>
               </>

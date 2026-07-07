@@ -41,6 +41,42 @@ export default function AccountPage() {
     return `https://admin.souqkaber.com${imagePath}`;
   };
 
+  // دالة مساعدة لاستخراج الرصيد والعملة من البيانات القادمة من الـ API
+  const parseBalance = (value: any): { currency: string; amount: number } => {
+    // الحالة 1: قيمة نصية مثل "EGP 100.50"
+    if (typeof value === 'string') {
+      const parts = value.trim().split(/\s+/);
+      if (parts.length === 2) {
+        const currency = parts[0];
+        const amount = parseFloat(parts[1]);
+        if (!isNaN(amount)) {
+          return { currency, amount };
+        }
+      }
+      // محاولة استخراج الأرقام فقط إذا كانت العملة غير موجودة
+      const numericMatch = value.match(/[\d.]+/);
+      if (numericMatch) {
+        return { currency: "EGP", amount: parseFloat(numericMatch[0]) };
+      }
+      return { currency: "EGP", amount: 0 };
+    }
+    
+    // الحالة 2: قيمة رقمية
+    if (typeof value === 'number') {
+      return { currency: "EGP", amount: value };
+    }
+    
+    // الحالة 3: كائن يحتوي على balance و currency
+    if (value && typeof value === 'object') {
+      const currency = value.currency || "EGP";
+      const amount = parseFloat(value.balance || value.amount || 0);
+      return { currency, amount: isNaN(amount) ? 0 : amount };
+    }
+    
+    // الحالة الافتراضية
+    return { currency: "EGP", amount: 0 };
+  };
+
   // دالة لجلب رصيد المحفظة من الـ API
   const fetchWalletBalance = async () => {
     setLoadingWallet(true);
@@ -58,7 +94,7 @@ export default function AccountPage() {
       const response = await fetch(`${apiUrl}/wallet`, {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
+          "Accept": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -66,11 +102,15 @@ export default function AccountPage() {
       const data = await response.json();
 
       if (data.result === true && data.errNum === 200) {
-        const balanceString = data.data.balance;
-        const [currencyPart, balancePart] = balanceString.split(" ");
+        const balanceData = data.data.balance;
         
-        setWalletCurrency(currencyPart || "EGP");
-        setWalletBalance(parseFloat(balancePart) || 0);
+        // استخدام الدالة المساعدة لتحليل البيانات بأمان
+        const parsed = parseBalance(balanceData);
+        setWalletCurrency(parsed.currency);
+        setWalletBalance(parsed.amount);
+        
+        // طباعة البيانات في الكونسول للتحقق (يمكنك إزالة هذا السطر في الإنتاج)
+        console.log("Balance parsed:", parsed);
       } else {
         console.error("Error fetching wallet:", data.message);
         setWalletBalance(0);
@@ -91,17 +131,17 @@ export default function AccountPage() {
   }, [isAuthenticated]);
 
   // التحقق من حالة تسجيل الدخول
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      toast.error("الرجاء تسجيل الدخول أولاً", {
-        duration: 2000,
-        position: "top-center",
-      });
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 1500);
-    }
-  }, [isAuthenticated, loading, router]);
+  // useEffect(() => {
+  //   if (!loading && !isAuthenticated) {
+  //     toast.error("الرجاء تسجيل الدخول أولاً", {
+  //       duration: 2000,
+  //       position: "top-center",
+  //     });
+  //     setTimeout(() => {
+  //       router.push("/auth/login");
+  //     }, 1500);
+  //   }
+  // }, [isAuthenticated, loading, router]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -158,7 +198,7 @@ export default function AccountPage() {
     return (
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-gray-300 border-t-[#ff3c27] rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-[#23A6F0] rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">جاري تحميل بيانات الحساب...</p>
         </div>
       </div>
@@ -167,7 +207,48 @@ export default function AccountPage() {
 
   // إذا لم يكن المستخدم مسجل دخول، لا نعرض المحتوى
   if (!isAuthenticated || !user) {
-    return null;
+    return (
+    <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
+      <div className="text-center max-w-md mx-4">
+        <div className="bg-white rounded-2xl p-8 shadow-lg">
+          {/* أيقونة القفل أو المنع */}
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg className="w-10 h-10 text-[#23A6F0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+            ! مرحباً بك
+          </h3>
+          <p className="text-gray-600 mb-6 text-lg">
+            يرجى <span className="text-[#23A6F0] font-semibold">تسجيل الدخول</span> أولاً للوصول إلى ملفك الشخصي
+          </p>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="w-full px-6 py-3 bg-[#23A6F0] text-white rounded-xl hover:bg-[#3b82f6] transition-all duration-300 font-semibold text-lg shadow-md hover:shadow-lg"
+            >
+              تسجيل الدخول الآن
+            </button>
+            
+            <button
+              onClick={() => router.push("/")}
+              className="w-full px-6 py-2 text-gray-600 hover:text-[#23A6F0] transition-colors duration-300 text-sm"
+            >
+              العودة إلى الصفحة الرئيسية
+            </button>
+          </div>
+        </div>
+        
+        {/* رسالة تأكيد إضافية */}
+        <p className="mt-4 text-sm text-gray-500">
+          🔒 هذا القسم محمي ويتطلب مصادقة
+        </p>
+      </div>
+    </div>
+  );
   }
 
   // الحصول على الحرف الأول من اسم المستخدم للصورة الافتراضية

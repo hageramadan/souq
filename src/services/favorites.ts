@@ -183,6 +183,7 @@ const getToken = (): string | null => {
 const getHeaders = (): HeadersInit => {
   const token = getToken();
   return {
+    'Accept': 'application/json',
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
   };

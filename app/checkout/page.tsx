@@ -45,7 +45,8 @@ const getHeaders = (): HeadersInit => {
   const guestToken = getGuestToken();
   
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    "Accept": "application/json",
+    'content-type': 'application/json',
   };
   
   if (token) {
@@ -78,17 +79,17 @@ const fetchCartWithParams = async (
     }
 
     const url = `${API_URL}/cart/preview?${params.toString()}`;
-    console.log("🟢 Fetching URL:", url);
+   
 
     const response = await fetch(url, {
       headers: getHeaders(),
     });
 
     const data = await response.json();
-    console.log("🟢 API Response:", data);
+   
 
     if (data.result === true && data.data && data.data.cart) {
-      console.log("🟢 Returning cart data:", data.data.cart);
+    
       return data.data.cart;
     }
 
@@ -396,35 +397,35 @@ export default function CheckoutPage() {
     const cityIdChanged = lastFetchedCityIdRef.current !== currentCityId;
 
     if (!deliveryMethodChanged && !cityIdChanged) {
-      console.log("🟢 Skipping - no changes detected");
+    
       return;
     }
 
     lastDeliveryMethodRef.current = currentDeliveryMethod;
     lastFetchedCityIdRef.current = currentCityId;
 
-    console.log(`🟢 Changes detected - deliveryMethod: ${currentDeliveryMethod}, cityId: ${currentCityId}`);
+  
 
     const fetchCart = async () => {
       try {
         isFetchingRef.current = true;
         
         if (currentDeliveryMethod === "delivery" && currentCityId) {
-          console.log(`🟢 Fetching cart with delivery and city_id: ${currentCityId}`);
+        
           const cartData = await fetchCartWithParams("delivery", currentCityId);
           if (cartData) {
             updateCart(cartData);
           }
         } 
         else if (currentDeliveryMethod === "pickup") {
-          console.log("🟢 Fetching cart with pickup (receive)");
+       
           const cartData = await fetchCartWithParams("pickup");
           if (cartData) {
             updateCart(cartData);
           }
         } 
         else if (currentDeliveryMethod === "delivery" && !currentCityId) {
-          console.log("🟢 Fetching cart with delivery (no city yet)");
+         
           const cartData = await fetchCartWithParams("delivery");
           if (cartData) {
             updateCart(cartData);
@@ -519,7 +520,7 @@ export default function CheckoutPage() {
   );
 
   const handleCitySelected = useCallback((cityId: string) => {
-    console.log(`🟢 City selected: ${cityId}`);
+   
     selectedCityIdRef.current = cityId;
     setSelectedCityId(cityId);
   }, []);
@@ -575,7 +576,7 @@ export default function CheckoutPage() {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify({
           name: accountData.name,
@@ -695,7 +696,7 @@ export default function CheckoutPage() {
 
       if (formData.deliveryMethod === "delivery") {
         const cityId = selectedCityIdRef.current || "1";
-        console.log(`🟢 Using cityId from ref: ${cityId}`);
+      
         additionalData.city_id = cityId;
       }
 
@@ -709,7 +710,7 @@ export default function CheckoutPage() {
       }
     }
 
-    console.log("🟢 Order Data:", orderData);
+ 
     return orderData;
   }, [formData, selectedAddressId, createAccount, isGuest, accountData]);
 

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getSliders } from "@/services/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Slide {
   id: number;
@@ -16,11 +18,29 @@ interface Slide {
   buttonLink: string;
 }
 
-interface HeroProps {
-  slides: Slide[];
-}
+const API_BASE_URL = 'https://admin.souqkaber.com';
 
-export function Hero({ slides }: HeroProps) {
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      loadingSlides: "Loading slides...",
+      shopNow: "Shop Now",
+    };
+  }
+  // Arabic (default)
+  return {
+    loadingSlides: "جاري تحميل العروض...",
+    shopNow: "تسوق الآن",
+  };
+};
+
+export function Hero() {
+  const { language } = useLanguage();
+  const t = getTranslations(language);
+  
+  const [slides, setSlides] = useState<Slide[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   
@@ -29,8 +49,37 @@ export function Hero({ slides }: HeroProps) {
   const [dragProgress, setDragProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // ✅ تغيير من useRef إلى useState
   const [isSwipingHorizontal, setIsSwipingHorizontal] = useState(false);
+
+  // ✅ جلب السلايدرز من العميل
+  useEffect(() => {
+    const fetchSliders = async () => {
+      try {
+        setLoading(true);
+        const slidersData = await getSliders();
+        
+        const transformedSlides: Slide[] = slidersData.length > 0 
+          ? slidersData.map(slider => ({
+              id: slider.id,
+              image: `${API_BASE_URL}${slider.image}`,
+              title: slider.name,
+              description: slider.description,
+              buttonText: t.shopNow,
+              buttonLink: slider.link || "/products",
+            }))
+          : [];
+        
+        setSlides(transformedSlides);
+      } catch (error) {
+        console.error('Error fetching sliders:', error);
+        setSlides([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSliders();
+  }, [t.shopNow]);
 
   useEffect(() => {
     if (!isAutoPlaying || slides.length === 0) return;
@@ -67,7 +116,6 @@ export function Hero({ slides }: HeroProps) {
     touchStartY.current = e.touches[0].clientY;
     setIsDragging(true);
     setIsAutoPlaying(false);
-    // ✅ استخدام setIsSwipingHorizontal بدلاً من isSwipingHorizontal.current
     setIsSwipingHorizontal(false);
     setDragProgress(0);
   };
@@ -80,10 +128,8 @@ export function Hero({ slides }: HeroProps) {
     const diffX = currentX - touchStartX.current;
     const diffY = currentY - touchStartY.current;
     
-    // ✅ استخدام isSwipingHorizontal (state) بدلاً من ref
     if (!isSwipingHorizontal && (Math.abs(diffX) > 10 || Math.abs(diffY) > 10)) {
       if (Math.abs(diffX) > Math.abs(diffY)) {
-        // ✅ استخدام setIsSwipingHorizontal
         setIsSwipingHorizontal(true);
       } else {
         setIsDragging(false);
@@ -91,7 +137,6 @@ export function Hero({ slides }: HeroProps) {
       }
     }
     
-    // ✅ استخدام isSwipingHorizontal (state)
     if (isSwipingHorizontal) {
       const containerWidth = containerRef.current.clientWidth;
       let progress = diffX / containerWidth;
@@ -105,7 +150,6 @@ export function Hero({ slides }: HeroProps) {
     
     const minSwipeDistance = 0.15;
     
-    // ✅ استخدام isSwipingHorizontal (state)
     if (Math.abs(dragProgress) > minSwipeDistance && isSwipingHorizontal) {
       if (dragProgress < 0) {
         goToNextSlide();
@@ -118,7 +162,6 @@ export function Hero({ slides }: HeroProps) {
     setDragProgress(0);
     touchStartX.current = 0;
     touchStartY.current = 0;
-    // ✅ استخدام setIsSwipingHorizontal
     setIsSwipingHorizontal(false);
     
     setTimeout(() => setIsAutoPlaying(true), 10000);
@@ -132,6 +175,23 @@ export function Hero({ slides }: HeroProps) {
     return (currentSlide + 1) % slides.length;
   };
 
+  // عرض حالة التحميل
+  if (loading) {
+    return (
+      <section className="relative w-full h-[55vh] lg:h-[70vh] overflow-hidden bg-gray-200">
+        <div className="flex justify-center items-center w-full h-full">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="w-12 h-12 border-4 border-gray-300 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (slides.length === 0) {
     return null;
   }
@@ -141,7 +201,6 @@ export function Hero({ slides }: HeroProps) {
       <div 
         ref={containerRef}
         className={`relative w-full h-full overflow-hidden ${
-          // ✅ الآن يمكن استخدام isSwipingHorizontal بأمان
           isDragging && isSwipingHorizontal ? 'touch-none' : 'touch-pan-y'
         }`}
         style={{
@@ -196,8 +255,8 @@ export function Hero({ slides }: HeroProps) {
                     href={slides[currentSlide].buttonLink} 
                     className="flex items-center justify-center gap-2"
                   >
-                    {slides[currentSlide].buttonText}
-                    <FaArrowLeft className="h-4 w-4" />
+                    {t.shopNow}
+                    <FaArrowLeft className={`h-4 w-4 ${language === 'en' ? 'rotate-180' : ''}`} />
                   </Link>
                 </Button>
               </div>

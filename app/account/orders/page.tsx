@@ -20,6 +20,7 @@ import { IoCopyOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { useRouter } from 'next/navigation';
 import Pagination from '@/components/products/Pagination';
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ========== تعريف الأنواع ==========
 type OrderStatus = 
@@ -129,7 +130,7 @@ const getToken = (): string | null => {
 const getHeaders = (): HeadersInit => {
   const token = getToken();
   return {
-    "Content-Type": "application/json",
+    "Accept": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 };
@@ -144,7 +145,6 @@ let lastFetchTime = 0;
 const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ orders: Order[], pagination: PaginationData }> => {
   const now = Date.now();
   if (isFetching || (now - lastFetchTime < 300)) {
-    console.log("⏳ Skipping duplicate fetch request");
     return {
       orders: [],
       pagination: {
@@ -164,17 +164,14 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
   lastFetchTime = now;
   
   try {
-    console.log(`🟢 Fetching orders page ${page}`);
     const response = await fetch(`${API_URL}/orders?page=${page}&per_page=${perPage}`, {
       method: "GET",
       headers: getHeaders(),
     });
 
     const data = await response.json();
-    console.log(`📥 Response for page ${page}:`, data);
 
     if (data.result === true && data.data) {
-      // ✅ تحويل البيانات بشكل آمن
       const orders = data.data.orders.map((order: any) => {
         try {
           return transformOrder(order);
@@ -186,16 +183,12 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
       
       const pagination = data.data.pagination;
       
-      console.log(`✅ Loaded ${orders.length} orders for page ${page}`);
-      console.log(`📊 Pagination:`, pagination);
-      
       return {
         orders: orders,
         pagination: pagination
       };
     }
     
-    console.warn(`⚠️ No orders found for page ${page}`);
     return {
       orders: [],
       pagination: {
@@ -211,7 +204,6 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
     };
   } catch (error) {
     console.error("❌ Error fetching orders:", error);
-    toast.error("حدث خطأ في جلب الطلبات");
     return {
       orders: [],
       pagination: {
@@ -266,8 +258,6 @@ const cleanImageUrl = (url: string): string => {
 };
 
 // ========== دوال جديدة لجلب خصائص المنتج ==========
-
-// جلب الذاكرة
 const getMemory = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const memoryAttr = item.variant.attributes.find(
@@ -276,7 +266,6 @@ const getMemory = (item: OrderItem): string | null => {
   return memoryAttr?.value || null;
 };
 
-// جلب الهارد ديسك
 const getStorage = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const storageAttr = item.variant.attributes.find(
@@ -285,7 +274,6 @@ const getStorage = (item: OrderItem): string | null => {
   return storageAttr?.value || null;
 };
 
-// جلب اللون (مع دعم عرض اللون)
 const getColor = (item: OrderItem): { name: string; hex: string | null } | null => {
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
@@ -301,9 +289,7 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
 
 // ========== تحويل بيانات الطلب بشكل آمن ==========
 const transformOrder = (apiOrder: any): Order => {
-  // ✅ التحقق من وجود البيانات الأساسية
   if (!apiOrder || !apiOrder.id) {
-    console.warn("⚠️ Invalid order data:", apiOrder);
     return {
       id: 0,
       orderNumber: "N/A",
@@ -353,50 +339,50 @@ const transformOrder = (apiOrder: any): Order => {
 };
 
 // ========== تكوين حالات الطلب ==========
-const statusConfig: Record<
-  OrderStatus,
-  { label: string; color: string; icon: any }
-> = {
-  ordered: { 
-    label: "تم الطلب", 
-    color: "status-ordered", 
-    icon: Clock 
-  },
-  processing: { 
-    label: "قيد المعالجة", 
-    color: "status-processing", 
-    icon: Box 
-  },
-  ready_for_receive: { 
-    label: "جاهز للاستلام", 
-    color: "status-ready", 
-    icon: PackageCheck 
-  },
-  delivering: { 
-    label: "جارٍ التوصيل", 
-    color: "status-delivering", 
-    icon: Truck 
-  },
-  delivered: { 
-    label: "تم التسليم", 
-    color: "status-delivered", 
-    icon: CheckCircle 
-  },
-  not_delivered: { 
-    label: "لم يتم التسليم", 
-    color: "status-not-delivered", 
-    icon: AlertCircle 
-  },
-  cancelled: { 
-    label: "ملغي", 
-    color: "status-cancelled", 
-    icon: XCircle 
-  },
+const getStatusConfig = (t: any) => {
+  return {
+    ordered: { 
+      label: t('orders.statusOrdered'), 
+      color: "status-ordered", 
+      icon: Clock 
+    },
+    processing: { 
+      label: t('orders.statusProcessing'), 
+      color: "status-processing", 
+      icon: Box 
+    },
+    ready_for_receive: { 
+      label: t('orders.statusReady'), 
+      color: "status-ready", 
+      icon: PackageCheck 
+    },
+    delivering: { 
+      label: t('orders.statusDelivering'), 
+      color: "status-delivering", 
+      icon: Truck 
+    },
+    delivered: { 
+      label: t('orders.statusDelivered'), 
+      color: "status-delivered", 
+      icon: CheckCircle 
+    },
+    not_delivered: { 
+      label: t('orders.statusNotDelivered'), 
+      color: "status-not-delivered", 
+      icon: AlertCircle 
+    },
+    cancelled: { 
+      label: t('orders.statusCancelled'), 
+      color: "status-cancelled", 
+      icon: XCircle 
+    },
+  };
 };
 
 type FilterStatus = "all" | OrderStatus;
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -417,9 +403,10 @@ export default function OrdersPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const itemsPerPage = 10;
 
+  const statusConfig = useMemo(() => getStatusConfig(t), [t]);
+
   // ========== جلب الطلبات ==========
   const loadOrders = useCallback(async (page: number = 1) => {
-    // ✅ إلغاء الطلب السابق
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -431,9 +418,6 @@ export default function OrdersPage() {
       const result = await fetchOrders(page, itemsPerPage);
       
       if (!abortControllerRef.current?.signal.aborted) {
-        console.log(`🟢 Setting orders for page ${page}:`, result.orders.length);
-        console.log(`📊 Setting pagination:`, result.pagination);
-        
         setOrders(result.orders);
         setPagination(result.pagination);
         hasLoadedRef.current = true;
@@ -441,19 +425,18 @@ export default function OrdersPage() {
     } catch (error) {
       if (!abortControllerRef.current?.signal.aborted) {
         console.error("❌ Error loading orders:", error);
-        toast.error("حدث خطأ في تحميل الطلبات");
+        toast.error(t('orders.loadError'));
       }
     } finally {
       if (!abortControllerRef.current?.signal.aborted) {
         setLoading(false);
       }
     }
-  }, [itemsPerPage]);
+  }, [itemsPerPage, t]);
 
   // ========== تحميل الصفحة الأولى ==========
   useEffect(() => {
     if (!hasLoadedRef.current) {
-      console.log("🟢 Loading orders for the first time");
       loadOrders(1);
     }
     
@@ -466,7 +449,6 @@ export default function OrdersPage() {
 
   // ========== تغيير الصفحة ==========
   const handlePageChange = useCallback((newPage: number) => {
-    console.log(`🔄 Changing to page ${newPage}`);
     if (newPage >= 1 && newPage <= pagination.last_page) {
       loadOrders(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -475,15 +457,10 @@ export default function OrdersPage() {
 
   // ========== فلترة الطلبات ==========
   const filteredOrders = useMemo(() => {
-    console.log(`🔄 Filtering orders with status: ${filterStatus}`);
-    console.log(`📦 Current orders count: ${orders.length}`);
-    
     if (filterStatus === "all") {
       return orders;
     }
-    const filtered = orders.filter((order) => order.status === filterStatus);
-    console.log(`✅ Filtered to ${filtered.length} orders`);
-    return filtered;
+    return orders.filter((order) => order.status === filterStatus);
   }, [orders, filterStatus]);
 
   const toggleExpand = useCallback((orderId: number) => {
@@ -492,22 +469,22 @@ export default function OrdersPage() {
 
   const copyOrderNumber = useCallback((orderNumber: string) => {
     navigator.clipboard.writeText(orderNumber);
-    toast.success("تم نسخ رقم الطلب");
-  }, []);
+    toast.success(t('orders.copySuccess'));
+  }, [t]);
 
   const goToOrderDetails = useCallback((orderId: number) => {
     router.push(`/account/orders/${orderId}`);
   }, [router]);
 
   const statusFilters: { value: FilterStatus; label: string }[] = [
-    { value: "all", label: "الكل" },
-    { value: "ordered", label: "تم الطلب" },
-    { value: "processing", label: "قيد المعالجة" },
-    { value: "ready_for_receive", label: "جاهز للاستلام" },
-    { value: "delivering", label: "جارٍ التوصيل" },
-    { value: "delivered", label: "تم التسليم" },
-    { value: "not_delivered", label: "لم يتم التسليم" },
-    { value: "cancelled", label: "ملغي" },
+    { value: "all", label: t('orders.filterAll') },
+    { value: "ordered", label: t('orders.statusOrdered') },
+    { value: "processing", label: t('orders.statusProcessing') },
+    { value: "ready_for_receive", label: t('orders.statusReady') },
+    { value: "delivering", label: t('orders.statusDelivering') },
+    { value: "delivered", label: t('orders.statusDelivered') },
+    { value: "not_delivered", label: t('orders.statusNotDelivered') },
+    { value: "cancelled", label: t('orders.statusCancelled') },
   ];
 
   if (loading) {
@@ -517,7 +494,7 @@ export default function OrdersPage() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
-              <p className="text-gray-500 mt-4">جاري تحميل الطلبات...</p>
+              <p className="text-gray-500 mt-4">{t('orders.loading')}</p>
             </div>
           </div>
         </div>
@@ -532,9 +509,8 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <Package className="w-6 h-6 sm:w-7 sm:h-7 text-[#23A6F0]" />
           <h1 className="text-xl sm:text-xl font-bold text-gray-800">
-            طلباتي
+            {t('orders.title')}
           </h1>
-         
         </div>
 
         {/* فلتر الحالات */}
@@ -543,7 +519,6 @@ export default function OrdersPage() {
             <button
               key={filter.value}
               onClick={() => {
-                console.log(`🔍 Filter changed to: ${filter.value}`);
                 setFilterStatus(filter.value);
               }}
               className={`whitespace-nowrap px-4 sm:px-5 md:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition ${
@@ -563,7 +538,7 @@ export default function OrdersPage() {
             <div className="mt-8 md:mt-12 rounded-2xl p-8 sm:p-12 text-center">
               <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
               <p className="text-gray-500 text-sm sm:text-base">
-                {orders.length === 0 ? "جاري تحميل الطلبات..." : "لا توجد طلبات في هذه الفئة"}
+                {orders.length === 0 ? t('orders.loading') : t('orders.noOrders')}
               </p>
             </div>
           ) : (
@@ -576,7 +551,7 @@ export default function OrdersPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-white  rounded-[8px]  sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                  className="bg-white rounded-[8px] sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                 >
                   {/* رأس الطلب */}
                   <div
@@ -593,7 +568,7 @@ export default function OrdersPage() {
                             }}
                             className="flex gap-2 sm:gap-4 items-center text-base sm:text-[20px] font-bold text-[#180100] cursor-pointer hover:opacity-70 transition"
                           >
-                            <h1 className="text-sm sm:text-base">رقم الطلب</h1>
+                            <h1 className="text-sm sm:text-base">{t('orders.orderNumber')}</h1>
                             <div className="flex gap-1 sm:gap-2 items-center">
                               <p className="font-bold text-gray-800 text-sm sm:text-base">
                                 <span>
@@ -631,7 +606,7 @@ export default function OrdersPage() {
                       </p>
 
                       <div className="flex gap-2 items-center text-sm sm:text-base">
-                        <p className="text-[#180100]">المنتجات</p>
+                        <p className="text-[#180100]">{t('orders.products')}</p>
                         <span className="text-gray-500">({itemsCount})</span>
                       </div>
                     </div>
@@ -639,8 +614,8 @@ export default function OrdersPage() {
 
                   {/* تفاصيل الطلب الموسعة */}
                   {isExpanded && order.items.length > 0 && (
-                    <div className=" p-4 sm:p-5 ">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-5 ">
+                    <div className="p-4 sm:p-5">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-5">
                         {order.items.map((item, idx) => {
                           const variantImage = item.variant?.variant_image 
                             ? cleanImageUrl(item.variant.variant_image) 
@@ -652,7 +627,6 @@ export default function OrdersPage() {
 
                           const displayImage = variantImage || productImage;
                           
-                          // ========== استخدام الدوال الجديدة ==========
                           const memory = getMemory(item);
                           const storage = getStorage(item);
                           const color = getColor(item);
@@ -666,7 +640,7 @@ export default function OrdersPage() {
                                 href={`/account/orders/${order.id}`}
                                 className="flex-shrink-0"
                               >
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-[8px] sm: rounded-[8px]  overflow-hidden hover:opacity-80 transition cursor-pointer relative">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-[8px] overflow-hidden hover:opacity-80 transition cursor-pointer relative">
                                   <Image
                                     src={displayImage}
                                     alt={item.title}
@@ -693,28 +667,24 @@ export default function OrdersPage() {
                                       </p>
                                     </Link>
                                     
-                                    {/* ========== عرض جميع الخصائص ========== */}
                                     <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-1">
-                                      {/* عرض الذاكرة */}
                                       {memory && (
                                         <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs bg-white px-1.5 sm:px-2 py-0.5 rounded-full text-gray-700 border border-gray-200">
-                                          <span className="font-medium">الذاكرة:</span>
+                                          <span className="font-medium">{t('orders.memory')}:</span>
                                           <span>{memory}</span>
                                         </span>
                                       )}
                                       
-                                      {/* عرض الهارد ديسك */}
                                       {storage && (
                                         <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs bg-white px-1.5 sm:px-2 py-0.5 rounded-full text-gray-700 border border-gray-200">
-                                          <span className="font-medium">هارد ديسك:</span>
+                                          <span className="font-medium">{t('orders.storage')}:</span>
                                           <span>{storage}</span>
                                         </span>
                                       )}
                                       
-                                      {/* عرض اللون */}
                                       {color && (
                                         <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs bg-white px-1.5 sm:px-2 py-0.5 rounded-full text-gray-700 border border-gray-200">
-                                          <span className="font-medium">اللون:</span>
+                                          <span className="font-medium">{t('orders.color')}:</span>
                                           <span>{color.name}</span>
                                           {color.hex && (
                                             <span 
@@ -727,9 +697,9 @@ export default function OrdersPage() {
                                     </div>
                                     
                                     <div className="flex flex-wrap gap-2 sm:gap-3 mt-1 text-[10px] sm:text-xs text-gray-500">
-                                      <span>الكمية: x{item.quantity}</span>
+                                      <span>{t('orders.quantity')}: x{item.quantity}</span>
                                       <span>
-                                        السعر: EGP {item.unit_price.toFixed(2)}
+                                        {t('orders.price')}: EGP {item.unit_price.toFixed(2)}
                                       </span>
                                     </div>
                                   </div>
@@ -743,28 +713,26 @@ export default function OrdersPage() {
                             </div>
                           );
                         })}
-
-                        
                       </div>
                       <div className="pt-2 sm:pt-3 flex justify-between items-center">
-                          <Link
-                            href={`/account/orders/${order.id}`}
-                            className="text-[#23A6F0] text-sm sm:text-base font-medium hover:underline"
-                          >
-                            عرض تفاصيل الطلب
-                          </Link>
-                          <div className="text-right">
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              إجمالي الطلب
-                            </p>
-                            <p className="text-base sm:text-xl font-bold text-[#23A6F0]">
-                              <span className="text-xs md:text-base font-bold text-[#23A6F0]">
-                                EGP
-                              </span>
-                              {order.total_amount.toFixed(2)}
-                            </p>
-                          </div>
+                        <Link
+                          href={`/account/orders/${order.id}`}
+                          className="text-[#23A6F0] text-sm sm:text-base font-medium hover:underline"
+                        >
+                          {t('orders.viewDetails')}
+                        </Link>
+                        <div className="text-right">
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            {t('orders.orderTotal')}
+                          </p>
+                          <p className="text-base sm:text-xl font-bold text-[#23A6F0]">
+                            <span className="text-xs md:text-base font-bold text-[#23A6F0]">
+                              EGP
+                            </span>
+                            {order.total_amount.toFixed(2)}
+                          </p>
                         </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -786,7 +754,7 @@ export default function OrdersPage() {
 
       <style jsx global>{`
         .status-ordered {
-         background-color: #f181173D; color: #f18117; 
+          background-color: #f181173D; color: #f18117; 
         }
         .status-processing {
           background-color: #ed89363d;

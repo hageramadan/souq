@@ -1,27 +1,31 @@
 // components/contact/SubmitButton.tsx
+"use client";
+
 import { Send } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SubmitButtonProps {
   isSubmitting: boolean;
 }
 
 export default function SubmitButton({ isSubmitting }: SubmitButtonProps) {
+  const { t } = useTranslation();
+
   return (
     <button
       type="submit"
       disabled={isSubmitting}
-      className="w-full bg-[#2DA5F3] text-white py-3  rounded-full  font-medium hover:bg-[#4bb3f8] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+      className="w-full bg-[#2DA5F3] text-white py-3 rounded-full font-medium hover:bg-[#4bb3f8] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       {isSubmitting ? (
         <>
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          جاري الإرسال...
+          {t('contact.sending')}
         </>
       ) : (
         <>
-          ارسال الرسالة
+          {t('contact.send')}
           <Send className="w-5 h-5" />
-
         </>
       )}
     </button>

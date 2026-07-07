@@ -114,7 +114,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <span className="w-1.5 h-6 bg-black rounded-full"></span>
         {title}
       </h2>
-      <div className="text-gray-600 text-sm leading-relaxed space-y-2 pr-2">
+      <div className="text-gray-600 text-sm leading-relaxed space-y-2 ps-2">
         {children}
       </div>
     </div>

@@ -3,6 +3,7 @@
 
 import { useEffect } from 'react';
 import ProductFilters from './FilterSidebar';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MobileFilterPopupProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export default function MobileFilterPopup({
   onFilterChange,
   currentFilters 
 }: MobileFilterPopupProps) {
+  const { language } = useLanguage();
+
   // منع التمرير في الخلفية عند فتح البوب أب
   useEffect(() => {
     if (isOpen) {
@@ -60,11 +63,14 @@ export default function MobileFilterPopup({
         <div className="h-full overflow-y-auto pb-20">
           <div className="px-4 py-6">
             <ProductFilters 
+
               onFilterChange={(filters) => {
+                
                 onFilterChange(filters);
                 // يمكنك إغلاق البوب أب تلقائياً بعد تطبيق الفلتر
                 // onClose();
               }} 
+              lang={language}
             />
           </div>
         </div>

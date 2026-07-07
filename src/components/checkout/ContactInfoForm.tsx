@@ -154,7 +154,7 @@ export default function ContactInfoForm({
               onChange={handleEmailChange}
               onBlur={handleEmailBlur}
               placeholder="example@email.com"
-              className={`w-full pr-12 pl-4 py-3 border  rounded-[8px]  focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent transition ${
+              className={`w-full ps-12 pe-4 py-3 border  rounded-[8px]  focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent transition ${
                 emailError && isEmailTouched
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-200"

@@ -8,45 +8,58 @@ import Pagination from "@/components/products/Pagination";
 import { ProductCard } from "@/components/products/ProductCard";
 import { useFavorites, transformFavoriteToProductCard } from "@/hooks/useFavorites";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ========== مكون عنوان الصفحة ==========
-const PageHeader = ({ title }: { title: string }) => (
-  <div className="page-with-padding">
-    <h1 className="text-xl font-bold text-gray-800">{title}</h1>
-    <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-      <Link href="/" className="hover:text-[#23A6F0] transition">الرئيسية</Link>
-      <ChevronRight className="w-4 h-4" />
-      <Link href="/account" className="hover:text-[#23A6F0] transition">حسابي</Link>
-      <ChevronRight className="w-4 h-4" />
-      <span className="text-[#23A6F0]">{title}</span>
+const PageHeader = ({ title }: { title: string }) => {
+  const { t } = useTranslation();
+  
+  return (
+    <div className="page-with-padding">
+      <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+      <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+        <Link href="/" className="hover:text-[#23A6F0] transition">
+          {t('common.home')}
+        </Link>
+        <ChevronRight className="w-4 h-4" />
+        <Link href="/account" className="hover:text-[#23A6F0] transition">
+          {t('common.myAccount')}
+        </Link>
+        <ChevronRight className="w-4 h-4" />
+        <span className="text-[#23A6F0]">{title}</span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ========== مكون المفضلة فارغة ==========
-const WishlistEmpty = () => (
-  <div className="container h-[80vh]">
-    <PageHeader title="قائمة المفضلة" />
-    
-    <div className="text-center rounded-2xl mt-5">
-      <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-        <Heart className="w-12 h-12 text-gray-400" />
+const WishlistEmpty = () => {
+  const { t } = useTranslation();
+  
+  return (
+    <div className="container h-[80vh]">
+      <PageHeader title={t('wishlist.title')} />
+      
+      <div className="text-center rounded-2xl mt-5">
+        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Heart className="w-12 h-12 text-gray-400" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">
+          {t('wishlist.emptyTitle')}
+        </h2>
+        <p className="text-gray-500 mb-6">
+          {t('wishlist.emptyMessage')}
+        </p>
+        <Link
+          href="/products"
+          className="inline-block bg-[#23A6F0] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#39abee] transition-all duration-300 shadow-md hover:shadow-lg"
+        >
+          {t('wishlist.exploreProducts')}
+        </Link>
       </div>
-      <h2 className="text-xl font-semibold text-gray-700 mb-2">
-        قائمة المفضلة فارغة
-      </h2>
-      <p className="text-gray-500 mb-6">
-        لم تقم بإضافة أي منتجات إلى قائمة المفضلة بعد
-      </p>
-      <Link
-        href="/products"
-        className="inline-block bg-[#23A6F0] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#39abee] transition-all duration-300 shadow-md hover:shadow-lg"
-      >
-        استكشاف المنتجات
-      </Link>
     </div>
-  </div>
-);
+  );
+};
 
 // تعريف نوع المنتج المحول
 interface TransformedProduct {
@@ -80,6 +93,7 @@ interface PaginationData {
 }
 
 export default function WishlistPage() {
+  const { t } = useTranslation();
   const { 
     favorites, 
     isLoading, 
@@ -144,7 +158,6 @@ export default function WishlistPage() {
   // ✅ تحديث العناصر عند تغيير favorites
   useEffect(() => {
     if (favorites) {
-      console.log(`🟢 Transforming ${favorites.length} favorites`);
       const transformed = transformFavorites(favorites);
       setItems(transformed);
       
@@ -192,12 +205,12 @@ export default function WishlistPage() {
       setShowClearConfirm(false);
       // ✅ إعادة تحميل البيانات من خلال refetch
       await refetch();
-      toast.success("تم حذف جميع المنتجات من المفضلة");
+      toast.success(t('wishlist.clearSuccess'));
     } catch (error) {
       console.error("❌ Error clearing favorites:", error);
-      toast.error("حدث خطأ في حذف المفضلة");
+      toast.error(t('wishlist.clearError'));
     }
-  }, [clearAllFavorites, refetch]);
+  }, [clearAllFavorites, refetch, t]);
 
   const cancelClearAll = useCallback(() => {
     setShowClearConfirm(false);
@@ -226,7 +239,7 @@ export default function WishlistPage() {
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="text-gray-500 text-sm animate-pulse">جاري تحميل المفضلة...</p>
+              <p className="text-gray-500 text-sm animate-pulse">{t('wishlist.loading')}</p>
             </div>
           </div>
         </div>
@@ -244,14 +257,18 @@ export default function WishlistPage() {
     <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] ">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 py-4">
         {/* ✅ استخدام PageHeader */}
-        <PageHeader title="قائمة المفضلة" />
+        <PageHeader title={t('wishlist.title')} />
 
         {/* ✅ شريط التحكم */}
         <div className="flex flex-wrap justify-between items-center gap-4 mt-6 mb-8">
           <div className="flex items-center gap-3">
             <Heart className="w-6 h-6 bg-red-700" />
             <span className="text-sm text-gray-600">
-              <span className="font-bold text-gray-900">{items.length>2? `${items.length} منتاجات`:`${items.length} منتج`}</span> 
+              <span className="font-bold text-gray-900">
+                {items.length > 2 
+                  ? t('wishlist.itemsCount', { count: items.length })
+                  : t('wishlist.itemCount', { count: items.length })}
+              </span>
             </span>
           </div>
           
@@ -262,7 +279,7 @@ export default function WishlistPage() {
               className="flex items-center gap-2 text-red-600 hover:text-red-700 transition disabled:opacity-50 text-sm font-medium"
             >
               <Trash2 className="w-4 h-4" />
-              <span>حذف الكل</span>
+              <span>{t('wishlist.clearAll')}</span>
             </button>
           )}
         </div>
@@ -317,7 +334,7 @@ export default function WishlistPage() {
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             {/* رأس النافذة */}
             <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-lg font-bold text-gray-800">تأكيد الحذف</h3>
+              <h3 className="text-lg font-bold text-gray-800">{t('wishlist.confirmTitle')}</h3>
               <button 
                 onClick={cancelClearAll} 
                 className="text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100"
@@ -333,10 +350,15 @@ export default function WishlistPage() {
                   <Trash2 className="w-8 h-8 text-red-600" />
                 </div>
                 <p className="text-gray-700 text-lg font-medium mb-2">
-                  هل أنت متأكد من حذف جميع المنتجات؟
+                  {t('wishlist.confirmMessage')}
                 </p>
                 <p className="text-gray-500 text-sm">
-                  سيتم حذف <span className="font-bold text-[#EC221F]">{items.length}</span> منتج من قائمة المفضلة بشكل نهائي.
+                  {t('wishlist.confirmWarning')}{" "}
+                  <span className="font-bold text-[#EC221F]">{items.length}</span>{" "}
+                  {items.length > 2 
+                    ? t('wishlist.itemsCount', { count: items.length })
+                    : t('wishlist.itemCount', { count: items.length })}{" "}
+                  {t('wishlist.fromWishlist')}
                 </p>
               </div>
             </div>
@@ -347,13 +369,13 @@ export default function WishlistPage() {
                 onClick={cancelClearAll} 
                 className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-[8px] hover:bg-gray-50 transition font-medium"
               >
-                إلغاء
+                {t('wishlist.cancel')}
               </button>
               <button 
                 onClick={confirmClearAll} 
                 className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-[8px] hover:bg-red-700 transition font-medium"
               >
-                حذف الكل
+                {t('wishlist.clearAll')}
               </button>
             </div>
           </div>

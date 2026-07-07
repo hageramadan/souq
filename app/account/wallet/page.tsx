@@ -30,7 +30,7 @@ export default function WalletPage() {
       const response = await fetch(`${apiUrl}/wallet`, {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
+          "Accept": "application/json",
           Authorization: `Bearer ${token}`, // إرسال التوكن في الـ Header
         },
       });

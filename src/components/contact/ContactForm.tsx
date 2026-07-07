@@ -5,6 +5,7 @@ import { useState } from "react";
 import FormInput from "./FormInput";
 import PhoneInput from "./PhoneInput";
 import SubmitButton from "./SubmitButton";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ContactFormData {
   name: string;
@@ -15,6 +16,8 @@ interface ContactFormData {
 }
 
 export default function ContactForm() {
+  const { t } = useTranslation();
+
   const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",
@@ -31,7 +34,6 @@ export default function ContactForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // معالج رقم الهاتف المعدل - يستقبل الرقم ورمز الدولة بشكل منفصل
   const handlePhoneChange = (phone: string, countryCode: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -46,15 +48,13 @@ export default function ContactForm() {
     setErrorMessage("");
 
     try {
-      // تجهيز البيانات للإرسال
       const payload = {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone, // الرقم فقط بدون رمز الدولة
-        country_code: formData.country_code, // رمز الدولة منفصل
+        phone: formData.phone,
+        country_code: formData.country_code,
         message: formData.message,
       };
-
 
       const response = await fetch("https://admin.souqkaber.com/api/contact-us", {
         method: "POST",
@@ -78,11 +78,11 @@ export default function ContactForm() {
         });
         setTimeout(() => setIsSubmitted(false), 5000);
       } else {
-        setErrorMessage(data.message || "حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.");
+        setErrorMessage(data.message || t('contact.error'));
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      setErrorMessage("حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.");
+      setErrorMessage(t('contact.serverError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -90,36 +90,40 @@ export default function ContactForm() {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm h-fit">
+      <h2 className="text-2xl font-bold text-[#191C1F] mb-6">
+        {t('contact.title')}
+      </h2>
+
       {isSubmitted && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200  rounded-[8px]  text-green-700 text-sm">
-          تم إرسال رسالتك بنجاح! سنقوم بالرد عليك قريباً.
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-[8px] text-green-700 text-sm">
+          {t('contact.success')}
         </div>
       )}
 
       {errorMessage && (
-        <div className="mb-6 p-4  bg-blue-50  border border-red-200  rounded-[8px]  text-red-700 text-sm">
+        <div className="mb-6 p-4 bg-blue-50 border border-red-200 rounded-[8px] text-red-700 text-sm">
           {errorMessage}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <FormInput
-          label="الاسم"
+          label={t('contact.name')}
           name="name"
           type="text"
           value={formData.name}
           onChange={handleChange}
-          placeholder="أدخل اسمك كاملاً"
+          placeholder={t('contact.namePlaceholder')}
           required
         />
 
         <FormInput
-          label="البريد الإلكتروني"
+          label={t('contact.email')}
           name="email"
           type="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="example@domain.com"
+          placeholder={t('contact.emailPlaceholder')}
           required
         />
 
@@ -130,12 +134,12 @@ export default function ContactForm() {
         />
 
         <FormInput
-          label="رسالتك"
+          label={t('contact.message')}
           name="message"
           type="textarea"
           value={formData.message}
           onChange={handleChange}
-          placeholder="اكتب رسالتك هنا..."
+          placeholder={t('contact.messagePlaceholder')}
           rows={5}
           required
         />

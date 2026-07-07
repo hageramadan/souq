@@ -97,7 +97,7 @@ export default function VerifyForgotPasswordClient() {
 
   return (
     <>
-      <Toaster position="top-center" />
+      {/* <Toaster position="top-center" /> */}
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
           {/* زر الرجوع */}

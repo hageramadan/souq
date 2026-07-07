@@ -46,7 +46,7 @@ export default function PrivacyPage() {
                 {/* 2. كيف نستخدم بياناتك */}
                 <Section title="كيف نستخدم بياناتك" >
                   <p>نستخدم بياناتك للأغراض التالية:</p>
-                  <ul className="list-disc pr-5 space-y-1 mt-2">
+                  <ul className="list-disc ps-5 space-y-1 mt-2">
                     <li>معالجة وتوصيل طلباتك</li>
                     <li>التواصل معك بخصوص طلباتك وحسابك</li>
                     <li>إرسال العروض والتحديثات (يمكنك إلغاء الاشتراك في أي وقت)</li>
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
                 {/* 6. حقوقك */}
                 <Section title="حقوقك">
                   <p>يحق لك في أي وقت:</p>
-                  <ul className="list-disc pr-5 space-y-1 mt-2">
+                  <ul className="list-disc ps-5 space-y-1 mt-2">
                     <li>طلب الاطلاع على بياناتك الشخصية المخزنة لدينا</li>
                     <li>طلب تصحيح أو تحديث بياناتك</li>
                     <li>طلب حذف حسابك وبياناتك الشخصية</li>
@@ -107,7 +107,7 @@ function Section({ title, children, icon }: { title: string; children: React.Rea
         {icon && <span className="text-[#23A6F0]">{icon}</span>}
         {title}
       </h2>
-      <div className="text-gray-600 text-sm leading-relaxed space-y-2 pr-2">
+      <div className="text-gray-600 text-sm leading-relaxed space-y-2 ps-2">
         {children}
       </div>
     </div>

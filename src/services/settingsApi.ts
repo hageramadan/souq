@@ -30,7 +30,7 @@ export async function getSettings(): Promise<SettingsData> {
     const response = await fetch(`https://admin.souqkaber.com/api/settings`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 

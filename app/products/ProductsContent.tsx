@@ -12,6 +12,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { X } from "lucide-react";
 import Link from "next/link";
 import { VscSettings } from "react-icons/vsc";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface VariantAttribute {
   id: number;
@@ -79,7 +80,19 @@ const extractColorsFromVariants = (
 
 export default function ProductsContent() {
   const searchParams = useSearchParams();
-
+  const { language } = useLanguage();
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  // ✅ دالة مساعدة للحصول على النص المناسب
+  const getText = useCallback((ar: string, en: string) => {
+    if (!isClient) return ar; // على السيرفر استخدم العربية دائماً
+    return language === 'en' ? en : ar;
+  }, [isClient, language]);
+  
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -152,8 +165,6 @@ export default function ProductsContent() {
         ];
       }
 
-      console.log(`🟢 Fetching products page ${currentPage}`, filterParams);
-      
       const { products: productsData, pagination } =
         await getAllProducts(filterParams);
       
@@ -192,8 +203,6 @@ export default function ProductsContent() {
   }, [loadProducts]);
 
   const handleFilterChange = (newFilters: any) => {
-    console.log('🔍 New filters received:', newFilters);
-    
     const updatedFilters: FiltersState = {};
     
     if (newFilters.categoryIds) {
@@ -215,8 +224,6 @@ export default function ProductsContent() {
       updatedFilters.maxPrice = newFilters.maxPrice;
     }
     
-    console.log('✅ Updated filters state:', updatedFilters);
-    
     isFilterChangeRef.current = true;
     setFilters(updatedFilters);
     setCurrentPage(1);
@@ -224,7 +231,6 @@ export default function ProductsContent() {
   };
 
   const handlePageChange = (page: number) => {
-    console.log(`🔄 Changing to page ${page}`);
     if (page >= 1 && page <= lastPage) {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -314,11 +320,11 @@ export default function ProductsContent() {
               <div className="flex  justify-between items-start sm:items-center gap-4">
                 <div className="flex items-end gap-1">
                   <Link href="/" className="text-[#726C6C] text-xl">
-                    الرئيسية
+                    {getText('الرئيسية', 'Home')}
                   </Link>
                   <span>/</span>
                   <h1 className="text-base md:text-xl font-bold text-[#180100]">
-                    {categoryName ? ` ${categoryName}` : "جميع المنتجات"}
+                    {categoryName ? ` ${categoryName}` : getText('جميع المنتجات', 'All Products')}
                   </h1>
                 </div>
 
@@ -335,7 +341,7 @@ export default function ProductsContent() {
             </div>
 
             {loading ? (
-              <LoadingSpinner size="lg" text="جاري تحميل المنتجات..." />
+              <LoadingSpinner size="lg" text={getText('جاري تحميل المنتجات...', 'Loading products...')} />
             ) : products.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
@@ -383,14 +389,17 @@ export default function ProductsContent() {
               </>
             ) : (
               <div className="text-center py-16">
-                <p className="text-xl text-gray-600">لا توجد منتجات متاحة</p>
-                <p className="text-gray-500 mt-2">حاول تغيير خيارات الفلتر</p>
+                <p className="text-xl text-gray-600">{getText('لا توجد منتجات متاحة', 'No products available')}</p>
+                <p className="text-gray-500 mt-2">{getText('حاول تغيير خيارات الفلتر', 'Try changing filter options')}</p>
               </div>
             )}
           </div>
 
           <div className="hidden md:block">
-            <ProductFilters onFilterChange={handleFilterChange} />
+            <ProductFilters 
+              onFilterChange={handleFilterChange}
+              lang={isClient ? language : 'ar'}
+            />
           </div>
         </div>
       </div>
@@ -423,7 +432,7 @@ export default function ProductsContent() {
           </div>
 
           <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-3xl">
-            <h2 className="text-lg font-bold">تصفية المنتجات</h2>
+            <h2 className="text-lg font-bold">{getText('تصفية المنتجات', 'Filter products')}</h2>
             <button
               onClick={() => setIsMobileFilterOpen(false)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -437,6 +446,7 @@ export default function ProductsContent() {
               onFilterChange={handleFilterChange}
               isMobile={true}
               onClose={() => setIsMobileFilterOpen(false)}
+              lang={isClient ? language : 'ar'}
             />
           </div>
         </div>

@@ -131,6 +131,7 @@ const getHeaders = (): HeadersInit => {
   const guestToken = getGuestToken();
   
   const headers: HeadersInit = {
+    'Accept': 'application/json',
     'Content-Type': 'application/json',
   };
   

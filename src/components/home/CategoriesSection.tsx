@@ -1,27 +1,58 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaArrowRightLong } from "react-icons/fa6";
+import { getCategories } from "@/services/api";
 
 interface Category {
   id: number;
   name: string;
   image: string;
-  slug: string;
+  slug?: string;
 }
 
 interface CategoriesSectionProps {
-  categories: Category[];
+  categories?: Category[]; // ✅ جعلها اختيارية
 }
 
-export function CategoriesSection({ categories }: CategoriesSectionProps) {
+export function CategoriesSection({ categories: initialCategories }: CategoriesSectionProps) {
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [loading, setLoading] = useState(!initialCategories || initialCategories.length === 0);
+  
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollStart, setScrollStart] = useState(0);
+
+  // ✅ جلب الفئات من العميل إذا لم تكن موجودة
+  useEffect(() => {
+    if (!initialCategories || initialCategories.length === 0) {
+      const fetchCategories = async () => {
+        try {
+          setLoading(true);
+          const categoriesData = await getCategories();
+          
+          const transformedCategories: Category[] = categoriesData.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            image: cat.image,
+            slug: cat.name.toLowerCase().replace(/\s+/g, '-'),
+          }));
+          
+          setCategories(transformedCategories);
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchCategories();
+    }
+  }, [initialCategories]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!sliderRef.current) return;
@@ -68,24 +99,26 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
     sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
-  const getCategoryImage = (categoryName: string, defaultImage: string): string => {
-    const imageMap: { [key: string]: string } = {
-      'رجال': '/images/categories/cate1.png',
-      'نساء': '/images/categories/cate2.png',
-      'أطفال': '/images/categories/cate3.jpg',
-      'بنات': '/images/categories/cate4.jpg',
-      'بيبي': '/images/categories/cate5.jpg',
-      'فورمال': '/images/categories/cate6.jpg',
-    };
 
-    for (const [key, value] of Object.entries(imageMap)) {
-      if (categoryName.includes(key)) {
-        return value;
-      }
-    }
-    
-    return defaultImage;
-  };
+
+  // عرض حالة التحميل
+  if (loading) {
+    return (
+      <section className="py-2 md:py-12">
+        <div className="container-custom px-2 lg:px-6">
+          <div className="flex justify-center items-center min-h-[150px]">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="w-10 h-10 border-4 border-gray-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-10 h-10 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              {/* <p className="text-gray-500 text-sm">جاري تحميل الفئات...</p> */}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (categories.length === 0) {
     return (
@@ -153,7 +186,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                       className="relative bg-gray-100 flex items-center justify-center overflow-hidden rounded-full h-[64px] md:h-[196px] w-[64px] md:w-[196px] transition-transform duration-300"
                     >
                       <Image
-                        src={getCategoryImage(category.name, category.image)}
+                        src={`https://admin.souqkaber.com${category.image}`}
                         alt={category.name}
                         fill
                         className="object-contain transition-transform duration-500 p-2 md:p-6"

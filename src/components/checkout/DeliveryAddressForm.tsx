@@ -104,7 +104,7 @@ export default function DeliveryAddressForm({
   const fetchSavedAddresses = async () => {
     // ✅ إذا كان المستخدم ضيف، لا تجلب العناوين
     if (isGuest) {
-      console.log("🟢 Guest user - skipping saved addresses fetch");
+     
       return;
     }
     
@@ -115,13 +115,13 @@ export default function DeliveryAddressForm({
       const token = localStorage.getItem('auth_token');
       // ✅ إذا لم يوجد توكن، لا تجلب
       if (!token) {
-        console.log("🟢 No auth token - skipping saved addresses fetch");
+      
         return;
       }
       
       const response = await fetch(`${API_URL}/addresses`, {
         headers: {
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
@@ -158,7 +158,7 @@ export default function DeliveryAddressForm({
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_URL}/governates`, {
         headers: {
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
@@ -196,14 +196,14 @@ export default function DeliveryAddressForm({
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_URL}/governates/${governorateId}/cities`, {
         headers: {
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
       const result = await response.json();
       
       if (result.result === true && Array.isArray(result.data)) {
-        console.log("🟢 Cities loaded:", result.data);
+       
         setCities(result.data);
       } else {
         console.warn("⚠️ No cities data received");
@@ -230,11 +230,11 @@ export default function DeliveryAddressForm({
 
   useEffect(() => {
     if (!show || hasFetchedRef.current || isFetchingRef.current) {
-      console.log("🟢 Skipping fetch - already fetched or fetching");
+     
       return;
     }
 
-    console.log("🟢 Fetching governorates for the first time");
+  
     isFetchingRef.current = true;
 
     const fetchData = async () => {
@@ -247,7 +247,7 @@ export default function DeliveryAddressForm({
         if (!isGuest) {
           await fetchSavedAddresses();
         }
-        console.log("🟢 Data fetched successfully");
+     
       } catch (error) {
         console.error("❌ Error fetching data:", error);
       } finally {
@@ -268,17 +268,17 @@ export default function DeliveryAddressForm({
   // ✅ عند اختيار المدينة (للضيف والمستخدم)
   const handleCitySelect = (value: string | null) => {
     if (!value) {
-      console.log("🟢 No city selected");
+     
       return;
     }
     
-    console.log(`🟢 City selected from dropdown: ${value}`);
+   
     
     const selectedCity = cities.find(c => c.name === value);
-    console.log(`🟢 Selected city object:`, selectedCity);
+   
     
     if (selectedCity && onCitySelected) {
-      console.log(`📤 Calling onCitySelected with ID: ${selectedCity.id}`);
+      
       onCitySelected(String(selectedCity.id));
     }
     
@@ -309,7 +309,7 @@ export default function DeliveryAddressForm({
       }
       
       if (onCitySelected) {
-        console.log("📤 Sending cityId to parent:", cityId);
+    
         onCitySelected(cityId);
       }
       
@@ -325,12 +325,12 @@ export default function DeliveryAddressForm({
         type: 'home',
       };
       
-      console.log("📤 Saving address:", addressToSave);
+     
       
       const response = await fetch(`${API_URL}/addresses`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify(addressToSave),
@@ -338,14 +338,13 @@ export default function DeliveryAddressForm({
       
       const result = await response.json();
       
-      console.log("📥 Save address response:", result);
       
       if (result.result === true) {
         await fetchSavedAddresses();
         setAddressSaved(true);
         
         if (onAddressSaved && result.data) {
-          console.log("📤 Calling onAddressSaved with:", result.data);
+       
           onAddressSaved(result.data);
         }
         
@@ -378,7 +377,7 @@ export default function DeliveryAddressForm({
       return;
     }
     
-    console.log("🟢 Manual save clicked");
+  
     const savedAddress = await saveAddressToAPI();
     
     if (savedAddress && savedAddress.id && onAddressSelected) {
@@ -409,12 +408,12 @@ export default function DeliveryAddressForm({
     setSelectedSavedAddressId(addressId);
     const address = savedAddresses.find((a) => a.id === addressId);
     if (address) {
-      console.log("🟢 Selected saved address:", address);
+     
       
       setSelectedAddressDetails(address);
       
       if (onCitySelected && address.city_id) {
-        console.log("📤 Sending cityId from saved address:", address.city_id);
+       
         onCitySelected(String(address.city_id));
       }
       
@@ -431,7 +430,7 @@ export default function DeliveryAddressForm({
       setSaveError(null);
       
       if (onAddressSelected) {
-        console.log("📤 Calling onAddressSelected with id:", addressId);
+       
         onAddressSelected(addressId);
       }
     }
@@ -527,7 +526,7 @@ export default function DeliveryAddressForm({
                   value={addressData.street}
                   onChange={(e) => updateAddress("street", e.target.value)}
                   placeholder="مثال: شارع النيل"
-                  className="w-full pr-10 p-3 border border-gray-200  rounded-[8px]  focus:border-black focus:outline-none"
+                  className="w-full ps-10 p-3 border border-gray-200  rounded-[8px]  focus:border-black focus:outline-none"
                 />
               </div>
             </div>
@@ -543,7 +542,7 @@ export default function DeliveryAddressForm({
                   value={addressData.apartmentNo}
                   onChange={(e) => updateAddress("apartmentNo", e.target.value)}
                   placeholder="رقم الشقة"
-                  className="w-full pr-10 p-3 border border-gray-200  rounded-[8px]  focus:border-black focus:outline-none"
+                  className="w-full ps-10 p-3 border border-gray-200  rounded-[8px]  focus:border-black focus:outline-none"
                 />
               </div>
             </div>
@@ -556,7 +555,7 @@ export default function DeliveryAddressForm({
                   value={addressData.floorNo}
                   onChange={(e) => updateAddress("floorNo", e.target.value)}
                   placeholder="رقم الدور"
-                  className="w-full pr-10 p-3 border border-gray-200  rounded-[8px]  focus:border-black focus:outline-none"
+                  className="w-full ps-10 p-3 border border-gray-200  rounded-[8px]  focus:border-black focus:outline-none"
                 />
               </div>
             </div>
@@ -645,7 +644,7 @@ export default function DeliveryAddressForm({
             </div>
 
             {useSavedAddress && (
-              <div className="mt-3 space-y-3 pr-2">
+              <div className="mt-3 space-y-3 ps-2">
                 {isLoadingAddresses ? (
                   <div className="text-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -661,7 +660,7 @@ export default function DeliveryAddressForm({
                         >
                           <X className="w-5 h-5 text-gray-600" />
                         </button>
-                        <div className="pr-8">
+                        <div className="ps-8">
                           <p className="font-medium text-gray-800">{selectedAddressDetails.street}</p>
                           <p className="text-sm text-gray-500 mt-1">
                             {selectedAddressDetails.building && `مبنى ${selectedAddressDetails.building} `}

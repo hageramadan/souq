@@ -4,16 +4,17 @@
 import {
   useReducer,
   useEffect,
-  useMemo,
   useCallback,
   useState,
   memo,
+  useRef,
   type ChangeEvent,
 } from 'react';
 import { getCategories, getColors, getSizes, getBrands } from '@/services/api';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { FaArrowLeft } from 'react-icons/fa6';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // ============================================================================
 // Types
@@ -59,6 +60,7 @@ export interface ProductFiltersProps {
   onFilterChange: (filters: AppliedFilters) => void;
   isMobile?: boolean;
   onClose?: () => void;
+  lang?: string;
 }
 
 interface FilterSectionProps {
@@ -133,6 +135,55 @@ function buildAppliedFilters(state: FiltersSelectionState): AppliedFilters {
 
   return filters;
 }
+
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      filter: 'Filter',
+      clearAll: 'Clear All',
+      prices: 'Prices',
+      maxPrice: 'Max Price',
+      minPrice: 'Min Price',
+      categories: 'Categories',
+      colors: 'Colors',
+      specifications: 'Specifications (RAM / HDD)',
+      brands: 'Brands',
+      apply: 'Apply',
+      loadingCategories: 'Loading categories...',
+      loadingColors: 'Loading colors...',
+      loadingSpecifications: 'Loading specifications...',
+      loadingBrands: 'Loading brands...',
+      ramPrefix: 'RAM: ',
+      hddPrefix: 'HDD: ',
+      le: 'EGP',
+      // Colors in English (for white detection)
+      white: 'white',
+    };
+  }
+  // Arabic (default)
+  return {
+    filter: 'فلتر',
+    clearAll: 'مسح الكل',
+    prices: 'الاسعار',
+    maxPrice: 'الحد الأقصى',
+    minPrice: 'الحد الأدنى',
+    categories: 'الفئات',
+    colors: 'الألوان',
+    specifications: 'المواصفات (RAM / HDD)',
+    brands: 'العلامات التجارية',
+    apply: 'تطبيق',
+    loadingCategories: 'جاري تحميل الفئات...',
+    loadingColors: 'جاري تحميل الألوان...',
+    loadingSpecifications: 'جاري تحميل المواصفات...',
+    loadingBrands: 'جاري تحميل العلامات التجارية...',
+    ramPrefix: 'RAM: ',
+    hddPrefix: 'HDD: ',
+    le: 'ج.م',
+    // Colors in Arabic (for white detection)
+    white: 'أبيض',
+  };
+};
 
 // ============================================================================
 // Reducer
@@ -333,7 +384,7 @@ const ColorSwatchList = memo(function ColorSwatchList({
             key={color.id}
             onClick={() => onToggle(color.code)}
             className="group relative"
-            aria-label={`لون ${color.name}`}
+            aria-label={`Color ${color.name}`}
           >
             <div
               className={`
@@ -357,24 +408,32 @@ const ColorSwatchList = memo(function ColorSwatchList({
 // Main component
 // ============================================================================
 
-export default function ProductFilters({ onFilterChange, isMobile = false, onClose }: ProductFiltersProps) {
+export default function ProductFilters({ onFilterChange, isMobile = false, onClose, lang: propLang }: ProductFiltersProps) {
+  const { language: contextLanguage } = useLanguage();
+  const [isClient, setIsClient] = useState(false);
+  
+  // ✅ استخدام ref لتخزين onFilterChange
+  const onFilterChangeRef = useRef(onFilterChange);
+  
+  useEffect(() => {
+    onFilterChangeRef.current = onFilterChange;
+  }, [onFilterChange]);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  // ✅ دالة مساعدة للحصول على النص المناسب
+  const getText = useCallback((ar: string, en: string) => {
+    if (!isClient) return ar; // على السيرفر استخدم العربية دائماً
+    const lang = propLang || contextLanguage || 'ar';
+    return lang === 'en' ? en : ar;
+  }, [isClient, propLang, contextLanguage]);
+
   const [state, dispatch] = useReducer(filtersReducer, initialFiltersState);
   const { categories, colors, sizes, brands } = useFilterOptions();
 
   const [tempMinPrice, tempMaxPrice] = state.tempPriceRange;
-
-  // ✅ في الموبايل: لا نطبق الفلاتر تلقائياً، ننتظر زر التطبيق
-  // في الديسكتوب: نطبق الفلاتر فوراً
-  const appliedFilters = useMemo<AppliedFilters>(
-    () => buildAppliedFilters(state),
-    [
-      state.selectedCategories,
-      state.selectedColors,
-      state.selectedAttributeIds,
-      state.selectedBrands,
-      state.appliedPriceRange,
-    ],
-  );
 
   // ✅ دالة تطبيق الفلاتر (تُستخدم للموبايل والديسكتوب)
   const applyFilters = useCallback(() => {
@@ -386,23 +445,23 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
       ...state,
       appliedPriceRange: state.tempPriceRange,
     });
-    onFilterChange(filtersToApply);
+    onFilterChangeRef.current(filtersToApply);
     
     // إغلاق الفلتر إذا كان في الموبايل
     if (isMobile && onClose) {
       onClose();
     }
-  }, [state, onFilterChange, isMobile, onClose]);
+  }, [state, isMobile, onClose]);
 
-  // ✅ للديسكتوب: تطبيق الفلاتر فوراً عند التغيير
+  // ✅ للديسكتوب: تطبيق الفلاتر فوراً عند التغيير (ما عدا السعر)
   useEffect(() => {
-    if (!isMobile) {
-      // في الديسكتوب نطبق الفلاتر فوراً
+    if (!isMobile && onFilterChangeRef.current) {
+      // في الديسكتوب نطبق الفلاتر فوراً (ما عدا السعر)
       const filters = buildAppliedFilters({
         ...state,
-        appliedPriceRange: state.tempPriceRange,
+        appliedPriceRange: state.appliedPriceRange, // ✅ استخدم السعر المطبق وليس المؤقت
       });
-      onFilterChange(filters);
+      onFilterChangeRef.current(filters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -410,7 +469,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     state.selectedColors,
     state.selectedAttributeIds,
     state.selectedBrands,
-    state.tempPriceRange,
+    state.appliedPriceRange, // ✅ اعتمد على appliedPriceRange بدلاً من tempPriceRange
     isMobile,
   ]);
 
@@ -450,19 +509,25 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     }
   };
 
-  // ✅ تطبيق فلتر السعر فقط (للديسكتوب)
+  // ✅ تطبيق فلتر السعر فقط عند الضغط على السهم
   const handleApplyPriceFilter = useCallback(() => {
-    if (!isMobile) {
-      dispatch({ type: 'APPLY_PRICE_FILTER' });
-    }
-  }, [isMobile]);
+    // تطبيق السعر في الـ state
+    dispatch({ type: 'APPLY_PRICE_FILTER' });
+    
+    // إرسال الفلاتر مع السعر المطبق إلى المكون الأب
+    const filters = buildAppliedFilters({
+      ...state,
+      appliedPriceRange: state.tempPriceRange, // استخدم القيم المؤقتة كقيم مطبقة
+    });
+    onFilterChangeRef.current(filters);
+  }, [state]);
 
   const handleResetFilters = useCallback(() => {
     dispatch({ type: 'RESET_ALL' });
     // إرسال الفلاتر الفارغة إلى المكون الأب
-    onFilterChange({});
+    onFilterChangeRef.current({});
     if (onClose && isMobile) onClose();
-  }, [onFilterChange, onClose, isMobile]);
+  }, [onClose, isMobile]);
 
   // ✅ دالة للحصول على لون الخلفية حسب النوع
   const getSizeBadgeColor = (size: SizeOption): string => {
@@ -471,12 +536,14 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     return '#9CA3AF'; // رمادي للافتراضي
   };
 
-  // ✅ دالة للحصول على النص المعروض مع بادئة
-  const getSizeLabel = (size: SizeOption): string => {
-    if (size.type === 'ram') return `RAM: ${size.value}`;
-    if (size.type === 'hard-disk') return `HDD: ${size.value}`;
+  // ✅ دالة للحصول على النص المعروض مع بادئة حسب اللغة
+  const getSizeLabel = useCallback((size: SizeOption): string => {
+    const ramPrefix = getText('RAM: ', 'RAM: ');
+    const hddPrefix = getText('HDD: ', 'HDD: ');
+    if (size.type === 'ram') return `${ramPrefix}${size.value}`;
+    if (size.type === 'hard-disk') return `${hddPrefix}${size.value}`;
     return size.value;
-  };
+  }, [getText]);
 
   // ✅ حساب عدد الفلاتر المختارة
   const getSelectedFiltersCount = useCallback(() => {
@@ -485,7 +552,11 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     if (state.selectedColors.length) count += state.selectedColors.length;
     if (state.selectedAttributeIds.length) count += state.selectedAttributeIds.length;
     if (state.selectedBrands.length) count += state.selectedBrands.length;
-    if (state.tempPriceRange[0] > MIN_PRICE || state.tempPriceRange[1] < MAX_PRICE) count++;
+    // ✅ استخدم appliedPriceRange بدلاً من tempPriceRange
+    if (state.appliedPriceRange) {
+      const [min, max] = state.appliedPriceRange;
+      if (min > MIN_PRICE || max < MAX_PRICE) count++;
+    }
     return count;
   }, [state]);
 
@@ -501,23 +572,23 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
       `}
     >
       <h3 className="text-[18.28px] mb-4 text-[#180100] flex justify-between items-center">
-        فلتر
+        {getText('فلتر', 'Filter')}
         <button
           onClick={handleResetFilters}
           className="text-sm text-[#666666] border py-[10px] px-[18px] rounded-full border-[#999999] font-normal"
         >
-          مسح الكل
+          {getText('مسح الكل', 'Clear All')}
         </button>
       </h3>
 
       {/* ===== فلتر السعر ===== */}
-      <FilterSection title="الاسعار">
+      <FilterSection title={getText('الاسعار', 'Prices')}>
         <div className="space-y-4">
           <p className="text-sm text-[#333333] flex justify-end gap-1">
-            <span>L.E</span>
+            <span>{getText('ج.م', 'EGP')}</span>
             {tempMaxPrice.toLocaleString()}
             <span>-</span>
-            <span>L.E</span>
+            <span>{getText('ج.م', 'EGP')}</span>
             {tempMinPrice.toLocaleString()}
           </p>
 
@@ -532,7 +603,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
 
           <div className="flex gap-3 mt-2 items-center">
             <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1">الحد الأقصى</label>
+              <label className="block text-xs text-gray-500 mb-1">{getText('الحد الأقصى', 'Max Price')}</label>
               <input
                 type="number"
                 value={tempMaxPrice}
@@ -541,7 +612,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1">الحد الأدنى</label>
+              <label className="block text-xs text-gray-500 mb-1">{getText('الحد الأدنى', 'Min Price')}</label>
               <input
                 type="number"
                 value={tempMinPrice}
@@ -549,12 +620,12 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                 className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            {/* ✅ إخفاء زر تطبيق السعر في الموبايل لأنه سيتم تطبيق كل الفلاتر دفعة واحدة */}
+            {/* ✅ زر تطبيق السعر - يعمل فقط عند الضغط عليه */}
             {!isMobile && (
               <div className="mt-4">
                 <button
                   onClick={handleApplyPriceFilter}
-                  className="w-[32.89px] bg-[#2DA5F3] text-white py-2 rounded-[8px] transition-colors font-semibold flex items-center justify-center gap-2"
+                  className="w-[32.89px] bg-[#2DA5F3] text-white py-2 rounded-[8px] transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-[#1a8bd4]"
                 >
                   <FaArrowLeft className="w-5 h-5" />
                 </button>
@@ -565,51 +636,51 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
       </FilterSection>
 
       {/* ===== فلتر الفئات ===== */}
-      <FilterSection title="الفئات">
+      <FilterSection title={getText('الفئات', 'Categories')}>
         <CheckboxFilterList
           items={categories}
           selectedValues={state.selectedCategories}
           getKey={(category) => category.id}
           getLabel={(category) => category.name}
           onToggle={handleCategoryToggle}
-          loadingMessage="جاري تحميل الفئات..."
+          loadingMessage={getText('جاري تحميل الفئات...', 'Loading categories...')}
           maxHeightClassName="max-h-64"
         />
       </FilterSection>
 
       {/* ===== فلتر الألوان ===== */}
-      <FilterSection title="الألوان">
+      <FilterSection title={getText('الألوان', 'Colors')}>
         <ColorSwatchList
           colors={colors}
           selectedColors={state.selectedColors}
           onToggle={handleColorToggle}
-          loadingMessage="جاري تحميل الألوان..."
+          loadingMessage={getText('جاري تحميل الألوان...', 'Loading colors...')}
         />
       </FilterSection>
 
       {/* ===== ✅ فلتر المواصفات (RAM / HDD) ===== */}
-      <FilterSection title="المواصفات (RAM / HDD)">
+      <FilterSection title={getText('المواصفات (RAM / HDD)', 'Specifications (RAM / HDD)')}>
         <CheckboxFilterList
           items={sizes}
           selectedValues={state.selectedAttributeIds}
           getKey={(size) => size.id}
           getLabel={getSizeLabel}
           onToggle={handleAttributeToggle}
-          loadingMessage="جاري تحميل المواصفات..."
+          loadingMessage={getText('جاري تحميل المواصفات...', 'Loading specifications...')}
           maxHeightClassName="max-h-64"
           getBadgeColor={getSizeBadgeColor}
         />
       </FilterSection>
 
       {/* ===== فلتر العلامات التجارية ===== */}
-      <FilterSection title="العلامات التجارية">
+      <FilterSection title={getText('العلامات التجارية', 'Brands')}>
         <CheckboxFilterList
           items={brands}
           selectedValues={state.selectedBrands}
           getKey={(brand) => brand.id}
           getLabel={(brand) => brand.name}
           onToggle={handleBrandToggle}
-          loadingMessage="جاري تحميل العلامات التجارية..."
+          loadingMessage={getText('جاري تحميل العلامات التجارية...', 'Loading brands...')}
           maxHeightClassName="max-h-48"
         />
       </FilterSection>
@@ -621,12 +692,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
             onClick={applyFilters}
             className="w-full bg-[#2D93CA] text-white py-3 rounded-[8px] font-semibold text-base transition-colors hover:bg-[#2479a8] flex items-center justify-center gap-2"
           >
-            تطبيق 
-            {/* {getSelectedFiltersCount() > 0 && (
-              <span className="bg-white text-[#2D93CA] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {getSelectedFiltersCount()}
-              </span>
-            )} */}
+            {getText('تطبيق', 'Apply')}
           </button>
         </div>
       )}

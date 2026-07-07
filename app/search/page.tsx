@@ -3,12 +3,12 @@
 
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search } from "lucide-react";
 import { ProductCard } from "@/components/products/ProductCard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Pagination from "@/components/products/Pagination";
 import toast from "react-hot-toast";
-import Link from "next/link";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const API_URL = "https://admin.souqkaber.com/api";
 
@@ -103,22 +103,19 @@ const searchProducts = async (
 ) => {
   try {
     const token = getToken();
-    console.log(
-      `🟢 Searching products for "${query}" page ${page} with ${perPage} per page`,
-    );
 
     const response = await fetch(
       `${API_URL}/products?page=${page}&per_page=${perPage}&search=${encodeURIComponent(query)}`,
       {
         headers: {
-          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "content-type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
       },
     );
 
     const data = await response.json();
-    console.log(`📥 Search response for page ${page}:`, data);
 
     // ✅ التأكد من أن البيانات بالشكل الصحيح
     if (data.result === true && data.data) {
@@ -204,6 +201,8 @@ const transformProductForCard = (product: any): TransformedProduct => {
 
 // مكون البحث الرئيسي
 function SearchContent() {
+  const { t } = useTranslation();
+  const { language } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get("q") || "";
@@ -248,11 +247,6 @@ function SearchContent() {
           const productsData = result.data.products || [];
           const paginationData = result.data.pagination;
 
-          console.log(
-            `✅ Found ${productsData.length} products for page ${currentPage}`,
-          );
-          console.log(`📊 Pagination:`, paginationData);
-
           setProducts(productsData);
 
           if (paginationData) {
@@ -272,7 +266,7 @@ function SearchContent() {
     } catch (error) {
       if (!abortControllerRef.current?.signal.aborted) {
         console.error("Error fetching search results:", error);
-        toast.error("حدث خطأ أثناء جلب نتائج البحث");
+        toast.error(t('search.error'));
         setProducts([]);
       }
     } finally {
@@ -283,7 +277,7 @@ function SearchContent() {
         }, 200);
       }
     }
-  }, [query, currentPage, perPage]);
+  }, [query, currentPage, perPage, t]);
 
   useEffect(() => {
     if (query) {
@@ -369,7 +363,6 @@ function SearchContent() {
   };
 
   const handlePageChange = (page: number) => {
-    console.log(`🔄 Changing to page ${page}`);
     if (page >= 1 && page <= lastPage) {
       setIsLoading(true);
       setCurrentPage(page);
@@ -381,24 +374,24 @@ function SearchContent() {
     if (totalProducts === 0) return "";
     const from = (currentPage - 1) * perPage + 1;
     const to = Math.min(currentPage * perPage, totalProducts);
-    return `عرض ${from} - ${to} من ${totalProducts} نتيجة`;
+    return t('search.showingResults', { from, to, total: totalProducts });
   };
 
   if (isFirstLoad) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <LoadingSpinner size="lg" text="جاري البحث..." />
+        <LoadingSpinner size="lg" text={t('search.loading')} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen page-with-padding">
-      <div className="container mx-auto px-4 pb-16  lg:px-9">
+      <div className="container mx-auto px-4 pb-16 lg:px-9">
         {/* عنوان الصفحة وشريط البحث */}
         <div className="mb-8">
           <h1 className="text-xl md:text-xl font-bold text-gray-800 mb-4">
-            نتائج البحث
+            {t('search.title')}
           </h1>
 
           <form onSubmit={handleSearch} className="relative max-w-2xl">
@@ -406,12 +399,12 @@ function SearchContent() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="ابحث عن منتجات..."
-              className="w-full px-6 py-3 pr-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
+              placeholder={t('search.placeholder')}
+              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
             />
             <button
               type="submit"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#23A6F0] transition"
+              className={`absolute ${language === 'en' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#23A6F0] transition`}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -427,15 +420,9 @@ function SearchContent() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <p className="text-gray-600">
             {totalProducts > 0 ? (
-              <>
-                تم العثور على{" "}
-                <span className="font-bold text-[#23A6F0]">
-                  {totalProducts}
-                </span>{" "}
-                نتيجة لـ `{query}`
-              </>
+              t('search.foundResults', { count: totalProducts, query })
             ) : (
-              !isLoading && <>لم يتم العثور على نتائج لـ `{query}`</>
+              !isLoading && t('search.noResults', { query })
             )}
           </p>
           {products.length > 0 && (
@@ -444,10 +431,10 @@ function SearchContent() {
               onChange={handleSortChange}
               className="px-4 py-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#23A6F0]"
             >
-              <option value="newest">الأحدث</option>
-              <option value="popular">الأكثر مبيعاً</option>
-              <option value="price_asc">السعر: من الأقل للأعلى</option>
-              <option value="price_desc">السعر: من الأعلى للأقل</option>
+              <option value="newest">{t('search.sortNewest')}</option>
+              <option value="popular">{t('search.sortPopular')}</option>
+              <option value="price_asc">{t('search.sortPriceAsc')}</option>
+              <option value="price_desc">{t('search.sortPriceDesc')}</option>
             </select>
           )}
         </div>
@@ -456,7 +443,7 @@ function SearchContent() {
           <div className="flex justify-center py-8">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 border-2 border-gray-300 border-t-[#23A6F0] rounded-full animate-spin"></div>
-              <span className="text-gray-500">جاري التحميل...</span>
+              <span className="text-gray-500">{t('search.loadingMore')}</span>
             </div>
           </div>
         )}
@@ -515,18 +502,16 @@ function SearchContent() {
                 <Search className="w-12 h-12 mx-auto text-gray-400" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                لا توجد نتائج
+                {t('search.noResultsTitle')}
               </h3>
               <p className="text-gray-500 mb-3">
-                لم نتمكن من العثور على منتجات مطابقة لـ `{query}`
+                {t('search.noResultsMessage', { query })}
               </p>
               <button
                 onClick={() => router.push("/")}
-               
-        className="inline-block bg-[#23A6F0] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#39abee] transition-all duration-300 shadow-md hover:shadow-lg"
-      >
-              
-                العودة إلى الرئيسية
+                className="inline-block bg-[#23A6F0] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#39abee] transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                {t('search.backToHome')}
               </button>
             </div>
           )
@@ -537,11 +522,13 @@ function SearchContent() {
 }
 
 export default function SearchPage() {
+  const { t } = useTranslation();
+  
   return (
     <Suspense
       fallback={
         <div className="min-h-[60vh] flex items-center justify-center">
-          <LoadingSpinner size="lg" text="جاري التحميل..." />
+          <LoadingSpinner size="lg" text={t('search.loadingPage')} />
         </div>
       }
     >

@@ -1,9 +1,11 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import { FaArrowLeft } from 'react-icons/fa'
 import Image from 'next/image'
+import { getAcceptLanguageHeader } from '@/services/api'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Ad {
   id: number;
@@ -17,74 +19,96 @@ interface Ad {
 
 const API_BASE_URL = 'https://admin.souqkaber.com';
 
+// ✅ دالة للحصول على الترجمات حسب اللغة (خارج المكون)
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      limitedTime: "Limited Time",
+      loading: "Loading...",
+      error: "Sorry, an error occurred",
+      retry: "Retry",
+      noAds: "No ads available",
+      previous: "Previous ad",
+      next: "Next ad",
+      goToAd: "Go to ad",
+      shopNow: "Shop Now",
+    };
+  }
+  // Arabic (default)
+  return {
+    limitedTime: "لفترة محدودة",
+    loading: "جاري التحميل...",
+    error: "عذراً، حدث خطأ",
+    retry: "إعادة المحاولة",
+    noAds: "لا توجد إعلانات متاحة",
+    previous: "إعلان سابق",
+    next: "إعلان تالي",
+    goToAd: "الانتقال إلى الإعلان",
+    shopNow: "تسوق الان",
+  };
+};
+
 export function AdsHome() {
+  const { language } = useLanguage();
+  const t = getTranslations(language);
+  
   // State for ads
   const [ads, setAds] = useState<Ad[]>([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // ✅ استخدام ref لمنع الطلبات المتكررة
+  const hasFetched = useRef(false);
 
-  // Countdown timer state (محتفظ به من الكود الثاني)
-  const [timeLeft, setTimeLeft] = useState({
-    days: 2,
-    hours: 12,
-    minutes: 45,
-    seconds: 5
-  });
-
-  // جلب الإعلانات من API
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const response = await fetch(`${API_BASE_URL}/api/ads`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.errNum === 200 && data.result === true) {
-          const activeAds = data.data.ad_pop_up.filter((ad: Ad) => ad.is_active === 1);
-          setAds(activeAds);
-        } else {
-          throw new Error(data.message || 'فشل في تحميل الإعلانات');
-        }
-      } catch (err) {
-        console.error('Error fetching ads:', err);
-        setError(err instanceof Error ? err.message : 'حدث خطأ في تحميل الإعلانات');
-      } finally {
-        setIsLoading(false);
+  // ✅ دالة جلب الإعلانات (مستقرة باستخدام useCallback)
+  const fetchAds = useCallback(async () => {
+    // ✅ منع الطلبات المتكررة
+    if (hasFetched.current) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch(`${API_BASE_URL}/api/ads`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Language': getAcceptLanguageHeader(),
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+        cache: 'no-store',
+        credentials: 'omit',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      
+      const data = await response.json();
+      
+      if (data.errNum === 200 && data.result === true) {
+        const activeAds = data.data.ad_pop_up.filter((ad: Ad) => ad.is_active === 1);
+        setAds(activeAds);
+        hasFetched.current = true; // ✅ تم الجلب بنجاح
+      } else {
+        throw new Error(data.message || t.error);
+      }
+    } catch (err) {
+      console.error('Error fetching ads:', err);
+      setError(err instanceof Error ? err.message : t.error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
 
-    fetchAds();
-  }, []);
-
-  // Countdown timer (من الكود الثاني)
+  // ✅ جلب الإعلانات عند تحميل المكون فقط (مرة واحدة)
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 }
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 }
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 }
-        } else if (prev.days > 0) {
-          return { days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 }
-        }
-        return prev
-      })
-    }, 1000)
+    fetchAds();
+  }, [fetchAds]);
 
-    return () => clearInterval(timer)
-  }, [])
-
-  // التبديل التلقائي بين الإعلانات كل 5 ثواني
+  // ✅ التبديل التلقائي بين الإعلانات كل 5 ثواني
   useEffect(() => {
     if (ads.length <= 1) return;
 
@@ -106,8 +130,6 @@ export function AdsHome() {
   const prevAd = () => {
     setCurrentAdIndex((prevIndex) => (prevIndex - 1 + ads.length) % ads.length);
   };
-
-  const formatNumber = (num: number) => String(num).padStart(2, '0');
 
   // عرض حالة التحميل
   if (isLoading) {
@@ -135,13 +157,16 @@ export function AdsHome() {
     return (
       <section className="py-6 md:py-12 bg-white">
         <div className="container-custom">
-          <div className=" bg-blue-50  rounded-2xl p-8 text-center">
-            <p className="text-red-500 mb-4">عذراً، حدث خطأ: {error}</p>
+          <div className="bg-blue-50 rounded-2xl p-8 text-center">
+            <p className="text-red-500 mb-4">{t.error}: {error}</p>
             <Button 
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                hasFetched.current = false; // ✅ إعادة تعيين الـ ref
+                window.location.reload();
+              }}
               className="bg-black hover:bg-[#1f98df]"
             >
-              إعادة المحاولة
+              {t.retry}
             </Button>
           </div>
         </div>
@@ -149,29 +174,40 @@ export function AdsHome() {
     );
   }
 
-  // إذا لم توجد إعلانات من API، نستخدم البيانات الافتراضية مع العداد
-  const hasAds = ads.length > 0;
-  const currentAd = hasAds ? ads[currentAdIndex] : null;
+  // إذا لم توجد إعلانات
+  if (ads.length === 0) {
+    return (
+      <section className="py-6 md:py-12 bg-white">
+        <div className="container-custom">
+          <div className="bg-[#F2F8FD] rounded-2xl p-8 text-center">
+            <p className="text-gray-500">{t.noAds}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const currentAd = ads[currentAdIndex];
 
   return (
     <section className="py-6 md:py-12 bg-white">
       <div className="container-custom">
         <div className="bg-[#F2F8FD] rounded-2xl grid grid-cols-2 items-center justify-between px-2 md:px-10 py-6 md:py-8 relative overflow-hidden">
           
-          {/* أزرار التنقل (إذا كان هناك أكثر من إعلان من API) */}
-          {hasAds && ads.length > 1 && (
+          {/* أزرار التنقل (إذا كان هناك أكثر من إعلان) */}
+          {ads.length > 1 && (
             <>
               <button
                 onClick={prevAd}
                 className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-1 md:p-2 shadow-lg transition-all"
-                aria-label="إعلان سابق"
+                aria-label={t.previous}
               >
                 <FaArrowLeft className="h-4 w-4 md:h-6 md:w-6 text-[#23A6F0] rotate-180" />
               </button>
               <button
                 onClick={nextAd}
                 className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-1 md:p-2 shadow-lg transition-all"
-                aria-label="إعلان تالي"
+                aria-label={t.next}
               >
                 <FaArrowLeft className="h-4 w-4 md:h-6 md:w-6 text-[#23A6F0]" />
               </button>
@@ -180,44 +216,38 @@ export function AdsHome() {
 
           {/* محتوى الإعلان */}
           <div className="flex flex-col gap-2 md:gap-5 flex-1 z-10 px-4 md:px-0">
-            {hasAds && currentAd?.sub_title ? (
+            {currentAd?.sub_title ? (
               <p className="text-[10px] md:text-[12px] font-semibold py-1 px-2 bg-[#FF995D] text-white w-fit rounded">
                 {currentAd.sub_title}
               </p>
             ) : (
               <p className="text-[8px] md:text-[16px] font-semibold py-0.5 px-1.5 md:px-3 text-[#BE4646] text-center md:text-right">
-                لفترة محدودة
+                {t.limitedTime}
               </p>
             )}
             
             <h1 className="text-lg md:text-xl font-bold text-[#191C1F]">
-              {hasAds ? currentAd?.name : "خصم 32%"}
+              {currentAd?.name}
             </h1>
             
-            {hasAds && currentAd?.description ? (
+            {currentAd?.description ? (
               <p className="text-sm md:text-base text-[#191C1F] w-full md:w-[80%] leading-[1.5]">
                 {currentAd.description}
               </p>
-            ) : (
-              <p className="text-[8px] text-center md:text-right md:text-[22px] text-[#191C1F] w-full md:w-[80%] leading-[1.3] md:leading-[1.5]">
-                Lorem ipsum dolor sit amet consectetur.
-              </p>
-            )}
-            
-           
+            ) : null}
             
             <Button
               asChild
-              aria-label='buy now'
+              aria-label={t.shopNow}
               className="w-fit md:w-[180px] md:h-[60px] animate-in text-[12px] md:text-[14px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl"
               style={{ backgroundColor: '#23A6F0' }}
             >
               <Link 
-                href={hasAds && currentAd?.link ? currentAd.link : "/products"} 
+                href={currentAd?.link ? currentAd.link : "/products"} 
                 className="flex items-center justify-center gap-2 text-white"
               >
-                تسوق الان
-                <FaArrowLeft className="h-4 w-4" />
+                {t.shopNow}
+                <FaArrowLeft className={`h-4 w-4 ${language === 'en' ? 'rotate-180' : ''}`} />
               </Link>
             </Button>
           </div>
@@ -225,8 +255,8 @@ export function AdsHome() {
           {/* صورة الإعلان */}
           <div className="mt-4 md:mt-0">
             <Image 
-              src={hasAds && currentAd?.image ? `${API_BASE_URL}${currentAd.image}` : "/images/sale.png"}
-              alt={hasAds && currentAd?.name ? currentAd.name : "Advertisement"}
+              src={currentAd?.image ? `${API_BASE_URL}${currentAd.image}` : "/images/sale.png"}
+              alt={currentAd?.name || "Advertisement"}
               className="w-[250px] md:w-[416px] h-[150px] md:h-[304px] lg:w-[536px] lg:h-[424px] object-cover rounded-lg"
               width={2036}
               height={1424}
@@ -235,8 +265,8 @@ export function AdsHome() {
           </div>
         </div>
 
-        {/* مؤشرات التقدم (dots) للإعلانات المتعددة من API */}
-        {hasAds && ads.length > 1 && (
+        {/* مؤشرات التقدم (dots) للإعلانات المتعددة */}
+        {ads.length > 1 && (
           <div className="flex justify-center gap-2 mt-4">
             {ads.map((_, index) => (
               <button
@@ -247,7 +277,7 @@ export function AdsHome() {
                     ? 'w-6 h-2 bg-black'
                     : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
                 }`}
-                aria-label={`الانتقال إلى الإعلان ${index + 1}`}
+                aria-label={`${t.goToAd} ${index + 1}`}
               />
             ))}
           </div>

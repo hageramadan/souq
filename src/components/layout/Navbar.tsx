@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PiSquaresFourLight as MenuIcon} from "react-icons/pi";
-import { Heart, ShoppingCart, User, Search, X, ChevronDown, LogOut, HeartIcon, Package, RotateCcw, UserCircle, Home, RefreshCw } from "lucide-react";
+import { Heart, ShoppingCart, User, Search, X, ChevronDown, LogOut, HeartIcon, Package, RotateCcw, UserCircle, Home, RefreshCw, Globe } from "lucide-react";
 import { useCartContext } from "@/contexts/CartContext";
 import { PiUserBold } from "react-icons/pi";
 import { useState, useRef, useEffect } from "react";
@@ -13,6 +13,8 @@ import Image from "next/image";
 import { getCategories } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useLanguage } from "@/contexts/LanguageContext";
+import toast from "react-hot-toast";
 
 interface Category {
   id: number;
@@ -20,20 +22,50 @@ interface Category {
   href: string;
 }
 
-const navLinks = [
-  { name: "الرئيسية", href: "/", icon: Home },
-  { name: "الفئات", href: "/categories", hasDropdown: true, icon: MenuIcon },
-  { name: "تواصل معنا", href: "/contact", icon: null },
-];
-
-// روابط الناف بار السفلي للموبايل
-const mobileBottomNav = [
-  { name: "الرئيسية", href: "/", icon: Home },
-  { name: "الفئات", href: "/categories", icon: MenuIcon, hasDropdown: true },
-  { name: "المفضلة", href: "/account/wishlist", icon: Heart },
-  { name: "السلة", href: "/cart", icon: ShoppingCart },
-  { name: "حسابي", href: "/account", icon: User, isAuth: true },
-];
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === 'en') {
+    return {
+      home: "Home",
+      categories: "Categories",
+      contact: "Contact Us",
+      favorites: "Favorites",
+      cart: "Cart",
+      account: "Account",
+      login: "Login",
+      logout: "Logout",
+      search: "Search for products...",
+      orders: "Orders",
+      returns: "Returns",
+      profile: "Profile",
+      allCategories: "All Categories",
+      guestCart: "Guest Cart",
+      wishlist: "Wishlist",
+      loading: "Loading categories...",
+      noCategories: "No categories available",
+    };
+  }
+  // Arabic (default)
+  return {
+    home: "الرئيسية",
+    categories: "الفئات",
+    contact: "تواصل معنا",
+    favorites: "المفضلة",
+    cart: "السلة",
+    account: "حسابي",
+    login: "تسجيل دخول",
+    logout: "تسجيل الخروج",
+    search: "ابحث عن منتج...",
+    orders: "الطلبات",
+    returns: "المرتجعات",
+    profile: "الملف الشخصي",
+    allCategories: "جميع الفئات",
+    guestCart: "سلة الضيف",
+    wishlist: "المفضلة",
+    loading: "جاري تحميل الفئات...",
+    noCategories: "لا توجد فئات متاحة",
+  };
+};
 
 export function Navbar() {
   const pathname = usePathname();
@@ -41,6 +73,10 @@ export function Navbar() {
   const { cart, isGuest } = useCartContext();
   const { isAuthenticated, user, logoutUser, loading } = useAuth();
   const { total: favoritesCount } = useFavorites();
+  const { language, setLanguage, updateUserLocale } = useLanguage();
+  
+  // ✅ الحصول على الترجمات حسب اللغة الحالية
+  const t = getTranslations(language);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -51,11 +87,15 @@ export function Navbar() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [showMobileLanguageDropdown, setShowMobileLanguageDropdown] = useState(false);
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const languageDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileLanguageDropdownRef = useRef<HTMLDivElement>(null);
   const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,6 +103,13 @@ export function Navbar() {
 
   // التحقق من أن الصفحة الحالية هي الهوم
   const isHomePage = pathname === "/";
+
+  // ✅ استمع لتغيرات اللغة وقم بتحديث الـ HTML
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    localStorage.setItem('user_language', language);
+  }, [language]);
 
   // جلب الفئات من API
   useEffect(() => {
@@ -138,11 +185,17 @@ export function Navbar() {
       if (showUserDropdown && userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);
       }
+      if (showLanguageDropdown && languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+        setShowLanguageDropdown(false);
+      }
+      if (showMobileLanguageDropdown && mobileLanguageDropdownRef.current && !mobileLanguageDropdownRef.current.contains(event.target as Node)) {
+        setShowMobileLanguageDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCategoriesDropdown, showUserDropdown]);
+  }, [showCategoriesDropdown, showUserDropdown, showLanguageDropdown, showMobileLanguageDropdown]);
 
   // Close on escape key
   useEffect(() => {
@@ -160,11 +213,63 @@ export function Navbar() {
       if (e.key === 'Escape' && showUserDropdown) {
         setShowUserDropdown(false);
       }
+      if (e.key === 'Escape' && showLanguageDropdown) {
+        setShowLanguageDropdown(false);
+      }
+      if (e.key === 'Escape' && showMobileLanguageDropdown) {
+        setShowMobileLanguageDropdown(false);
+      }
     };
     
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [showSearchInput, showCategoriesDropdown, showMobileCategoriesSheet, showUserDropdown]);
+  }, [showSearchInput, showCategoriesDropdown, showMobileCategoriesSheet, showUserDropdown, showLanguageDropdown, showMobileLanguageDropdown]);
+
+  // ✅ دالة تغيير اللغة - الحل النهائي
+const handleLanguageChange = async (locale: string) => {
+  try {
+   
+    
+    // 1. حفظ اللغة في localStorage
+    localStorage.setItem('user_language', locale);
+  
+    
+    // 2. تحديث HTML attributes
+    document.documentElement.lang = locale;
+    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+  
+    
+    // 3. تحديث اللغة في Context
+    setLanguage(locale);
+   
+    
+    // 4. إذا كان المستخدم مسجل دخول، تحديث اللغة في الباك اند
+    if (isAuthenticated) {
+    
+      await updateUserLocale(locale);
+    }
+    
+    // 5. إغلاق القوائم المنسدلة
+    setShowLanguageDropdown(false);
+    setShowMobileLanguageDropdown(false);
+    
+    // 6. عرض رسالة نجاح
+    // toast.success(locale === 'ar' ? '✅ تم تغيير اللغة إلى العربية' : '✅ Language changed to English');
+    
+    // 7. ✅ تأكد من حفظ اللغة قبل إعادة التحميل
+    const savedLang = localStorage.getItem('user_language');
+   
+    
+    // 8. ✅ إعادة تحميل الصفحة (بدون إضافة ?lang= في الـ URL)
+    window.location.reload();
+    
+  } catch (error) {
+    console.error('Error changing language:', error);
+    const savedLanguage = localStorage.getItem('user_language') || 'ar';
+    setLanguage(savedLanguage);
+    toast.error(locale === 'ar' ? '❌ فشل تغيير اللغة' : '❌ Failed to change language');
+  }
+};
 
   // ✅ دالة البحث الرئيسية (للديسكتوب والموبايل)
   const handleSearch = (e: React.FormEvent) => {
@@ -260,89 +365,95 @@ export function Navbar() {
       <header 
         className="hidden md:block sticky top-0 z-50 w-full shadow-md bg-white">
         <div className="container-custom">
-          <div className="flex h-20 items-center justify-between gap-4">
+          <div className="flex h-20 lg:h-24 items-center justify-between gap-4">
             {/* Logo */}
             <Link 
               href="/" 
               className="text-[32px] font-bold transition-colors shrink-0"
             >
-              <Image src="/images/logo.png" alt="Logo" width={2000} height={800} className="object-contain w-20 h-20" />
+              <Image src="/images/logo.png" alt="Logo" width={1000} height={700} className="object-contain w-24 h-24" />
             </Link>
 
-            {/* Desktop Navigation Links */}
+            {/* Desktop Navigation Links - ✅ استخدام الترجمات */}
             <nav className="flex items-center gap-6 flex-1 justify-center">
-              {navLinks.map((link) => (
-                link.hasDropdown ? (
-                  <div key={link.href} className="relative" ref={categoriesRef}>
-                    <button
-                      aria-label="categories"
-                      className="flex items-center gap-1 text-[16px] transition-colors hover:text-[#23A6F0]"
-                      style={{ 
-                        color: pathname.startsWith('/categories') ? '#23A6F0' : '#112B40',
-                        fontWeight: pathname.startsWith('/categories') ? '700' : '400'
-                      }}
-                      onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
-                      onMouseEnter={() => setShowCategoriesDropdown(true)}
-                    >
-                      {link.name}
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
-                    </button>
+              <Link
+                href="/"
+                className="text-[16px] transition-colors hover:text-[#23A6F0]"
+                style={{ 
+                  color: pathname === '/' ? '#23A6F0' : '#112B40',
+                  fontWeight: pathname === '/' ? '700' : '400'
+                }}
+              >
+                {t.home}
+              </Link>
+              
+              <div className="relative" ref={categoriesRef}>
+                <button
+                  aria-label="categories"
+                  className="flex items-center gap-1 text-[16px] transition-colors hover:text-[#23A6F0]"
+                  style={{ 
+                    color: pathname.startsWith('/categories') ? '#23A6F0' : '#112B40',
+                    fontWeight: pathname.startsWith('/categories') ? '700' : '400'
+                  }}
+                  onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                  onMouseEnter={() => setShowCategoriesDropdown(true)}
+                >
+                  {t.categories}
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
+                </button>
 
-                    {/* Categories Dropdown - Desktop */}
-                    {showCategoriesDropdown && (
-                      <div 
-                        className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
-                        style={{ borderColor: '#e2e8f0' }}
-                        onMouseLeave={() => setShowCategoriesDropdown(false)}
-                      >
-                        <div className="py-2">
-                          {loadingCategories ? (
-                            <div className="px-4 py-3 text-center">
-                              <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-[#23A6F0] border-r-transparent"></div>
-                              <p className="text-xs text-gray-500 mt-1">جاري تحميل الفئات...</p>
-                            </div>
-                          ) : categories.length > 0 ? (
-                            categories.map((category) => (
-                              <Link
-                                key={category.id}
-                                href={category.href}
-                                className="block px-4 py-2 text-[14px] transition-colors hover:bg-gray-50"
-                                style={{ color: '#112B40' }}
-                                onClick={() => setShowCategoriesDropdown(false)}
-                                onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                                onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
-                              >
-                                {category.name}
-                              </Link>
-                            ))
-                          ) : (
-                            <div className="px-4 py-3 text-center">
-                              <p className="text-xs text-gray-500">لا توجد فئات متاحة</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-[16px] transition-colors hover:text-[#23A6F0]"
-                    style={{ 
-                      color: pathname === link.href ? '#23A6F0' : '#112B40',
-                      fontWeight: pathname === link.href ? '700' : '400'
-                    }}
+                {/* Categories Dropdown - Desktop */}
+                {showCategoriesDropdown && (
+                  <div 
+                    className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
+                    style={{ borderColor: '#e2e8f0' }}
+                    onMouseLeave={() => setShowCategoriesDropdown(false)}
                   >
-                    {link.name}
-                  </Link>
-                )
-              ))}
+                    <div className="py-2">
+                      {loadingCategories ? (
+                        <div className="px-4 py-3 text-center">
+                          <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-[#23A6F0] border-r-transparent"></div>
+                          <p className="text-xs text-gray-500 mt-1">{t.loading}</p>
+                        </div>
+                      ) : categories.length > 0 ? (
+                        categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={category.href}
+                            className="block px-4 py-2 text-[14px] transition-colors hover:bg-gray-50"
+                            style={{ color: '#112B40' }}
+                            onClick={() => setShowCategoriesDropdown(false)}
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+                          >
+                            {category.name}
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-center">
+                          <p className="text-xs text-gray-500">{t.noCategories}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                href="/contact"
+                className="text-[16px] transition-colors hover:text-[#23A6F0]"
+                style={{ 
+                  color: pathname === '/contact' ? '#23A6F0' : '#112B40',
+                  fontWeight: pathname === '/contact' ? '700' : '400'
+                }}
+              >
+                {t.contact}
+              </Link>
             </nav>
 
             {/* Desktop Actions */}
             <div className="flex items-center gap-1 shrink-0">
-              {/* ✅ Search Button - Desktop مع حقل بحث ثابت */}
+              {/* Search Button - Desktop */}
               <div className="relative" ref={searchContainerRef}>
                 {!showSearchInput ? (
                   <Button 
@@ -362,8 +473,8 @@ export function Navbar() {
                         <Input
                           ref={searchInputRef}
                           type="search"
-                          placeholder="ابحث عن منتج..."
-                          className="w-64 h-10 pr-9 pl-9 border border-gray-300 rounded-full bg-white focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
+                          placeholder={t.search}
+                          className="w-64 h-10 ps-9 pe-9 border border-gray-300 rounded-full bg-white focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
                           style={{ color: '#195073' }}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
@@ -375,16 +486,6 @@ export function Navbar() {
                         >
                           <Search className="h-4 w-4 text-gray-500 hover:text-white" />
                         </button>
-                        {/* {searchQuery && (
-                          <button
-                            type="button"
-                            aria-label="clear search"
-                            onClick={() => setSearchQuery("")}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
-                          >
-                            <X className="h-4 w-4 text-gray-400" />
-                          </button>
-                        )} */}
                       </div>
                       <button
                         type="button"
@@ -437,13 +538,53 @@ export function Navbar() {
                   <ShoppingCart className="h-5 w-5" />
                   {isGuest && itemsCount > 0 && (
                     <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] bg-gray-800 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      سلة الضيف
+                      {t.guestCart}
                     </span>
                   )}
                 </Link>
               </Button>
 
-              {/* User / Login */}
+              {/* Language Selector - Desktop */}
+              <div className="relative" ref={languageDropdownRef}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                  className="relative z-10 hover:bg-gray-100 rounded-[10px]"
+                  style={{ color: '#195073' }}
+                  aria-label="تغيير اللغة"
+                >
+                  <Globe className="h-5 w-5" />
+                  <span className="absolute -bottom-1 text-[10px] font-bold">
+                    {language === 'ar' ? 'ع' : 'EN'}
+                  </span>
+                </Button>
+
+                {showLanguageDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg border shadow-xl z-50">
+                    <div className="py-2">
+                      <button
+                        onClick={() => handleLanguageChange('ar')}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'ar' ? 'text-[#23A6F0] font-bold' : ''}`}
+                      >
+                        <span className="text-lg">🇸🇦</span>
+                        العربية
+                        {language === 'ar' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                      </button>
+                      <button
+                        onClick={() => handleLanguageChange('en')}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'en' ? 'text-[#23A6F0] font-bold' : ''}`}
+                      >
+                        <span className="text-lg">🇬🇧</span>
+                        English
+                        {language === 'en' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* User / Login - ✅ استخدام الترجمات */}
               {isAuthenticated && user ? (
                 <div className="relative" ref={userDropdownRef}>
                   <button
@@ -465,23 +606,23 @@ export function Navbar() {
                         </div>
                         <Link href="/account/wishlist" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
                           <HeartIcon className="h-4 w-4" />
-                          <span>المفضلة</span>
+                          <span>{t.wishlist}</span>
                         </Link>
                         <Link href="/account/orders" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
                           <Package className="h-4 w-4" />
-                          <span>الطلبات</span>
+                          <span>{t.orders}</span>
                         </Link>
                         <Link href="/account/returns" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
                           <RefreshCw className="h-4 w-4" />
-                          <span>المرتجعات</span>
+                          <span>{t.returns}</span>
                         </Link>
                         <Link href="/account" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
                           <UserCircle className="h-4 w-4" />
-                          <span>الملف الشخصي</span>
+                          <span>{t.profile}</span>
                         </Link>
                         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 border-t border-gray-100 mt-1 text-red-500">
                           <LogOut className="h-4 w-4" />
-                          <span>تسجيل الخروج</span>
+                          <span>{t.logout}</span>
                         </button>
                       </div>
                     </div>
@@ -491,7 +632,7 @@ export function Navbar() {
                 <Button asChild variant="ghost" className="hover:bg-gray-100 gap-2 rounded-[16px]">
                   <Link href="/auth/login">
                     <PiUserBold className="h-5 w-5 text-[#195073]"  />
-                    <span className="text-[14px] font-bold  text-[#195073]" >تسجيل دخول</span>
+                    <span className="text-[14px] font-bold  text-[#195073]" >{t.login}</span>
                   </Link>
                 </Button>
               )}
@@ -502,17 +643,15 @@ export function Navbar() {
 
       {/* ========== MOBILE VIEW ========== */}
       
-      {/* الشريط العلوي للموبايل - يظهر فقط في الموبايل */}
+      {/* الشريط العلوي للموبايل */}
       <div className="md:hidden sticky top-0 z-50 w-full bg-white shadow-md">
         <div className="px-2 py-3 flex items-center justify-between">
-          {/* Logo */}
           <Link href="/" className="shrink-0">
             <Image src="/images/logo.png" alt="Logo" width={2000} height={500} className="object-contain w-16 h-16" />
           </Link>
 
-          {/* ✅ Search - Mobile (يظهر فقط عند الضغط على أيقونة البحث) */}
           {!showSearchInput ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -522,6 +661,45 @@ export function Navbar() {
               >
                 <Search className="h-5 w-5 text-[#195073]" />
               </Button>
+              
+              {/* Language Selector - Mobile */}
+              <div className="relative" ref={mobileLanguageDropdownRef}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMobileLanguageDropdown(!showMobileLanguageDropdown)}
+                  className="hover:bg-gray-100 rounded-full relative"
+                  aria-label="تغيير اللغة"
+                >
+                  <Globe className="h-5 w-5 text-[#195073]" />
+                  <span className="absolute -bottom-1 text-[8px] font-bold text-[#195073]">
+                    {language === 'ar' ? 'ع' : 'EN'}
+                  </span>
+                </Button>
+
+                {showMobileLanguageDropdown && (
+                  <div className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === 'en' ? 'right-0' : 'left-0'}`} >
+                    <div className="py-2">
+                      <button
+                        onClick={() => handleLanguageChange('ar')}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'ar' ? 'text-[#23A6F0] font-bold' : ''}`}
+                      >
+                        <span className="text-lg">🇸🇦</span>
+                        العربية
+                        {language === 'ar' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                      </button>
+                      <button
+                        onClick={() => handleLanguageChange('en')}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'en' ? 'text-[#23A6F0] font-bold' : ''}`}
+                      >
+                        <span className="text-lg">🇬🇧</span>
+                        English
+                        {language === 'en' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="relative flex-1 mx-2" ref={mobileSearchContainerRef}>
@@ -529,8 +707,8 @@ export function Navbar() {
                 <Input
                   ref={mobileSearchInputRef}
                   type="search"
-                  placeholder="ابحث عن منتج..."
-                  className="w-full h-10 pr-9 pl-9 bg-gray-100 border-0 rounded-full focus:ring-2 focus:ring-[#23A6F0]"
+                  placeholder={t.search}
+                  className="w-full h-10 ps-9 pe-9 bg-gray-100 border-0 rounded-full focus:ring-2 focus:ring-[#23A6F0]"
                   style={{ color: '#195073' }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -542,16 +720,6 @@ export function Navbar() {
                 >
                   <Search className="h-4 w-4 text-gray-500 hover:text-white" />
                 </button>
-                {/* {searchQuery && (
-                  <button
-                    type="button"
-                    aria-label="clear search"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
-                  >
-                    <X className="h-4 w-4 text-gray-400" />
-                  </button>
-                )} */}
                 <button
                   type="button"
                   onClick={closeMobileSearch}
@@ -565,15 +733,15 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - ✅ استخدام الترجمات */}
         {mobileMenuOpen && (
           <div className="border-t py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 bg-white" style={{ borderColor: '#e2e8f0' }}>
             <form onSubmit={handleSearch} className="relative px-3">
               <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: '#94a3b8' }} />
               <Input
                 type="search"
-                placeholder="ابحث عن منتج..."
-                className="w-full h-10 pr-9 bg-gray-50"
+                placeholder={t.search}
+                className="w-full h-10 ps-9 bg-gray-50"
                 style={{ 
                   color: '#112B40',
                   borderColor: '#e2e8f0'
@@ -595,7 +763,7 @@ export function Navbar() {
                   </span>
                 )}
                 <Heart className="h-5 w-5" style={{ color: '#195073' }} />
-                <span className="text-xs" style={{ color: '#195073' }}>المفضلة</span>
+                <span className="text-xs" style={{ color: '#195073' }}>{t.favorites}</span>
               </Link>
               
               <Link 
@@ -610,7 +778,7 @@ export function Navbar() {
                 )}
                 <ShoppingCart className="h-5 w-5" style={{ color: '#195073' }} />
                 <span className="text-xs" style={{ color: '#195073' }}>
-                  السلة {isGuest && itemsCount > 0 && '(ضيف)'}
+                  {t.cart} {isGuest && itemsCount > 0 && '(Guest)'}
                 </span>
               </Link>
 
@@ -619,7 +787,7 @@ export function Navbar() {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#23A6F0] to-[#1a7fb3] flex items-center justify-center text-white font-bold text-sm">
                     {getUserInitial()}
                   </div>
-                  <span className="text-xs" style={{ color: '#195073' }}>حسابي</span>
+                  <span className="text-xs" style={{ color: '#195073' }}>{t.account}</span>
                 </div>
               ) : (
                 <Link 
@@ -628,12 +796,11 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <User className="h-5 w-5" style={{ color: '#195073' }} />
-                  <span className="text-xs" style={{ color: '#195073' }}>تسجيل دخول</span>
+                  <span className="text-xs" style={{ color: '#195073' }}>{t.login}</span>
                 </Link>
               )}
             </div>
 
-            {/* إذا كان المستخدم مسجل دخول، عرض روابط إضافية في الموبايل */}
             {isAuthenticated && user && (
               <div className="px-3 space-y-1 border-b border-gray-100 pb-3">
                 <Link 
@@ -643,7 +810,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Package className="h-4 w-4" />
-                  <span>الطلبات</span>
+                  <span>{t.orders}</span>
                 </Link>
                 <Link 
                   href="/account/returns" 
@@ -652,7 +819,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <RotateCcw className="h-4 w-4" />
-                  <span>المرتجعات</span>
+                  <span>{t.returns}</span>
                 </Link>
                 <button 
                   onClick={() => {
@@ -663,223 +830,195 @@ export function Navbar() {
                   style={{ color: '#23A6F0' }}
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>تسجيل الخروج</span>
+                  <span>{t.logout}</span>
                 </button>
               </div>
             )}
 
-            {/* رسالة للمستخدم الضيف في الموبايل */}
             {isGuest && itemsCount > 0 && (
               <div className="px-3 py-2 bg-[#2D93CA] border border-blue-200 rounded-lg mx-3">
                 <p className="text-xs text-blue-700 text-center">
-                  🛒 سلة الضيف - سجل دخولك لحفظ المنتجات
+                  🛒 {t.guestCart} - {t.login} {t.account}
                 </p>
               </div>
             )}
 
             <div className="flex flex-col gap-1">
-              {navLinks.map((link) => (
-                link.hasDropdown ? (
-                  <div key={link.href} className="space-y-2">
-                    <button
-                      aria-label="categories"
-                      className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50 flex items-center justify-between w-full"
-                      style={{ color: '#112B40' }}
-                      onClick={() => setShowMobileCategoriesSheet(!showMobileCategoriesSheet)}
-                    >
-                      {link.name}
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showMobileCategoriesSheet ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    {/* قائمة الفئات في الموبايل */}
-                    {showMobileCategoriesSheet && (
-                      <div className="mr-4 space-y-1">
-                        {loadingCategories ? (
-                          <div className="px-3 py-2 text-sm text-gray-500">جاري التحميل...</div>
-                        ) : (
-                          categories.map((category) => (
-                            <Link
-                              key={category.id}
-                              href={category.href}
-                              className="block px-3 py-2 text-[14px] rounded-md transition-colors hover:bg-gray-50"
-                              style={{ color: '#112B40' }}
-                              onClick={() => {
-                                setMobileMenuOpen(false);
-                                setShowMobileCategoriesSheet(false);
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                              onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
-                            >
-                              {category.name}
-                            </Link>
-                          ))
-                        )}
-                      </div>
+              <Link
+                href="/"
+                className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50"
+                style={{ color: '#112B40' }}
+                onClick={() => setMobileMenuOpen(false)}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+              >
+                {t.home}
+              </Link>
+              
+              <div className="space-y-2">
+                <button
+                  aria-label="categories"
+                  className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50 flex items-center justify-between w-full"
+                  style={{ color: '#112B40' }}
+                  onClick={() => setShowMobileCategoriesSheet(!showMobileCategoriesSheet)}
+                >
+                  {t.categories}
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showMobileCategoriesSheet ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showMobileCategoriesSheet && (
+                  <div className="mr-4 space-y-1">
+                    {loadingCategories ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">{t.loading}</div>
+                    ) : (
+                      categories.map((category) => (
+                        <Link
+                          key={category.id}
+                          href={category.href}
+                          className="block px-3 py-2 text-[14px] rounded-md transition-colors hover:bg-gray-50"
+                          style={{ color: '#112B40' }}
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            setShowMobileCategoriesSheet(false);
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+                        >
+                          {category.name}
+                        </Link>
+                      ))
                     )}
                   </div>
-                ) : (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50"
-                    style={{ color: '#112B40' }}
-                    onClick={() => setMobileMenuOpen(false)}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
-                  >
-                    {link.name}
-                  </Link>
-                )
-              ))}
+                )}
+              </div>
+
+              <Link
+                href="/contact"
+                className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50"
+                style={{ color: '#112B40' }}
+                onClick={() => setMobileMenuOpen(false)}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+              >
+                {t.contact}
+              </Link>
             </div>
           </div>
         )}
       </div>
 
-      {/* القائمة السفلية للموبايل (Bottom Navigation Bar) */}
+      {/* القائمة السفلية للموبايل (Bottom Navigation Bar) - ✅ استخدام الترجمات */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg" style={{ borderColor: '#e2e8f0' }}>
         <div className="flex items-center justify-around py-2">
-          {mobileBottomNav.map((item) => {
-            const isActive = pathname === item.href || (item.href === "/categories" && pathname.startsWith("/categories"));
-            const Icon = item.icon;
-            
-            // معالجة حالة "حسابي" عند تسجيل الدخول
-            if (item.name === "حسابي" && isAuthenticated && user) {
-              return (
-                <Link
-                  key={item.name}
-                  href="/account"
-                  className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMobileCategoriesSheet(false);
-                  }}
-                >
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#23A6F0] to-[#1a7fb3] flex items-center justify-center text-white font-bold text-xs">
-                    {getUserInitial()}
-                  </div>
-                  <span className="text-[10px]" style={{ color: isActive ? '#23A6F0' : '#666' }}>
-                    حسابي
-                  </span>
-                </Link>
-              );
-            }
-            
-            // معالجة حالة "حسابي" عندما لا يكون مسجل دخول
-            if (item.name === "حسابي" && !isAuthenticated) {
-              return (
-                <Link
-                  key={item.name}
-                  href="/auth/login"
-                  className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMobileCategoriesSheet(false);
-                  }}
-                >
-                  <Icon className="h-5 w-5" style={{ color: isActive ? '#23A6F0' : '#666' }} />
-                  <span className="text-[10px]" style={{ color: isActive ? '#23A6F0' : '#666' }}>
-                    تسجيل دخول
-                  </span>
-                </Link>
-              );
-            }
-            
-            // معالج الفئات (تظهر sheet من الأسفل)
-            if (item.hasDropdown) {
-              return (
-                <button
-                  key={item.name}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMobileCategoriesSheet(true);
-                  }}
-                  className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
-                >
-                  <Icon className="h-5 w-5" style={{ color: isActive ? '#23A6F0' : '#666' }} />
-                  <span className="text-[10px]" style={{ color: isActive ? '#23A6F0' : '#666' }}>
-                    {item.name}
-                  </span>
-                </button>
-              );
-            }
-            
-            // معالج المفضلة (تظهر العدد)
-            if (item.name === "المفضلة") {
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors relative"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMobileCategoriesSheet(false);
-                  }}
-                >
-                  <div className="relative">
-                    <Icon className="h-5 w-5" style={{ color: isActive ? '#23A6F0' : '#666' }} />
-                    {favoritesCount > 0 && (
-                      <span className="absolute -top-2 -right-2 text-[9px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
-                        {favoritesCount > 99 ? '99+' : favoritesCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px]" style={{ color: isActive ? '#23A6F0' : '#666' }}>
-                    {item.name}
-                  </span>
-                </Link>
-              );
-            }
-            
-            // معالج السلة (تظهر العدد)
-            if (item.name === "السلة") {
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors relative"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMobileCategoriesSheet(false);
-                  }}
-                >
-                  <div className="relative">
-                    <Icon className="h-5 w-5" style={{ color: isActive ? '#23A6F0' : '#666' }} />
-                    {itemsCount > 0 && (
-                      <span className="absolute -top-2 -right-2 text-[9px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
-                        {itemsCount > 99 ? '99+' : itemsCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px]" style={{ color: isActive ? '#23A6F0' : '#666' }}>
-                    {item.name}
-                  </span>
-                </Link>
-              );
-            }
-            
-            // باقي العناصر (الرئيسية)
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMobileCategoriesSheet(false);
-                }}
-              >
-                <Icon className="h-5 w-5" style={{ color: isActive ? '#23A6F0' : '#666' }} />
-                <span className="text-[10px]" style={{ color: isActive ? '#23A6F0' : '#666' }}>
-                  {item.name}
+          {/* Home */}
+          <Link
+            href="/"
+            className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMobileCategoriesSheet(false);
+            }}
+          >
+            <Home className="h-5 w-5" style={{ color: pathname === '/' ? '#23A6F0' : '#666' }} />
+            <span className="text-[10px]" style={{ color: pathname === '/' ? '#23A6F0' : '#666' }}>
+              {t.home}
+            </span>
+          </Link>
+
+          {/* Categories */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMobileCategoriesSheet(true);
+            }}
+            className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
+          >
+            <MenuIcon className="h-5 w-5" style={{ color: pathname.startsWith('/categories') ? '#23A6F0' : '#666' }} />
+            <span className="text-[10px]" style={{ color: pathname.startsWith('/categories') ? '#23A6F0' : '#666' }}>
+              {t.categories}
+            </span>
+          </button>
+
+          {/* Favorites */}
+          <Link
+            href="/account/wishlist"
+            className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors relative"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMobileCategoriesSheet(false);
+            }}
+          >
+            <div className="relative">
+              <Heart className="h-5 w-5" style={{ color: pathname === '/account/wishlist' ? '#23A6F0' : '#666' }} />
+              {favoritesCount > 0 && (
+                <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
                 </span>
-              </Link>
-            );
-          })}
+              )}
+            </div>
+            <span className="text-[10px]" style={{ color: pathname === '/account/wishlist' ? '#23A6F0' : '#666' }}>
+              {t.favorites}
+            </span>
+          </Link>
+
+          {/* Cart */}
+          <Link
+            href="/cart"
+            className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors relative"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMobileCategoriesSheet(false);
+            }}
+          >
+            <div className="relative">
+              <ShoppingCart className="h-5 w-5" style={{ color: pathname === '/cart' ? '#23A6F0' : '#666' }} />
+              {itemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                  {itemsCount > 99 ? '99+' : itemsCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px]" style={{ color: pathname === '/cart' ? '#23A6F0' : '#666' }}>
+              {t.cart}
+            </span>
+          </Link>
+
+          {/* Account */}
+          {isAuthenticated && user ? (
+            <Link
+              href="/account"
+              className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMobileCategoriesSheet(false);
+              }}
+            >
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#23A6F0] to-[#1a7fb3] flex items-center justify-center text-white font-bold text-[10px]">
+                {getUserInitial()}
+              </div>
+              <span className="text-[10px]" style={{ color: pathname === '/account' ? '#23A6F0' : '#666' }}>
+                {t.account}
+              </span>
+            </Link>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMobileCategoriesSheet(false);
+              }}
+            >
+              <User className="h-5 w-5" style={{ color: '#666' }} />
+              <span className="text-[10px]" style={{ color: '#666' }}>
+                {t.login}
+              </span>
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Sheet / Modal للفئات في الموبايل (تظهر من الأسفل) */}
+      {/* Sheet / Modal للفئات في الموبايل */}
       {showMobileCategoriesSheet && (
         <>
           <div 
@@ -888,7 +1027,7 @@ export function Navbar() {
           />
           <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl animate-in slide-in-from-bottom duration-300 max-h-[70vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-              <h3 className="text-lg font-bold" style={{ color: '#112B40' }}>جميع الفئات</h3>
+              <h3 className="text-lg font-bold" style={{ color: '#112B40' }}>{t.allCategories}</h3>
               <button onClick={() => setShowMobileCategoriesSheet(false)} className="p-1 rounded-full hover:bg-gray-100">
                 <X className="h-5 w-5" style={{ color: '#666' }} />
               </button>
@@ -897,7 +1036,7 @@ export function Navbar() {
               {loadingCategories ? (
                 <div className="text-center py-8">
                   <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-[#23A6F0] border-r-transparent"></div>
-                  <p className="text-sm text-gray-500 mt-2">جاري تحميل الفئات...</p>
+                  <p className="text-sm text-gray-500 mt-2">{t.loading}</p>
                 </div>
               ) : categories.length > 0 ? (
                 <div className="space-y-2">
@@ -915,7 +1054,7 @@ export function Navbar() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">لا توجد فئات متاحة</p>
+                  <p className="text-sm text-gray-500">{t.noCategories}</p>
                 </div>
               )}
             </div>

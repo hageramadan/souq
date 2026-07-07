@@ -1,6 +1,7 @@
 // components/Pagination.tsx
 'use client';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
@@ -11,6 +12,7 @@ interface PaginationProps {
 }
 
 export default function Pagination({ currentPage, lastPage, onPageChange, total }: PaginationProps) {
+   const { language } = useLanguage();
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -79,7 +81,7 @@ export default function Pagination({ currentPage, lastPage, onPageChange, total 
      
       
       {/* أزرار التصفح */}
-      <div className="flex justify-center items-center gap-2 flex-wrap">
+      <div className="flex justify-center items-center gap-2 flex-wrap" >
         {/* زر السابق */}
         <button
           onClick={() => handlePageChange(currentPage - 1)}
@@ -91,7 +93,7 @@ export default function Pagination({ currentPage, lastPage, onPageChange, total 
           }`}
           aria-label="الصفحة السابقة"
         >
-          <ChevronRight size={18} />
+          <ChevronRight size={18} className={`${language === 'en' ? 'rotate-180' : ''}`}/>
         </button>
         
         {/* أرقام الصفحات */}
@@ -102,6 +104,7 @@ export default function Pagination({ currentPage, lastPage, onPageChange, total 
             </span>
           ) : (
             <button
+            
               key={`page-${page}`}
               onClick={() => handlePageChange(page as number)}
               className={`w-12 h-12 rounded-full transition-all duration-200 font-medium ${
@@ -128,7 +131,7 @@ export default function Pagination({ currentPage, lastPage, onPageChange, total 
           }`}
           aria-label="الصفحة التالية"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={18} className={`${language === 'en' ? 'rotate-180' : ''}`}/>
         </button>
       </div>
     </div>

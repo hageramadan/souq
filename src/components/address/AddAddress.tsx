@@ -137,7 +137,7 @@ export default function AddAddress({
 
         const response = await fetch(`${API_URL}/governates`, {
           headers: {
-            "Content-Type": "application/json",
+            "Accept": "application/json",
             ...(token && { Authorization: `Bearer ${token}` }),
           },
         });
@@ -182,7 +182,7 @@ export default function AddAddress({
 
         const response = await fetch(`${API_URL}/governates/${formData.governorateId}/cities`, {
           headers: {
-            "Content-Type": "application/json",
+            "Accept": "application/json",
             ...(token && { Authorization: `Bearer ${token}` }),
           },
         });
@@ -436,7 +436,7 @@ export default function AddAddress({
       const response = await fetch(url, {
         method: method,
         headers: {
-          "Content-Type": "application/json",
+          "Accept": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify(addressData),

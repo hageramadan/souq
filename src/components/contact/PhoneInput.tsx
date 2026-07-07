@@ -9,16 +9,17 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PhoneInputProps {
-  value: string;  // القيمة كاملة (مثال: "+966512345678")
+  value: string;
   onChange: (phone: string, countryCode: string) => void;
   required?: boolean;
 }
 
 interface CountryCode {
   code: string;
-  country: string;
+  countryKey: string; // ✅ مفتاح للترجمة بدلاً من النص الثابت
   countryCode: string;
   placeholder: string;
   example: string;
@@ -26,16 +27,15 @@ interface CountryCode {
   minLength: number;
   maxLength: number;
   startsWith: string[];
-  startsWithoutZero?: string[]; // ✅ إضافة بادئات بدون صفر
+  startsWithoutZero?: string[];
   allowLeadingZero?: boolean;
-  
 }
 
-// بيانات الدول مع قواعد الفالديشن لكل دولة
+// ✅ بيانات الدول مع مفاتيح الترجمة
 const countryCodes: CountryCode[] = [
   { 
     code: "+20", 
-    country: "مصر", 
+    countryKey: "Egypt",
     countryCode: "EG",
     placeholder: "01234567890",
     example: "01234567890",
@@ -43,12 +43,12 @@ const countryCodes: CountryCode[] = [
     minLength: 11,
     maxLength: 11,
     startsWith: ["010", "011", "012", "015"],
-      startsWithoutZero: ["10", "11", "12", "15"],// ✅ بدون 0
+    startsWithoutZero: ["10", "11", "12", "15"],
     allowLeadingZero: true
   },
   { 
     code: "+966", 
-    country: "السعودية", 
+    countryKey: "SaudiArabia",
     countryCode: "SA",
     placeholder: "0512345678",
     example: "0512345678",
@@ -61,7 +61,7 @@ const countryCodes: CountryCode[] = [
   },
   { 
     code: "+964", 
-    country: "العراق", 
+    countryKey: "Iraq",
     countryCode: "IQ",
     placeholder: "07701234567",
     example: "07701234567",
@@ -74,7 +74,7 @@ const countryCodes: CountryCode[] = [
   },
   { 
     code: "+971", 
-    country: "الإمارات", 
+    countryKey: "UAE",
     countryCode: "AE",
     placeholder: "0501234567",
     example: "0501234567",
@@ -87,23 +87,36 @@ const countryCodes: CountryCode[] = [
   },
 ];
 
-// ✅ دالة مساعدة لتنسيق رسالة الخطأ
-const getErrorMessage = (country: CountryCode, type: 'prefix' | 'pattern' | 'length'): string => {
+// ✅ دالة مساعدة لتنسيق رسالة الخطأ (مدعومة بالترجمة)
+const getErrorMessage = (
+  country: CountryCode, 
+  type: 'prefix' | 'pattern' | 'length', 
+  t: any,
+  getCountryName: (country: CountryCode) => string
+): string => {
+  const countryName = getCountryName(country);
   const prefixList = country.startsWith.join(" أو ");
   
   switch (type) {
     case 'prefix':
-      return `رقم الهاتف في ${country.country} يجب أن يبدأ بـ (${prefixList})`;
+      return t('contact.validation.mustStartWith')
+        .replace('{country}', countryName)
+        .replace('{prefixes}', prefixList);
     case 'pattern':
-      return `رقم الهاتف غير صحيح (مثال: ${country.example})`;
+      return t('contact.validation.invalidExample')
+        .replace('{example}', country.example);
     case 'length':
-      return `رقم الهاتف يجب أن يكون ${country.minLength} أرقام (مثال: ${country.example})`;
+      return t('contact.validation.mustBeDigits')
+        .replace('{length}', country.minLength.toString())
+        .replace('{example}', country.example);
     default:
-      return 'رقم الهاتف غير صحيح';
+      return t('contact.invalid');
   }
 };
 
 export default function PhoneInput({ value, onChange, required = false }: PhoneInputProps) {
+  const { t } = useTranslation();
+
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>(countryCodes[0]);
   const [error, setError] = useState("");
   const [localPhoneNumber, setLocalPhoneNumber] = useState("");
@@ -134,10 +147,15 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     }
   }, [value]);
 
+  // ✅ الحصول على اسم الدولة المترجم
+  const getCountryName = (country: CountryCode): string => {
+    return t(`countries.${country.countryKey}`) || country.countryKey;
+  };
+
   // التحقق من الرقم حسب الدولة
   const validatePhoneNumber = (phoneNumber: string, country: CountryCode): boolean => {
     if (!phoneNumber && required) {
-      setError("رقم الهاتف مطلوب");
+      setError(t('contact.phoneRequired'));
       return false;
     }
     
@@ -151,7 +169,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     
     // التحقق من أن الإدخال أرقام فقط
     if (!/^\d+$/.test(cleanNumber)) {
-      setError("يجب أن يحتوي رقم الهاتف على أرقام فقط");
+      setError(t('contact.onlyDigits'));
       return false;
     }
 
@@ -169,7 +187,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     isValidPrefix = allPrefixes.some(prefix => cleanNumber.startsWith(prefix));
     
     if (!isValidPrefix) {
-      setError(getErrorMessage(country, 'prefix'));
+      setError(getErrorMessage(country, 'prefix', t, getCountryName));
       return false;
     }
 
@@ -178,7 +196,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
                          cleanNumber.length === country.minLength - 1;
     
     if (!isValidLength) {
-      setError(getErrorMessage(country, 'length'));
+      setError(getErrorMessage(country, 'length', t, getCountryName));
       return false;
     }
 
@@ -186,7 +204,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     const patternValid = country.pattern.test(cleanNumber);
     
     if (!patternValid) {
-      setError(getErrorMessage(country, 'pattern'));
+      setError(getErrorMessage(country, 'pattern', t, getCountryName));
       return false;
     }
     
@@ -215,7 +233,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     const rawValue = e.target.value;
     
     // إزالة أي أحرف غير رقمية
-    let numbersOnly = rawValue.replace(/[^\d]/g, "");
+    const numbersOnly = rawValue.replace(/[^\d]/g, "");
     
     // تحديث الحالة المحلية
     setLocalPhoneNumber(numbersOnly);
@@ -233,7 +251,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     if (localPhoneNumber) {
       validatePhoneNumber(localPhoneNumber, selectedCountry);
     } else if (required) {
-      setError("رقم الهاتف مطلوب");
+      setError(t('contact.phoneRequired'));
     }
   };
 
@@ -245,7 +263,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
   return (
     <div className="w-full">
       <div>
-        <div className="relative flex flex-row-reverse items-stretch">
+        <div className="relative flex flex-row-reverse items-stretch" dir="ltr">
           <div className="flex-1 relative">
             <input
               type="tel"
@@ -255,7 +273,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
               required={required}
               placeholder={selectedCountry.placeholder}
               inputMode="numeric"
-              className={`w-full px-4 h-full border rounded-l-xl focus:ring-black  focus:border-black rounded-r-none focus:outline-none  foucs:ring-2  transition bg-white text-left font-mono text-base
+              className={`w-full px-4 h-full border rounded-r-xl focus:ring-black focus:border-black rounded-l-none focus:outline-none foucs:ring-2 transition bg-white text-left font-mono text-base
                 ${error && isTouched && localPhoneNumber 
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500 foucs:ring-2" 
                   : !error && localPhoneNumber && (localPhoneNumber.length === selectedCountry.minLength || localPhoneNumber.length === selectedCountry.minLength - 1)
@@ -263,8 +281,8 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
                   : "border-gray-200 focus:border-[#000000] focus:ring-[#000000] foucs:ring-2"
                 }`}
               style={{
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
+                borderTopLeftRadius: 0,
+                borderBottomLeftRadius: 0,
               }}
               dir="ltr"
             />
@@ -273,10 +291,10 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
           <div className="relative">
             <Select value={selectedCountry.code} onValueChange={handleCountrySelect}>
               <SelectTrigger 
-                className="!h-12 bg-white border-gray-200 rounded-r-xl rounded-l-none border-l-0 focus:ring-0 focus:border-gray-200 min-w-[110px]"
+                className="!h-12 bg-white border-gray-200 rounded-l-xl rounded-r-none border-r-0 focus:ring-0 focus:border-gray-200 min-w-[110px]"
                 style={{ 
-                  borderTopLeftRadius: 0, 
-                  borderBottomLeftRadius: 0,
+                  borderTopRightRadius: 0, 
+                  borderBottomRightRadius: 0,
                   boxShadow: 'none'
                 }}
               >
@@ -289,10 +307,10 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
                       height: '16px',
                       objectFit: 'cover'
                     }}
-                    title={selectedCountry.country}
+                    title={getCountryName(selectedCountry)}
                   />
                   <span className="text-sm font-medium text-gray-700">{selectedCountry.code}</span>
-                  <span className="text-xs text-gray-500 hidden sm:inline">({selectedCountry.country})</span>
+                  <span className="text-xs text-gray-500 hidden sm:inline">({getCountryName(selectedCountry)})</span>
                 </div>
               </SelectTrigger>
               <SelectContent 
@@ -312,14 +330,16 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
                           height: '20px',
                           objectFit: 'cover'
                         }}
-                        title={country.country}
+                        title={getCountryName(country)}
                       />
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-semibold text-gray-800">{country.country}</span>
+                        <span className="text-sm font-semibold text-gray-800">
+                          {getCountryName(country)}
+                        </span>
                         <div className="flex gap-2 text-xs text-gray-500">
                           <span>{country.code}</span>
                           <span>•</span>
-                          <span>{country.minLength} أرقام</span>
+                          <span>{country.minLength} {t('contact.digits')}</span>
                         </div>
                       </div>
                     </div>
@@ -340,14 +360,14 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
         {/* رسالة النجاح */}
         {!error && localPhoneNumber && (localPhoneNumber.length === selectedCountry.minLength || localPhoneNumber.length === selectedCountry.minLength - 1) && (
           <p className="text-green-600 text-sm mt-1">
-            ✓ رقم صحيح لدولة {selectedCountry.country}
+            ✓ {t('contact.valid')} {getCountryName(selectedCountry)}
           </p>
         )}
         
         {/* معلومات المساعدة - تظهر أثناء الكتابة */}
         {!error && localPhoneNumber && localPhoneNumber.length < selectedCountry.minLength - 1 && localPhoneNumber.length > 0 && (
           <p className="text-blue-500 text-xs mt-1">
-            📝 كتبت {localPhoneNumber.length} من {selectedCountry.minLength} أرقام
+            📝 {t('contact.typed')} {localPhoneNumber.length} {t('contact.of')} {selectedCountry.minLength} {t('contact.digits')}
           </p>
         )}
       </div>

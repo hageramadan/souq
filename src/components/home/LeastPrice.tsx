@@ -1,11 +1,10 @@
-// components/home/YouMayAlsoLike.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
-import { getMostSellingProducts, getNewProducts, ProductData, getAllProducts } from "@/services/api";
+import { getLeastPriceProducts, ProductData } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // ✅ تعريف واجهات الفاريانتات
@@ -35,7 +34,6 @@ interface ProductVariant {
   attributes: VariantAttribute[];
 }
 
-// ✅ تحديث واجهة Product لإضافة خصائص الفاريانتات
 interface Product {
   id: string;
   name: string;
@@ -56,7 +54,7 @@ interface Product {
 
 // ✅ دالة استخراج الألوان من جميع الـ variants
 const extractColorsFromVariants = (
-  variants: ProductVariant[]
+  variants: ProductVariant[],
 ): Array<{ color: string; name: string }> => {
   const colorMap = new Map<string, string>();
 
@@ -88,51 +86,45 @@ const extractColorsFromVariants = (
 const getTranslations = (lang: string) => {
   if (lang === 'en') {
     return {
-      youMayAlsoLike: "You May Also Like",
+      latestProducts: "Least Prices",
       viewMore: "View More",
-      loading: "Loading products...",
-      noProducts: "No products available",
+      loading: "Loading...",
       failedToLoad: "Failed to load products",
+      noProducts: "No products available",
     };
   }
   return {
-    youMayAlsoLike: "قد يعجبك أيضاً",
+    latestProducts: "اقل الاسعار",
     viewMore: "عرض المزيد",
-    loading: "جاري تحميل المنتجات...",
-    noProducts: "لا توجد منتجات حالياً",
+    loading: "جاري التحميل...",
     failedToLoad: "فشل في تحميل المنتجات",
+    noProducts: "لا توجد منتجات حالياً",
   };
 };
 
-// ✅ تحويل البيانات من API إلى شكل المنتج المطلوب مع دعم الفاريانتات
+// تحويل البيانات من API إلى شكل المنتج المطلوب
 const transformProduct = (product: ProductData): Product => {
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
-    if (url.startsWith("/storage")) {
+    if (url.startsWith('/storage')) {
       return `https://admin.souqkaber.com${url}`;
     }
     return `https://admin.souqkaber.com${url}`;
   };
-
-  const mainImage =
-    product.images && product.images.length > 0
-      ? cleanImageUrl(product.images[0])
-      : "/images/placeholder.jpg";
-
-  const hoverImage =
-    product.images && product.images.length > 1
-      ? cleanImageUrl(product.images[1])
-      : mainImage;
+  
+  const mainImage = product.images && product.images.length > 0 
+    ? cleanImageUrl(product.images[0])
+    : "/images/placeholder.jpg";
+    
+  const hoverImage = product.images && product.images.length > 1 
+    ? cleanImageUrl(product.images[1])
+    : mainImage;
 
   let discount: number | undefined;
   let originalPrice: number | undefined;
-
+  
   if (product.pricing.has_discount && product.pricing.price_after_discount) {
-    discount = Math.round(
-      ((product.pricing.price - product.pricing.price_after_discount) /
-        product.pricing.price) *
-        100
-    );
+    discount = Math.round(((product.pricing.price - product.pricing.price_after_discount) / product.pricing.price) * 100);
     originalPrice = product.pricing.price;
   }
 
@@ -140,7 +132,7 @@ const transformProduct = (product: ProductData): Product => {
   let hasVariants = false;
   let variants: ProductVariant[] = [];
   let variantId: number | null = null;
-
+  
   if (product.has_variants && product.variants && product.variants.length > 0) {
     hasVariants = true;
     variants = product.variants as ProductVariant[];
@@ -167,17 +159,7 @@ const transformProduct = (product: ProductData): Product => {
   };
 };
 
-// دالة لخلط المنتجات عشوائياً
-const shuffleProducts = (products: Product[]): Product[] => {
-  const shuffled = [...products];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-export function YouMayAlsoLike() {
+export function LeastPriceProducts() {
   const { language } = useLanguage();
   const t = getTranslations(language);
   const isRTL = language === 'ar';
@@ -207,48 +189,24 @@ export function YouMayAlsoLike() {
   // جلب المنتجات من API
   const fetchProducts = useCallback(async () => {
     if (fetchingRef.current) return;
-
+    
     try {
       fetchingRef.current = true;
       setIsInitialLoading(true);
-
-      let productsData: ProductData[] = [];
-
-      try {
-        productsData = await getMostSellingProducts(1, 20);
-
-        if (productsData.length === 0) {
-          productsData = await getNewProducts(1, 20);
-        }
-
-        if (productsData.length === 0) {
-          const { products: allProducts } = await getAllProducts({
-            page: 1,
-            per_page: 20,
-          });
-          productsData = allProducts;
-        }
-      } catch (err) {
-        console.error(
-          "Error fetching from most selling, trying new products:",
-          err
-        );
-        productsData = await getNewProducts(1, 20);
-      }
-
+      
+      const productsData = await getLeastPriceProducts(1, 20);
+      
       if (!isMounted.current) return;
-
+      
       if (productsData.length === 0) {
         setProducts([]);
-        return;
       }
-
-      let transformedProducts = productsData.map(transformProduct);
-      transformedProducts = shuffleProducts(transformedProducts);
+      
+      const transformedProducts = productsData.map(transformProduct);
       setProducts(transformedProducts);
       
     } catch (err) {
-      console.error("Error fetching products:", err);
+      console.error('Error fetching products:', err);
       if (!isMounted.current) return;
       setError(t.failedToLoad);
       setProducts([]);
@@ -289,8 +247,8 @@ export function YouMayAlsoLike() {
     
     const timeoutId = setTimeout(() => {
       fetchProducts();
-    }, 100);
-
+    }, 0);
+    
     return () => {
       isMounted.current = false;
       window.removeEventListener('resize', updateItemsPerView);
@@ -527,7 +485,7 @@ export function YouMayAlsoLike() {
 
   if (isInitialLoading) {
     return (
-      <section className="py-6 md:py-12 bg-gray-50">
+      <section className="py-6 md:py-12 bg-white">
         <div className="container-custom">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="flex flex-col items-center gap-4">
@@ -535,9 +493,6 @@ export function YouMayAlsoLike() {
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#2D93CA] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="text-gray-500 text-sm animate-pulse">
-                {t.loading}
-              </p>
             </div>
           </div>
         </div>
@@ -547,7 +502,7 @@ export function YouMayAlsoLike() {
 
   if (error && products.length === 0) {
     return (
-      <section className="py-6 md:py-12 bg-gray-50">
+      <section className="py-6 md:py-12 bg-white">
         <div className="container-custom">
           <div className="text-center py-12">
             <p className="text-gray-500">{error}</p>
@@ -559,16 +514,16 @@ export function YouMayAlsoLike() {
 
   return (
     products.length > 0 && (
-      <section className="py-6 md:py-12 bg-gray-50 overflow-hidden">
+      <section className="py-6 md:py-12 bg-white overflow-hidden" id="least_price">
         <div className="container-custom">
           {/* Header */}
           <div className="mb-2 md:mb-5 flex justify-between items-center px-1 relative">
             <h2 className="text-lg md:text-xl font-bold" style={{ color: '#112B40' }}>
-              {t.youMayAlsoLike}
+              {t.latestProducts}
             </h2>
-            {/* <Link
-              href="/products"
-              className="text-[#2D93CA] text-[14px] font-bold hover:underline transition-all duration-300 flex items-center gap-1"
+            {/* <Link 
+              href="/products" 
+              className="text-[#2D93CA] text-[14px] font-bold hover:underline transition-all duration-300"
             >
               {t.viewMore}
             </Link> */}
@@ -644,7 +599,7 @@ export function YouMayAlsoLike() {
                         animationDelay: `${index * 50}ms`
                       }}
                     >
-                      <ProductCard
+                      <ProductCard 
                         id={product.id}
                         name={product.name}
                         price={product.price}

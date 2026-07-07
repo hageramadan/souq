@@ -2,39 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  FaUser,
-  FaEnvelope,
-  FaLock,
-  FaEye,
-  FaEyeSlash,
-} from "react-icons/fa";
-import toast, { Toaster } from "react-hot-toast";
+import {FaUser} from "react-icons/fa";
+import toast from "react-hot-toast";
 import PhoneInput from "@/components/contact/PhoneInput";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function RegisterWithPhone() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { registerWithPhone, loading } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     phoneNumber: "",
     countryCode: "+20",
-    password: "",
-    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<{
     name?: string;
-    email?: string;
     phone?: string;
-    password?: string;
-    confirmPassword?: string;
   }>({});
 
   // معالج تغيير رقم الهاتف
@@ -55,17 +43,9 @@ export default function RegisterWithPhone() {
 
     // التحقق من الاسم
     if (!formData.name.trim()) {
-      newErrors.name = "الاسم الكامل مطلوب";
+      newErrors.name = t('auth.nameRequired');
     } else if (formData.name.trim().length < 3) {
-      newErrors.name = "الاسم يجب أن يكون 3 أحرف على الأقل";
-    }
-
-    // التحقق من البريد الإلكتروني (اختياري ولكن نتحقق من صحته إذا أدخل)
-    if (formData.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        newErrors.email = "البريد الإلكتروني غير صحيح";
-      }
+      newErrors.name = t('auth.nameMinLength');
     }
 
     // التحقق من رقم الهاتف
@@ -73,70 +53,55 @@ export default function RegisterWithPhone() {
     const phoneRegex = /^\+?[0-9]{10,15}$/;
     
     if (!formData.phoneNumber) {
-      newErrors.phone = "رقم الهاتف مطلوب";
+      newErrors.phone = t('auth.phoneRequired');
     } else if (!phoneRegex.test(fullPhone.replace(/\s/g, ""))) {
-      newErrors.phone = "رقم الهاتف غير صحيح (10-15 رقم)";
+      newErrors.phone = t('auth.phoneInvalid');
     }
-
-    // التحقق من كلمة المرور
-    // if (!formData.password) {
-    //   newErrors.password = "كلمة المرور مطلوبة";
-    // } else if (formData.password.length < 6) {
-    //   newErrors.password = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
-    // }
-
-    // التحقق من تطابق كلمة المرور
-    // if (!formData.confirmPassword) {
-    //   newErrors.confirmPassword = "تأكيد كلمة المرور مطلوب";
-    // } else if (formData.password !== formData.confirmPassword) {
-    //   newErrors.confirmPassword = "كلمة المرور غير متطابقة";
-    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) {
-    const firstError = Object.values(errors)[0];
-    if (firstError) {
-      toast.error(firstError);
+    if (!validateForm()) {
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        toast.error(firstError);
+      }
+      return;
     }
-    return;
-  }
 
-  setIsSubmitting(true);
+    setIsSubmitting(true);
 
-  // استخدام API حقيقي عبر الـ Context
-  const result = await registerWithPhone(
-    formData.name,
-    formData.phoneNumber,
-    formData.password,
-    formData.countryCode
-  );
+    // استخدام API حقيقي عبر الـ Context
+    const result = await registerWithPhone(
+      formData.name,
+      formData.phoneNumber,
+      formData.countryCode
+    );
 
-  if (result.success) {
-    toast.success(result.message || "تم إرسال رمز التحقق إلى هاتفك! ✅", {
-      duration: 4000,
-      position: "top-center",
-    });
+    if (result.success) {
+      toast.success(result.message || t('auth.registerSuccess'), {
+        duration: 4000,
+        position: "top-center",
+      });
 
-    // ✅ التوجيه مباشرة إلى صفحة OTP للهاتف
-    const fullPhone = `${formData.countryCode}${formData.phoneNumber}`;
-    setTimeout(() => {
-      router.push(`/auth/verify-otp/phone?phone=${encodeURIComponent(fullPhone)}&isRegister=true`);
-    }, 1500);
-  } else {
-    toast.error(result.message || "حدث خطأ أثناء إنشاء الحساب", {
-      duration: 4000,
-      position: "top-center",
-    });
-  }
+      // ✅ التوجيه مباشرة إلى صفحة OTP للهاتف
+      const fullPhone = `${formData.countryCode}${formData.phoneNumber}`;
+      setTimeout(() => {
+        router.push(`/auth/verify-otp/phone?phone=${encodeURIComponent(fullPhone)}&isRegister=true`);
+      }, 1500);
+    } else {
+      toast.error(result.message || t('auth.registerError'), {
+        duration: 4000,
+        position: "top-center",
+      });
+    }
 
-  setIsSubmitting(false);
-};
+    setIsSubmitting(false);
+  };
 
   const clearFieldError = (field: keyof typeof errors) => {
     if (errors[field]) {
@@ -147,215 +112,99 @@ export default function RegisterWithPhone() {
   const isLoading = loading || isSubmitting;
 
   return (
-    <>
-      {/* <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            fontSize: "14px",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            direction: "rtl",
-          },
-        }}
-      /> */}
+    <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
+      <div className="container mx-auto px-4 py-6 md:py-12">
+        <div className="max-w-md mx-auto">
+          {/* بطاقة تسجيل حساب جديد */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            {/* العنوان */}
+            <div className="text-center mb-8">
+              <h1 className="text-xl font-bold text-gray-800 mb-2">
+                {t('auth.registerTitle')}
+              </h1>
+              <p className="text-gray-500 text-sm">
+                {t('auth.registerSubtitle')}
+              </p>
+            </div>
 
-      <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center ">
-        <div className="container mx-auto px-4 py-6 md:py-12">
-          <div className="max-w-md mx-auto">
-            {/* بطاقة تسجيل حساب جديد */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-              {/* العنوان */}
-              <div className="text-center mb-8">
-                <h1 className="text-xl font-bold text-gray-800 mb-2">
-                  انشاء حساب
-                </h1>
-                <p className="text-gray-500 text-sm">
-                  يرجى إدخال بياناتك لمتابعة عملية التسجيل
-                </p>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* الاسم */}
+              <div className="mb-6">
+                <label className="block text-gray-700 font-medium mb-2">
+                  {t('auth.nameLabel')} <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <FaUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      clearFieldError("name");
+                    }}
+                    placeholder={t('auth.namePlaceholder')}
+                    disabled={isLoading}
+                    className={`w-full px-4 py-2 ps-10 border text-base rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                      errors.name ? "border-red-500" : "border-gray-300"
+                    } ${isLoading ? "opacity-50" : ""}`}
+                    dir="rtl"
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                )}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* الاسم */}
-                <div className="mb-6">
-                  <label className="block text-gray-700 font-medium mb-2">
-                    الاسم <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <FaUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => {
-                        setFormData({ ...formData, name: e.target.value });
-                        clearFieldError("name");
-                      }}
-                      placeholder="أدخل اسمك"
-                      disabled={isLoading}
-                      className={`w-full px-4 py-2 pr-10 border text-base rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
-                        errors.name ? "border-red-500" : "border-gray-300"
-                      } ${isLoading ? "opacity-50" : ""}`}
-                      dir="rtl"
-                    />
-                  </div>
-                  {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                  )}
-                </div>
+              {/* رقم الهاتف */}
+              <div className="mb-6">
+                <label className="block text-gray-700 font-medium mb-2">
+                  {t('auth.phoneLabel')} <span className="text-red-500">*</span>
+                </label>
+                <PhoneInput
+                  value={`${formData.countryCode}${formData.phoneNumber}`}
+                  onChange={handlePhoneChange}
+                  required={true}
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                )}
+              </div>
 
-                {/* البريد الإلكتروني (اختياري) */}
-                {/* <div className="mb-6">
-                  <label className="block text-gray-700 font-medium mb-2">
-                    البريد الإلكتروني <span className="text-gray-400 text-xs">(اختياري)</span>
-                  </label>
-                  <div className="relative">
-                    <FaEnvelope className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => {
-                        setFormData({ ...formData, email: e.target.value });
-                        clearFieldError("email");
-                      }}
-                      placeholder="example@email.com"
-                      disabled={isLoading}
-                      className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
-                        errors.email ? "border-red-500" : "border-gray-300"
-                      } ${isLoading ? "opacity-50" : ""}`}
-                      dir="rtl"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                  )}
-                </div> */}
+              {/* زر إنشاء الحساب */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full flex justify-center items-center gap-2 px-4 py-3 bg-[#2DA5F3] text-white rounded-[8px] hover:bg-[#37afff] transition font-medium ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {t('auth.creatingAccount')}
+                  </>
+                ) : (
+                  t('auth.createAccount')
+                )}
+              </button>
 
-                {/* رقم الهاتف */}
-                <div className="mb-6">
-                  <label className="block text-gray-700 font-medium mb-2">
-                    رقم الهاتف <span className="text-red-500">*</span>
-                  </label>
-                  <PhoneInput
-                    value={`${formData.countryCode}${formData.phoneNumber}`}
-                    onChange={handlePhoneChange}
-                    required={true}
-                    
-                  />
-                  {errors.phone && (
-                    <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-                  )}
-                </div>
-
-                {/* كلمة المرور */}
-                {/* <div className="mb-6">
-                  <label className="block text-gray-700 font-medium mb-2">
-                    كلمة المرور <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <FaLock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => {
-                        setFormData({ ...formData, password: e.target.value });
-                        clearFieldError("password");
-                      }}
-                      placeholder="•••••••• (6 أحرف على الأقل)"
-                      disabled={isLoading}
-                      className={`w-full px-4 text-sm  py-2 pr-10 pl-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
-                        errors.password ? "border-red-500" : "border-gray-300"
-                      } ${isLoading ? "opacity-50" : ""}`}
-                      dir="rtl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={isLoading}
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.password}
-                    </p>
-                  )}
-                </div> */}
-
-                {/* تأكيد كلمة المرور */}
-                {/* <div className="mb-6">
-                  <label className="block text-gray-700 font-medium mb-2">
-                    تأكيد كلمة المرور <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <FaLock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => {
-                        setFormData({ ...formData, confirmPassword: e.target.value });
-                        clearFieldError("confirmPassword");
-                      }}
-                      placeholder="••••••••"
-                      disabled={isLoading}
-                      className={`w-full px-4 py-2 text-sm  pr-10 pl-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
-                        errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                      } ${isLoading ? "opacity-50" : ""}`}
-                      dir="rtl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      disabled={isLoading}
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div> */}
-
-                {/* زر إنشاء الحساب */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full flex justify-center items-center gap-2 px-4 py-3 bg-[#2DA5F3] text-white rounded-[8px] hover:bg-[#37afff] transition font-medium ${
-                    isLoading ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      جاري إنشاء الحساب...
-                    </>
-                  ) : (
-                    "إنشاء حساب"
-                  )}
-                </button>
-
-                {/* رابط تسجيل الدخول */}
-                <div className="text-center mt-6 pt-4 border-t border-gray-200">
-                  <p className="text-gray-600 text-sm">
-                    لديك حساب بالفعل؟{" "}
-                    <button
-                      type="button"
-                      onClick={() => router.push("/auth/login")}
-                      className="text-[#23A6F0] font-medium hover:underline"
-                    >
-                      تسجيل الدخول
-                    </button>
-                  </p>
-                </div>
-              </form>
-            </div>
+              {/* رابط تسجيل الدخول */}
+              <div className="text-center mt-6 pt-4 border-t border-gray-200">
+                <p className="text-gray-600 text-sm">
+                  {t('auth.haveAccount')}{" "}
+                  <button
+                    type="button"
+                    onClick={() => router.push("/auth/login")}
+                    className="text-[#23A6F0] font-medium hover:underline"
+                  >
+                    {t('auth.login')}
+                  </button>
+                </p>
+              </div>
+            </form>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
