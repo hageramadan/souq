@@ -198,7 +198,7 @@ export function ProductCard({
     <div
       role="article"
       aria-labelledby={`product-name-${id}`}
-      className="group w-full h-full sm:w-[170px] sm:h-[240px] md:w-[308px] md:h-[386px] relative bg-white transition-all duration-300 hover:shadow-lg"
+      className="group w-full h-full sm:w-[150px] sm:h-[220px] md:w-[308px] md:h-[386px] relative bg-white transition-all duration-300 hover:shadow-lg"
       style={{
         borderRadius: '12px',
         border: '1px solid #e2e8f0',
@@ -319,7 +319,7 @@ export function ProductCard({
         {/* Product Info */}
         <div className="px-4 mt-3">
           {/* Product Name */}
-          <h3 className="text-xs md:text-sm font-medium line-clamp-2 mb-1" style={{ color: '#112B40' }}>
+          <h3 className="text-xs md:text-sm font-medium line-clamp-1 mb-1" style={{ color: '#112B40' }}>
             {name}
           </h3>
 

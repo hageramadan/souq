@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
 import { getNewProducts, ProductData } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { HiArrowNarrowLeft, HiOutlineArrowNarrowRight } from "react-icons/hi";
 
 // ✅ تعريف واجهات الفاريانتات
 interface VariantAttribute {
@@ -84,7 +85,7 @@ const extractColorsFromVariants = (
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
 const getTranslations = (lang: string) => {
-  if (lang === 'en') {
+  if (lang === "en") {
     return {
       latestProducts: "Latest Products",
       loading: "Loading...",
@@ -106,25 +107,31 @@ const getTranslations = (lang: string) => {
 const transformProduct = (product: ProductData): Product => {
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
-    if (url.startsWith('/storage')) {
+    if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }
     return `https://admin.souqkaber.com${url}`;
   };
-  
-  const mainImage = product.images && product.images.length > 0 
-    ? cleanImageUrl(product.images[0])
-    : "/images/placeholder.jpg";
-    
-  const hoverImage = product.images && product.images.length > 1 
-    ? cleanImageUrl(product.images[1])
-    : mainImage;
+
+  const mainImage =
+    product.images && product.images.length > 0
+      ? cleanImageUrl(product.images[0])
+      : "/images/placeholder.jpg";
+
+  const hoverImage =
+    product.images && product.images.length > 1
+      ? cleanImageUrl(product.images[1])
+      : mainImage;
 
   let discount: number | undefined;
   let originalPrice: number | undefined;
-  
+
   if (product.pricing.has_discount && product.pricing.price_after_discount) {
-    discount = Math.round(((product.pricing.price - product.pricing.price_after_discount) / product.pricing.price) * 100);
+    discount = Math.round(
+      ((product.pricing.price - product.pricing.price_after_discount) /
+        product.pricing.price) *
+        100,
+    );
     originalPrice = product.pricing.price;
   }
 
@@ -132,7 +139,7 @@ const transformProduct = (product: ProductData): Product => {
   let hasVariants = false;
   let variants: ProductVariant[] = [];
   let variantId: number | null = null;
-  
+
   if (product.has_variants && product.variants && product.variants.length > 0) {
     hasVariants = true;
     variants = product.variants as ProductVariant[];
@@ -162,8 +169,8 @@ const transformProduct = (product: ProductData): Product => {
 export function LatestProducts() {
   const { language } = useLanguage();
   const t = getTranslations(language);
-  const isRTL = language === 'ar';
-  
+  const isRTL = language === "ar";
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,7 +181,7 @@ export function LatestProducts() {
   const [currentTranslate, setCurrentTranslate] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [maxIndex, setMaxIndex] = useState(0);
-  
+
   const isMounted = useRef(true);
   const fetchingRef = useRef(false);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -189,24 +196,23 @@ export function LatestProducts() {
   // جلب المنتجات من API
   const fetchProducts = useCallback(async () => {
     if (fetchingRef.current) return;
-    
+
     try {
       fetchingRef.current = true;
       setIsInitialLoading(true);
-      
+
       const productsData = await getNewProducts(1, 20);
-      
+
       if (!isMounted.current) return;
-      
+
       if (productsData.length === 0) {
         setProducts([]);
       }
-      
+
       const transformedProducts = productsData.map(transformProduct);
       setProducts(transformedProducts);
-      
     } catch (err) {
-      console.error('Error fetching products:', err);
+      console.error("Error fetching products:", err);
       if (!isMounted.current) return;
       setError(t.failedToLoad);
       setProducts([]);
@@ -219,8 +225,8 @@ export function LatestProducts() {
 
   // تحديث عدد العناصر المعروضة حسب حجم الشاشة
   const updateItemsPerView = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    
+    if (typeof window === "undefined") return;
+
     const width = window.innerWidth;
     if (width < 640) {
       setItemsPerView(2);
@@ -241,17 +247,17 @@ export function LatestProducts() {
 
   useEffect(() => {
     isMounted.current = true;
-    
+
     updateItemsPerView();
-    window.addEventListener('resize', updateItemsPerView);
-    
+    window.addEventListener("resize", updateItemsPerView);
+
     const timeoutId = setTimeout(() => {
       fetchProducts();
     }, 0);
-    
+
     return () => {
       isMounted.current = false;
-      window.removeEventListener('resize', updateItemsPerView);
+      window.removeEventListener("resize", updateItemsPerView);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -279,35 +285,41 @@ export function LatestProducts() {
   }, [itemsPerView]);
 
   // الانتقال لشريحة محددة
-  const goToSlide = useCallback((index: number, animate: boolean = true) => {
-    const max = calculateMaxIndex();
-    const targetIndex = Math.max(0, Math.min(index, max));
-    setCurrentIndex(targetIndex);
-    // في RTL نستخدم نفس المنطق ولكن مع عكس الاتجاه
-    const translate = isRTL 
-      ? targetIndex * getCardWidthWithGap()  // RTL: موجب
-      : -targetIndex * getCardWidthWithGap(); // LTR: سالب
-    setCurrentTranslate(translate);
-    if (animate) {
-      setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 350);
-    }
-  }, [calculateMaxIndex, getCardWidthWithGap, isRTL]);
+  const goToSlide = useCallback(
+    (index: number, animate: boolean = true) => {
+      const max = calculateMaxIndex();
+      const targetIndex = Math.max(0, Math.min(index, max));
+      setCurrentIndex(targetIndex);
+      // في RTL نستخدم نفس المنطق ولكن مع عكس الاتجاه
+      const translate = isRTL
+        ? targetIndex * getCardWidthWithGap() // RTL: موجب
+        : -targetIndex * getCardWidthWithGap(); // LTR: سالب
+      setCurrentTranslate(translate);
+      if (animate) {
+        setIsAnimating(true);
+        setTimeout(() => setIsAnimating(false), 350);
+      }
+    },
+    [calculateMaxIndex, getCardWidthWithGap, isRTL],
+  );
 
   // التنقل بالسهمين - معكوسين في RTL
-  const scrollByAmount = useCallback((direction: 'left' | 'right') => {
-    if (isDraggingRef.current) return;
-    const max = calculateMaxIndex();
-    let newIndex;
-    
-    // نفس اتجاه السحب في كلتا اللغتين
-    if (direction === 'right') {
-      newIndex = Math.min(currentIndex + 1, max);
-    } else {
-      newIndex = Math.max(currentIndex - 1, 0);
-    }
-    goToSlide(newIndex, true);
-  }, [currentIndex, calculateMaxIndex, goToSlide]);
+  const scrollByAmount = useCallback(
+    (direction: "left" | "right") => {
+      if (isDraggingRef.current) return;
+      const max = calculateMaxIndex();
+      let newIndex;
+
+      // نفس اتجاه السحب في كلتا اللغتين
+      if (direction === "right") {
+        newIndex = Math.min(currentIndex + 1, max);
+      } else {
+        newIndex = Math.max(currentIndex - 1, 0);
+      }
+      goToSlide(newIndex, true);
+    },
+    [currentIndex, calculateMaxIndex, goToSlide],
+  );
 
   // سحب بالماوس - نفس الاتجاه في كلتا اللغتين
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -320,7 +332,7 @@ export function LatestProducts() {
     velocityRef.current = 0;
     setIsAnimating(false);
     startTranslateRef.current = currentTranslate;
-    
+
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -329,21 +341,21 @@ export function LatestProducts() {
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDraggingRef.current) return;
     e.preventDefault();
-    
+
     const now = Date.now();
     const deltaX = e.pageX - lastMoveXRef.current;
     const deltaTime = now - lastMoveTimeRef.current;
-    
+
     if (deltaTime > 0 && deltaTime < 100) {
       velocityRef.current = (deltaX / deltaTime) * 8;
     }
-    
+
     // نفس اتجاه السحب في كلتا اللغتين
     const diff = e.pageX - startX;
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
     const maxTranslate = isRTL ? max * cardWidth : -max * cardWidth;
-    
+
     let newTranslate = startTranslateRef.current + diff;
     // منع التجاوز مع مرونة
     if (isRTL) {
@@ -353,9 +365,9 @@ export function LatestProducts() {
       if (newTranslate > 20) newTranslate = 20;
       if (newTranslate < maxTranslate - 20) newTranslate = maxTranslate - 20;
     }
-    
+
     setCurrentTranslate(newTranslate);
-    
+
     lastMoveXRef.current = e.pageX;
     lastMoveTimeRef.current = now;
   };
@@ -364,10 +376,10 @@ export function LatestProducts() {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsDragging(false);
-    
+
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
-    
+
     // حساب أقرب شريحة حسب الاتجاه
     let currentIndexValue;
     if (isRTL) {
@@ -376,7 +388,7 @@ export function LatestProducts() {
       currentIndexValue = Math.round(-currentTranslate / cardWidth);
     }
     const clampedIndex = Math.max(0, Math.min(currentIndexValue, max));
-    
+
     if (Math.abs(velocityRef.current) > 2) {
       let nextIndex = clampedIndex;
       if (isRTL) {
@@ -396,7 +408,7 @@ export function LatestProducts() {
     } else {
       goToSlide(clampedIndex, true);
     }
-    
+
     velocityRef.current = 0;
   };
 
@@ -411,7 +423,7 @@ export function LatestProducts() {
     velocityRef.current = 0;
     setIsAnimating(false);
     startTranslateRef.current = currentTranslate;
-    
+
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -420,22 +432,22 @@ export function LatestProducts() {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDraggingRef.current || !e.touches.length) return;
     // e.preventDefault();
-    
+
     const touch = e.touches[0];
     const now = Date.now();
     const deltaX = touch.pageX - lastMoveXRef.current;
     const deltaTime = now - lastMoveTimeRef.current;
-    
+
     if (deltaTime > 0 && deltaTime < 100) {
       velocityRef.current = (deltaX / deltaTime) * 8;
     }
-    
+
     // نفس اتجاه السحب في كلتا اللغتين
     const diff = touch.pageX - startX;
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
     const maxTranslate = isRTL ? max * cardWidth : -max * cardWidth;
-    
+
     let newTranslate = startTranslateRef.current + diff;
     if (isRTL) {
       if (newTranslate < -20) newTranslate = -20;
@@ -444,9 +456,9 @@ export function LatestProducts() {
       if (newTranslate > 20) newTranslate = 20;
       if (newTranslate < maxTranslate - 20) newTranslate = maxTranslate - 20;
     }
-    
+
     setCurrentTranslate(newTranslate);
-    
+
     lastMoveXRef.current = touch.pageX;
     lastMoveTimeRef.current = now;
   };
@@ -455,10 +467,10 @@ export function LatestProducts() {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsDragging(false);
-    
+
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
-    
+
     let currentIndexValue;
     if (isRTL) {
       currentIndexValue = Math.round(currentTranslate / cardWidth);
@@ -466,7 +478,7 @@ export function LatestProducts() {
       currentIndexValue = Math.round(-currentTranslate / cardWidth);
     }
     const clampedIndex = Math.max(0, Math.min(currentIndexValue, max));
-    
+
     if (Math.abs(velocityRef.current) > 2) {
       let nextIndex = clampedIndex;
       if (isRTL) {
@@ -486,7 +498,7 @@ export function LatestProducts() {
     } else {
       goToSlide(clampedIndex, true);
     }
-    
+
     velocityRef.current = 0;
   };
 
@@ -525,7 +537,10 @@ export function LatestProducts() {
         <div className="container-custom">
           {/* Header */}
           <div className="mb-2 md:mb-5 flex justify-between items-center px-1 relative">
-            <h2 className="text-lg md:text-xl font-bold" style={{ color: '#112B40' }}>
+            <h2
+              className="text-lg md:text-xl font-bold"
+              style={{ color: "#112B40" }}
+            >
               {t.latestProducts}
             </h2>
             {/* <Link 
@@ -534,47 +549,52 @@ export function LatestProducts() {
             >
               {t.viewAll}
             </Link> */}
-              {/* Left Navigation Button */}
-            {currentIndex >= 0 && (
-              <button
-                onClick={() => scrollByAmount('left')}
-                className={` ${language=='en'?'end-8 md:end-5':'end-7 md:end-5'} absolute  top-1/3 md:top-1/2 -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-sm hover:shadow-lg rounded-[8px] p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
-                style={{ transform: 'translate(-50%, -50%)' }}
-                aria-label="السابق"
-              >
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-[#112B40]" />
-              </button>
-            )}
-
-            {/* Right Navigation Button */}
-            {currentIndex <= maxIndex && (
-              <button
-                onClick={() => scrollByAmount('right')}
-                className={` ${language=='en'?'end-6 md:end-3':'end-10 md:end-7'} absolute top-1/3 md:top-1/2 -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-sm hover:shadow-lg rounded-[8px] p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
-                style={{ transform: 'translate(50%, -50%)' }}
-                aria-label="التالي"
-              >
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-[#112B40]" />
-              </button>
-            )}
           </div>
 
           {/* Slider Container */}
           <div className="relative">
-          
+            {currentIndex >= 0 && (
+              <button
+                onClick={() => scrollByAmount("left")}
+                className={`${
+                  language === "en"
+                    ? "end-2 md:end-[-30px]"
+                    : "end-2 md:end-[-30px]"
+                } absolute top-1/2 md:top-1/2 -translate-y-1/2 z-20 bg-[#23A6F0] hover:bg-[#23A6F0] shadow-sm hover:shadow-lg rounded-full p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
+                style={{ transform: "translate(-50%, -50%)" }}
+                aria-label="السابق"
+              >
+                <HiArrowNarrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              </button>
+            )}
 
+            {/* Right Navigation Button - مع مسافة أكبر */}
+            {currentIndex <= maxIndex && (
+              <button
+                onClick={() => scrollByAmount("right")}
+                className={`${
+                  language === "en"
+                    ? "start-2 md:start-[-30px]"
+                    : "start-2 md:start-[-30px]"
+                } absolute top-1/2 md:top-1/2 -translate-y-1/2 z-20 bg-[#23A6F0] hover:bg-[#23A6F0] shadow-sm hover:shadow-lg rounded-full p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
+                style={{ transform: "translate(50%, -50%)" }}
+                aria-label="التالي"
+              >
+                <HiOutlineArrowNarrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              </button>
+            )}
             {/* Slider Track */}
-            <div
-              ref={containerRef}
-              className="overflow-hidden"
-            >
+            <div ref={containerRef} className="overflow-hidden">
               <div
                 ref={sliderRef}
                 className="flex gap-3 md:gap-5 cursor-grab active:cursor-grabbing select-none "
                 style={{
                   transform: `translateX(${currentTranslate}px)`,
-                  transition: isAnimating && !isDragging ? 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-                  willChange: 'transform',
+                  transition:
+                    isAnimating && !isDragging
+                      ? "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                      : "none",
+                  willChange: "transform",
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -589,26 +609,29 @@ export function LatestProducts() {
                   <div
                     key={product.id}
                     className="flex-shrink-0"
-                    style={{ 
-                      width: itemsPerView >= 4 
-                        ? 'calc((100% / 4.5) - 10px)' 
-                        : itemsPerView >= 3 
-                        ? 'calc((100% / 3) - 10px)'
-                        : 'calc((100% / 2) - 8px)',
-                      minWidth: itemsPerView >= 4 
-                        ? 'calc((100% / 4.5) - 10px)' 
-                        : itemsPerView >= 3 
-                        ? 'calc((100% / 3) - 10px)'
-                        : 'calc((100% / 2) - 8px)',
+                    style={{
+                      width:
+                        itemsPerView >= 4
+                          ? "calc((100% / 4.5) - 10px)"
+                          : itemsPerView >= 3
+                            ? "calc((100% / 3) - 10px)"
+                            : "calc((100% / 2) - 8px)",
+                      minWidth:
+                        itemsPerView >= 4
+                          ? "calc((100% / 4.5) - 10px)"
+                          : itemsPerView >= 3
+                            ? "calc((100% / 3) - 10px)"
+                            : "calc((100% / 2) - 8px)",
                     }}
                   >
-                    <div className="animate-in fade-in zoom-in duration-500 flex justify-center w-full"
-                      style={{ 
-                        animationFillMode: 'both',
-                        animationDelay: `${index * 50}ms`
+                    <div
+                      className="animate-in fade-in zoom-in duration-500 flex justify-center w-full"
+                      style={{
+                        animationFillMode: "both",
+                        animationDelay: `${index * 50}ms`,
                       }}
                     >
-                      <ProductCard 
+                      <ProductCard
                         id={product.id}
                         name={product.name}
                         price={product.price}
@@ -630,8 +653,6 @@ export function LatestProducts() {
                 ))}
               </div>
             </div>
-
-          
           </div>
         </div>
 
@@ -646,7 +667,7 @@ export function LatestProducts() {
               transform: scale(1);
             }
           }
-          
+
           .animate-in {
             animation: fadeIn 0.5s ease-out forwards;
           }
@@ -654,7 +675,7 @@ export function LatestProducts() {
           .cursor-grabbing {
             cursor: grabbing;
           }
-          
+
           .select-none {
             user-select: none;
             -webkit-user-select: none;

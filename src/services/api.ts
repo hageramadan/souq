@@ -143,12 +143,24 @@ interface CategoryResponse {
     categories: CategoryData[];
   };
 }
-
-interface CategoryData {
+export interface SubCategory {
   id: number;
   name: string;
-  subcategories: any[];
+}
+
+export interface Brand {
+  id: number;
+  name: string;
+}
+
+export interface CategoryData {
+  id: number;
+  name: string;
+  subcategories: SubCategory[];
   image: string;
+  brands: Brand[]; 
+   products?: any[];
+  sliders?: any[];
 }
 
 export async function getCategories(lang?: string): Promise<CategoryData[]> {
@@ -172,8 +184,6 @@ export async function getCategories(lang?: string): Promise<CategoryData[]> {
     }
 
     const result: CategoryResponse = await response.json();
-    
-    
     
     if (result.result && result.errNum === 200 && result.data?.categories) {
       return Array.isArray(result.data.categories) ? result.data.categories : [];

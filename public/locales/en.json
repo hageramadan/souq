@@ -182,7 +182,29 @@
   },
   "common": {
     "home": "Home",
-    "myAccount": "My Account"
+    "myAccount": "My Account",
+    "loading": "Loading...",
+     "dir": "ltr",
+    "lang": "en"
+  },
+    "products": {
+    "home": "Home",
+    "allProducts": "All Products",
+    "sortBy": "Sort by:",
+    "sortAll": "All",
+    "sortPriceAsc": "Lowest Price",
+    "sortPriceDesc": "Highest Price",
+    "sortBestSeller": "Best Seller",
+    "sortOffers": "Offers",
+    "filterProducts": "Filter products",
+    "loading": "Loading products...",
+    "noProducts": "No products available",
+    "tryChangingFilters": "Try changing filter options"
+  },
+   "brandSlider": {
+    "all": "All",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
   },
   "orders": {
     "title": "My Orders",
@@ -208,6 +230,35 @@
     "storage": "Storage",
     "color": "Color"
   },
+  "filter": {
+    "title": "Filter",
+    "clearAll": "Clear All",
+    "prices": "Prices",
+    "maxPrice": "Max Price",
+    "minPrice": "Min Price",
+    "currency": "EGP",
+    "categories": "Categories",
+    "subcategories": "Subcategories",
+    "colors": "Colors",
+    "specifications": "Specifications (RAM / HDD)",
+    "brands": "Brands",
+    "apply": "Apply",
+    "loadingCategories": "Loading categories...",
+    "loadingSubcategories": "Loading subcategories...",
+    "loadingColors": "Loading colors...",
+    "loadingSpecifications": "Loading specifications...",
+    "loadingBrands": "Loading brands...",
+    "ramPrefix": "RAM: ",
+    "hddPrefix": "HDD: ",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "moreCategories": "more categories",
+    "moreBrands": "more brands",
+    "selectCategoryToSeeBrands": "Select a category to see its brands",
+    "noBrandsForCategory": "No brands for this category",
+    "brandsFor": "Brands for"
+  }
+  ,
   "footer": {
     "categories": "Categories",
     "new": "New",

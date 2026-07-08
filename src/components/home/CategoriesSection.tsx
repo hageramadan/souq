@@ -108,10 +108,10 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
         <div className="container-custom px-2 lg:px-6">
           <div className="flex justify-center items-center min-h-[150px]">
             <div className="flex flex-col items-center gap-4">
-              <div className="relative">
+              {/* <div className="relative">
                 <div className="w-10 h-10 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-10 h-10 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
-              </div>
+              </div> */}
               {/* <p className="text-gray-500 text-sm">جاري تحميل الفئات...</p> */}
             </div>
           </div>
@@ -125,7 +125,7 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
       <section className="py-2 md:py-12">
         <div className="container-custom px-4 sm:px-6">
           <div className="text-center text-gray-500">
-            <p>لا توجد أقسام متاحة حالياً</p>
+           
           </div>
         </div>
       </section>

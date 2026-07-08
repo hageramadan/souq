@@ -226,7 +226,7 @@ export function AdsHome() {
               </p>
             )}
             
-            <h1 className="text-lg md:text-xl font-bold text-[#191C1F]">
+            <h1 className="text-sm md:text-xl font-bold text-[#191C1F]">
               {currentAd?.name}
             </h1>
             

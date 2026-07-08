@@ -183,7 +183,29 @@
   },
    "common": {
     "home": "الرئيسية",
-    "myAccount": "حسابي"
+    "myAccount": "حسابي",
+    "loading": "جاري التحميل...",
+     "dir": "rtl",
+    "lang": "ar"
+  },
+   "products": {
+    "home": "الرئيسية",
+    "allProducts": "جميع المنتجات",
+    "sortBy": "ترتيب :",
+    "sortAll": "الكل",
+    "sortPriceAsc": "الأقل سعراً",
+    "sortPriceDesc": "الأعلى سعراً",
+    "sortBestSeller": "الأكثر مبيعاً",
+    "sortOffers": "العروض",
+    "filterProducts": "تصفية المنتجات",
+    "loading": "جاري تحميل المنتجات...",
+    "noProducts": "لا توجد منتجات متاحة",
+    "tryChangingFilters": "حاول تغيير خيارات الفلتر"
+  },
+    "brandSlider": {
+    "all": "الكل",
+    "scrollLeft": "تمرير لليسار",
+    "scrollRight": "تمرير لليمين"
   },
    "orders": {
     "title": "طلباتي",
@@ -208,6 +230,34 @@
     "memory": "الذاكرة",
     "storage": "هارد ديسك",
     "color": "اللون"
+  },
+   "filter": {
+    "title": "فلتر",
+    "clearAll": "مسح الكل",
+    "prices": "الاسعار",
+    "maxPrice": "الحد الأقصى",
+    "minPrice": "الحد الأدنى",
+    "currency": "ج.م",
+    "categories": "الفئات",
+    "subcategories": "الفئات الفرعية",
+    "colors": "الألوان",
+    "specifications": "المواصفات (RAM / HDD)",
+    "brands": "العلامات التجارية",
+    "apply": "تطبيق",
+    "loadingCategories": "جاري تحميل الفئات...",
+    "loadingSubcategories": "جاري تحميل الفئات الفرعية...",
+    "loadingColors": "جاري تحميل الألوان...",
+    "loadingSpecifications": "جاري تحميل المواصفات...",
+    "loadingBrands": "جاري تحميل العلامات التجارية...",
+    "ramPrefix": "رام: ",
+    "hddPrefix": "هارد ديسك: ",
+    "showMore": "عرض المزيد",
+    "showLess": "عرض أقل",
+    "moreCategories": "فئات أخرى",
+    "moreBrands": "براندات أخرى",
+    "selectCategoryToSeeBrands": "اختر فئة لعرض برانداتها",
+    "noBrandsForCategory": "لا توجد براندات لهذا القسم",
+    "brandsFor": "براندات قسم"
   },
   "footer": {
     "categories": "الاقسام",
