@@ -18,7 +18,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { IoCopyOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Pagination from '@/components/products/Pagination';
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -135,7 +135,7 @@ const getHeaders = (): HeadersInit => {
   };
 };
 
-const PLACEHOLDER_IMAGE = "/images/placeholder-product.png";
+const PLACEHOLDER_IMAGE = "/images/placeholder-product.jpg";
 
 // ✅ متغيرات لمنع التكرار على مستوى الدالة
 let isFetching = false;
@@ -257,27 +257,30 @@ const cleanImageUrl = (url: string): string => {
   return url;
 };
 
-// ========== دوال جديدة لجلب خصائص المنتج ==========
-const getMemory = (item: OrderItem): string | null => {
+// ========== دوال جديدة لجلب خصائص المنتج (تدعم اللغتين) ==========
+const getAttributeValue = (
+  item: OrderItem, 
+  attributeNames: string[]
+): string | null => {
   if (!item.variant?.attributes) return null;
-  const memoryAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "الذاكرة"
+  const attr = item.variant.attributes.find(
+    (a) => attributeNames.includes(a.attribute_type.name)
   );
-  return memoryAttr?.value || null;
+  return attr?.value || null;
+};
+
+const getMemory = (item: OrderItem): string | null => {
+  return getAttributeValue(item, ["الذاكرة", "RAM"]);
 };
 
 const getStorage = (item: OrderItem): string | null => {
-  if (!item.variant?.attributes) return null;
-  const storageAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "هارد ديسك"
-  );
-  return storageAttr?.value || null;
+  return getAttributeValue(item, ["هارد ديسك", "Hard disk"]);
 };
 
 const getColor = (item: OrderItem): { name: string; hex: string | null } | null => {
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "لون"
+    (a) => a.attribute_type.name === "لون" || a.attribute_type.name === "color"
   );
   if (!colorAttr) return null;
   
@@ -383,6 +386,9 @@ type FilterStatus = "all" | OrderStatus;
 
 export default function OrdersPage() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const pathname = usePathname(); // ✅ الحصول على المسار الحالي
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -397,9 +403,7 @@ export default function OrdersPage() {
     next_page: null,
     previous_page: null
   });
-  const router = useRouter();
   
-  const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const itemsPerPage = 10;
 
@@ -420,7 +424,6 @@ export default function OrdersPage() {
       if (!abortControllerRef.current?.signal.aborted) {
         setOrders(result.orders);
         setPagination(result.pagination);
-        hasLoadedRef.current = true;
       }
     } catch (error) {
       if (!abortControllerRef.current?.signal.aborted) {
@@ -434,18 +437,16 @@ export default function OrdersPage() {
     }
   }, [itemsPerPage, t]);
 
-  // ========== تحميل الصفحة الأولى ==========
+  // ========== تحميل البيانات عند mount وعند تغيير المسار ==========
   useEffect(() => {
-    if (!hasLoadedRef.current) {
-      loadOrders(1);
-    }
+    loadOrders(1);
     
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [loadOrders]);
+  }, [loadOrders, pathname]); // ✅ إضافة pathname كاعتماد
 
   // ========== تغيير الصفحة ==========
   const handlePageChange = useCallback((newPage: number) => {
@@ -494,7 +495,7 @@ export default function OrdersPage() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
-              <p className="text-gray-500 mt-4">{t('orders.loading')}</p>
+              {/* <p className="text-gray-500 mt-4">{t('orders.loading')}</p> */}
             </div>
           </div>
         </div>
@@ -538,7 +539,7 @@ export default function OrdersPage() {
             <div className="mt-8 md:mt-12 rounded-2xl p-8 sm:p-12 text-center">
               <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
               <p className="text-gray-500 text-sm sm:text-base">
-                {orders.length === 0 ? t('orders.loading') : t('orders.noOrders')}
+                {orders.length === 0 ? t('orders.noOrders') : t('orders.noFilteredOrders')}
               </p>
             </div>
           ) : (

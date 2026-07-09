@@ -7,8 +7,11 @@ import AddAddress from "@/components/address/AddAddress";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import toast, { Toaster } from "react-hot-toast";
 import { Address } from "@/types/address";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function AddressPage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -25,20 +28,20 @@ export default function AddressPage() {
       const response = await fetch(`${API_URL}/addresses`, {
         headers: {
           'Content-Type': 'application/json',
+          'Accept':'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
       const result = await response.json();
       
-      
       if (result.result === true && Array.isArray(result.data)) {
         setAddresses(result.data);
       } else {
-        throw new Error("فشل في تحميل العناوين");
+        throw new Error(t('addressPage.fetchError'));
       }
     } catch (error) {
-      console.error("❌ خطأ في جلب العناوين:", error);
-      toast.error("فشل في تحميل العناوين");
+      console.error("❌ Error fetching addresses:", error);
+      toast.error(t('addressPage.fetchError'));
       setAddresses([]);
     } finally {
       setIsLoading(false);
@@ -74,6 +77,7 @@ export default function AddressPage() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Accept':'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
@@ -81,14 +85,14 @@ export default function AddressPage() {
       const result = await response.json();
       
       if (result.result === true) {
-        toast.success("تم حذف العنوان بنجاح");
+        toast.success(t('addressPage.deleteSuccess'));
         await fetchAddresses();
       } else {
-        throw new Error(result.message || "فشل في حذف العنوان");
+        throw new Error(result.message || t('addressPage.deleteError'));
       }
     } catch (error) {
-      console.error("❌ خطأ في حذف العنوان:", error);
-      toast.error(error instanceof Error ? error.message : "فشل في حذف العنوان");
+      console.error("❌ Error deleting address:", error);
+      toast.error(error instanceof Error ? error.message : t('addressPage.deleteError'));
     }
   };
 
@@ -102,7 +106,7 @@ export default function AddressPage() {
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل العناوين...</p>
+          <p className="mt-4 text-gray-600">{t('addressPage.loading')}</p>
         </div>
       </div>
     );
@@ -115,7 +119,7 @@ export default function AddressPage() {
         <div className="mb-3">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-xl font-bold text-[#180100]">
-              العناوين المحفوظة
+              {t('addressPage.title')}
             </h1>
           </div>
 
@@ -131,7 +135,8 @@ export default function AddressPage() {
                 setEditingAddress(null);
                 setShowAddAddress(true);
               }}
-              className="flex items-center gap-2 text-[#180100] hover:text-[#ff6b6b] transition-colors"
+              className="flex items-center gap-2 text-[#23A6F0] hover:text-[#23A6F0] transition-colors"
+              aria-label={t('addressPage.addNewAddress')}
             >
               <BsFillPlusCircleFill className="w-10 h-10" />
             </button>

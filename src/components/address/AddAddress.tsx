@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import LocationMap from "./LocationMap";
 import { Address } from "@/types/address";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // تعريف نوع العنوان باللغة الإنجليزية
 type AddressTypeValue = "home" | "work" | "other";
@@ -44,6 +45,8 @@ export default function AddAddress({
   initialData,
   isEditing,
 }: AddAddressProps) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  
   // تحويل القيمة المخزنة من العربية إلى الإنجليزية إذا وجدت
   const getInitialAddressType = (type?: string): AddressTypeValue => {
     if (type === "home" || type === "work" || type === "other")
@@ -158,15 +161,15 @@ export default function AddAddress({
           setGovernorates([]);
         }
       } catch (error) {
-        console.error("❌ خطأ في جلب المحافظات:", error);
-        toast.error("فشل في تحميل المحافظات");
+        console.error("❌ Error fetching governorates:", error);
+        toast.error(t('address.fetchGovernoratesError'));
       } finally {
         setIsLoadingGovernorates(false);
       }
     };
 
     fetchGovernorates();
-  }, []);
+  }, [t]);
 
   // --- جلب المدن عند اختيار المحافظة ---
   useEffect(() => {
@@ -199,8 +202,8 @@ export default function AddAddress({
           setCities([]);
         }
       } catch (error) {
-        console.error("❌ خطأ في جلب المدن:", error);
-        toast.error("فشل في تحميل المدن");
+        console.error("❌ Error fetching cities:", error);
+        toast.error(t('address.fetchCitiesError'));
         setCities([]);
       } finally {
         setIsLoadingCities(false);
@@ -208,26 +211,23 @@ export default function AddAddress({
     };
 
     fetchCities();
-  }, [formData.governorateId]);
+  }, [formData.governorateId, t]);
 
-  // ✅ عند التعديل، تعيين المحافظة والمدينة المناسبة (مع التحقق من وجود governate)
+  // ✅ عند التعديل، تعيين المحافظة والمدينة المناسبة
   useEffect(() => {
     if (isEditing && initialData?.city) {
       const updates: any = {};
       
-      // تعيين بيانات المدينة إذا وجدت
       if (initialData.city.id) {
         updates.cityId = initialData.city.id.toString();
         updates.city = initialData.city.name || "";
       }
       
-      // تعيين بيانات المحافظة إذا وجدت (قد لا تكون موجودة في الـ API)
       if (initialData.city.governate) {
         updates.governorateId = initialData.city.governate.id?.toString() || "";
         updates.governorate = initialData.city.governate.name || "";
       }
       
-      // تعيين باقي البيانات
       updates.street = initialData.street || "";
       updates.building = initialData.building || "";
       updates.apartmentNumber = initialData.apartment || "";
@@ -246,28 +246,20 @@ export default function AddAddress({
   // دالة لعرض النص العربي للمستخدم
   const getAddressTypeDisplay = (type: AddressTypeValue): string => {
     switch (type) {
-      case "home":
-        return "المنزل";
-      case "work":
-        return "الدوام";
-      case "other":
-        return "اخرى";
-      default:
-        return "المنزل";
+      case "home": return t('address.home');
+      case "work": return t('address.work');
+      case "other": return t('address.other');
+      default: return t('address.home');
     }
   };
 
   // دالة للحصول على الأيقونة المناسبة
   const getAddressTypeIcon = (type: AddressTypeValue) => {
     switch (type) {
-      case "home":
-        return <FaHome className="inline ml-1" />;
-      case "work":
-        return <FaBriefcase className="inline ml-1" />;
-      case "other":
-        return <FaMapMarkerAlt className="inline ml-1" />;
-      default:
-        return <FaHome className="inline ml-1" />;
+      case "home": return <FaHome className="inline ml-1" />;
+      case "work": return <FaBriefcase className="inline ml-1" />;
+      case "other": return <FaMapMarkerAlt className="inline ml-1" />;
+      default: return <FaHome className="inline ml-1" />;
     }
   };
 
@@ -284,33 +276,33 @@ export default function AddAddress({
     } = {};
 
     if (!formData.street.trim()) {
-      newErrors.street = "عنوان التوصيل المفصل مطلوب";
+      newErrors.street = t('address.streetRequired');
     } else if (formData.street.trim().length < 5) {
-      newErrors.street = "عنوان التوصيل قصير جداً (على الأقل 5 حروف)";
+      newErrors.street = t('address.streetMinLength');
     }
 
     if (!formData.governorateId) {
-      newErrors.governorate = "الرجاء اختيار المحافظة";
+      newErrors.governorate = t('address.selectGovernorate');
     }
 
     if (!formData.cityId) {
-      newErrors.city = "الرجاء اختيار المدينة";
+      newErrors.city = t('address.selectCity');
     }
 
     if (!formData.building.trim()) {
-      newErrors.building = "اسم المبنى مطلوب";
+      newErrors.building = t('address.buildingRequired');
     }
 
     if (!formData.apartmentNumber.trim()) {
-      newErrors.apartment = "رقم الشقة مطلوب";
+      newErrors.apartment = t('address.apartmentRequired');
     }
 
     if (!formData.floor.trim()) {
-      newErrors.floor = "رقم الدور مطلوب";
+      newErrors.floor = t('address.floorRequired');
     }
 
     if (!formData.addressType) {
-      newErrors.addressType = "الرجاء اختيار تصنيف العنوان";
+      newErrors.addressType = t('address.selectAddressType');
     }
 
     setErrors(newErrors);
@@ -336,11 +328,9 @@ export default function AddAddress({
     );
     setIsExtracting(false);
 
-    // البحث عن المحافظة (id من النوع string)
     const foundGovernorate = governorates.find(
       (gov) => gov.name === governorate
     );
-    // البحث عن المدينة (id من النوع string)
     const foundCity = cities.find(
       (c) => c.name === city
     );
@@ -391,7 +381,7 @@ export default function AddAddress({
         city = city.replace("مدينة ", "");
       }
     } catch (error) {
-      console.error("❌ خطأ في استخراج الموقع:", error);
+      console.error("❌ Error in reverse geocode:", error);
     }
 
     return { city, governorate };
@@ -409,7 +399,6 @@ export default function AddAddress({
     setIsSubmitting(true);
 
     try {
-      // ✅ إرسال city_id كـ string كما يطلبه الـ API
       const addressData = {
         city_id: formData.cityId,
         street: formData.street,
@@ -420,7 +409,6 @@ export default function AddAddress({
         longitude: formData.longitude || null,
         type: formData.addressType,
       };
-
 
       const token = localStorage.getItem("auth_token");
 
@@ -437,6 +425,7 @@ export default function AddAddress({
         method: method,
         headers: {
           "Accept": "application/json",
+          'content-type':'application/json',
           ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify(addressData),
@@ -444,10 +433,9 @@ export default function AddAddress({
 
       const result = await response.json();
 
-
       if (result.result === true) {
         toast.success(
-          isEditing ? "تم تحديث العنوان بنجاح" : "تم إضافة العنوان بنجاح",
+          isEditing ? t('address.updateSuccess') : t('address.addSuccess')
         );
         onSave(result.data);
         onClose();
@@ -456,12 +444,12 @@ export default function AddAddress({
           const errorMessages = Object.values(result.data).flat();
           throw new Error(errorMessages.join(", "));
         }
-        throw new Error(result.message || "حدث خطأ في حفظ العنوان");
+        throw new Error(result.message || t('address.saveError'));
       }
     } catch (error) {
-      console.error("❌ خطأ في حفظ العنوان:", error);
+      console.error("❌ Error saving address:", error);
       toast.error(
-        error instanceof Error ? error.message : "حدث خطأ في حفظ العنوان",
+        error instanceof Error ? error.message : t('address.saveError')
       );
     } finally {
       setIsSubmitting(false);
@@ -473,386 +461,365 @@ export default function AddAddress({
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل المحافظات...</p>
+          <p className="mt-4 text-gray-600">{t('address.loadingGovernorates')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      {/* <Toaster
-        position="top-center"
-        reverseOrder={false}
-        toastOptions={{
-          style: {
-            fontSize: "14px",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            direction: "rtl",
-          },
-          success: { style: { background: "#10B981", color: "white" } },
-          error: { style: { background: "#EF4444", color: "white" } },
-        }}
-      /> */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-            <h2 className="text-xl font-bold text-gray-800">
-              {isEditing ? "تعديل العنوان" : "إضافة عنوان جديد"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-full"
-            >
-              <IoClose size={24} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="lg:w-1/2 space-y-5 order-2 md:order-1">
-                {/* عنوان التوصيل */}
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">
-                    عنوان التوصيل المفصل <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.street}
-                    onChange={(e) => {
-                      setFormData({ ...formData, street: e.target.value });
-                      clearFieldError("street");
-                    }}
-                    placeholder="اسم الشارع بالتفصيل"
-                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
-                      errors.street ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.street && (
-                    <p className="text-red-500 text-xs mt-1">{errors.street}</p>
-                  )}
-                </div>
-
-               {/* المحافظة والمدينة */}
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-  <div>
-    <label className="block text-gray-700 font-medium mb-2">
-      المحافظة <span className="text-red-500">*</span>
-    </label>
-    <Select
-      value={formData.governorateId || ""}
-      onValueChange={(value) => {
-        // ✅ التأكد من أن value ليس null
-        const selectedValue = value || "";
-        const selectedGov = governorates.find(
-          (gov) => gov.id.toString() === selectedValue
-        );
-        setFormData({
-          ...formData,
-          governorateId: selectedValue,
-          governorate: selectedGov?.name || "",
-          cityId: "",
-          city: "",
-        });
-        clearFieldError("governorate");
-      }}
-    >
-      <SelectTrigger
-        className={`w-full ${errors.governorate ? "border-red-500" : ""}`}
-      >
-        <SelectValue>
-          {formData.governorate || "اختر المحافظة"}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {governorates.map((gov) => (
-          <SelectItem key={gov.id} value={gov.id.toString()}>
-            {gov.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-    {errors.governorate && (
-      <p className="text-red-500 text-xs mt-1">
-        {errors.governorate}
-      </p>
-    )}
-  </div>
-
-  <div>
-  <label className="block text-gray-700 font-medium mb-2">
-    المدينة <span className="text-red-500">*</span>
-  </label>
-  <Select
-    value={formData.cityId || ""}
-    onValueChange={(value) => {
-      // ✅ التأكد من أن value ليس null
-      const selectedValue = value || "";
-      const selectedCity = cities.find(
-        (city) => city.id.toString() === selectedValue
-      );
-      setFormData({
-        ...formData,
-        cityId: selectedValue,
-        city: selectedCity?.name || "",
-      });
-      clearFieldError("city");
-    }}
-    disabled={!formData.governorateId || isLoadingCities}
-  >
-    <SelectTrigger
-      className={`w-full ${errors.city ? "border-red-500" : ""}`}
-    >
-      {/* ✅ عرض اسم المدينة هنا بدلاً من الـ ID */}
-      <SelectValue>
-        {formData.city || (
-          !formData.governorateId
-            ? "اختر المحافظة أولاً"
-            : isLoadingCities
-            ? "جاري التحميل..."
-            : "اختر المدينة"
-        )}
-      </SelectValue>
-    </SelectTrigger>
-    <SelectContent>
-      {isLoadingCities ? (
-        <div className="p-4 text-center text-gray-500">
-          جاري تحميل المدن...
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
+          <h2 className="text-xl font-bold text-gray-800">
+            {isEditing ? t('address.editTitle') : t('address.addTitle')}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-full"
+          >
+            <IoClose size={24} />
+          </button>
         </div>
-      ) : cities.length === 0 ? (
-        <div className="p-4 text-center text-gray-500">
-          لا توجد مدن متاحة
-        </div>
-      ) : (
-        cities.map((city) => (
-          <SelectItem key={city.id} value={city.id.toString()}>
-            <div className="flex justify-between items-center w-full">
-              <span>{city.name}</span>
-              <span className="text-xs text-gray-400 mr-2">
-                رسوم التوصيل: {city.delivery_fee} ج.م
-              </span>
-            </div>
-          </SelectItem>
-        ))
-      )}
-    </SelectContent>
-  </Select>
-  {errors.city && (
-    <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-  )}
-</div>
-</div>
 
-                {/* اسم المبنى */}
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="lg:w-1/2 space-y-5 order-2 md:order-1">
+              {/* عنوان التوصيل */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  {t('address.streetLabel')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.street}
+                  onChange={(e) => {
+                    setFormData({ ...formData, street: e.target.value });
+                    clearFieldError("street");
+                  }}
+                  placeholder={t('address.streetPlaceholder')}
+                  className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                    errors.street ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.street && (
+                  <p className="text-red-500 text-xs mt-1">{errors.street}</p>
+                )}
+              </div>
+
+              {/* المحافظة والمدينة */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    اسم المبنى <span className="text-red-500">*</span>
+                    {t('address.governorate')} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={formData.building}
-                    onChange={(e) => {
-                      setFormData({ ...formData, building: e.target.value });
-                      clearFieldError("building");
-                    }}
-                    placeholder="اسم المبنى"
-                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
-                      errors.building ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.building && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.building}
-                    </p>
-                  )}
-                </div>
-
-                {/* رقم الشقة ورقم الدور */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      رقم الشقة <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.apartmentNumber}
-                      onChange={(e) => {
-                        setFormData({
-                          ...formData,
-                          apartmentNumber: e.target.value,
-                        });
-                        clearFieldError("apartment");
-                      }}
-                      placeholder="رقم الشقة"
-                      className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
-                        errors.apartment ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.apartment && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.apartment}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      رقم الدور <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.floor}
-                      onChange={(e) => {
-                        setFormData({ ...formData, floor: e.target.value });
-                        clearFieldError("floor");
-                      }}
-                      placeholder="رقم الدور"
-                      className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
-                        errors.floor ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.floor && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.floor}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* تصنيف العنوان */}
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">
-                    تصنيف العنوان <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-3 flex-wrap">
-                    {(["home", "work", "other"] as AddressTypeValue[]).map(
-                      (typeValue) => (
-                        <button
-                          key={typeValue}
-                          type="button"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              addressType: typeValue,
-                            });
-                            clearFieldError("addressType");
-                          }}
-                          className={`flex items-center gap-2 p-2 md:px-5 md:py-3 border font-semibold rounded-[8px] cursor-pointer ${
-                            formData.addressType === typeValue
-                              ? "border-black bg-[#D2D6DB3D]"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          <span
-                            className={
-                              formData.addressType === typeValue
-                                ? "text-black"
-                                : "text-gray-700"
-                            }
-                          >
-                            {getAddressTypeIcon(typeValue)}
-                            {getAddressTypeDisplay(typeValue)}
-                          </span>
-                        </button>
-                      ),
-                    )}
-                  </div>
-                  {errors.addressType && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.addressType}
-                    </p>
-                  )}
-                </div>
-
-                {/* Save for future */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.saveForFuture}
-                    onChange={(e) =>
+                  <Select
+                    value={formData.governorateId || ""}
+                    onValueChange={(value) => {
+                      const selectedValue = value || "";
+                      const selectedGov = governorates.find(
+                        (gov) => gov.id.toString() === selectedValue
+                      );
                       setFormData({
                         ...formData,
-                        saveForFuture: e.target.checked,
-                      })
-                    }
-                    className="w-4 h-4 text-black bg-black rounded"
-                  />
-                  <span className="text-gray-700">
-                    حفظ العنوان للطلبات القادمة
-                  </span>
-                </label>
+                        governorateId: selectedValue,
+                        governorate: selectedGov?.name || "",
+                        cityId: "",
+                        city: "",
+                      });
+                      clearFieldError("governorate");
+                    }}
+                  >
+                    <SelectTrigger
+                      className={`w-full ${errors.governorate ? "border-red-500" : ""}`}
+                    >
+                      <SelectValue>
+                        {formData.governorate || t('address.selectGovernorate')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {governorates.map((gov) => (
+                        <SelectItem key={gov.id} value={gov.id.toString()}>
+                          {gov.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.governorate && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.governorate}
+                    </p>
+                  )}
+                </div>
 
-                {/* Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-[8px] hover:bg-gray-50 transition"
-                    disabled={isSubmitting}
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    {t('address.city')} <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    value={formData.cityId || ""}
+                    onValueChange={(value) => {
+                      const selectedValue = value || "";
+                      const selectedCity = cities.find(
+                        (city) => city.id.toString() === selectedValue
+                      );
+                      setFormData({
+                        ...formData,
+                        cityId: selectedValue,
+                        city: selectedCity?.name || "",
+                      });
+                      clearFieldError("city");
+                    }}
+                    disabled={!formData.governorateId || isLoadingCities}
                   >
-                    إلغاء
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 px-4 py-2 bg-[#23A6F0] text-white rounded-[8px] hover:bg-[#41b1f1] transition disabled:opacity-50"
-                  >
-                    {isSubmitting
-                      ? "جاري الحفظ..."
-                      : isEditing
-                        ? "تحديث"
-                        : "حفظ"}
-                  </button>
+                    <SelectTrigger
+                      className={`w-full ${errors.city ? "border-red-500" : ""}`}
+                    >
+                      <SelectValue>
+                        {formData.city || (
+                          !formData.governorateId
+                            ? t('address.selectGovernorateFirst')
+                            : isLoadingCities
+                            ? t('address.loadingCities')
+                            : t('address.selectCity')
+                        )}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingCities ? (
+                        <div className="p-4 text-center text-gray-500">
+                          {t('address.loadingCities')}
+                        </div>
+                      ) : cities.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          {t('address.noCities')}
+                        </div>
+                      ) : (
+                        cities.map((city) => (
+                          <SelectItem key={city.id} value={city.id.toString()}>
+                            <div className="flex justify-between items-center w-full">
+                              <span>{city.name}</span>
+                             
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.city && (
+                    <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                  )}
                 </div>
               </div>
 
-              {/* الخريطة */}
-              <div className="lg:w-1/2 order-1 md:order-2">
-                <label className="flex items-center gap-2 text-gray-700 font-medium mb-2">
-                  <FaLocationDot className="text-red-500" />
-                  اختر موقعك على الخريطة (اختياري)
+              {/* اسم المبنى */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  {t('address.buildingLabel')} <span className="text-red-500">*</span>
                 </label>
-                <LocationMap
-                  onLocationSelect={handleLocationSelect}
-                  initialLocation={
-                    formData.latitude && formData.longitude
-                      ? {
-                          lat: parseFloat(formData.latitude),
-                          lng: parseFloat(formData.longitude),
-                        }
-                      : undefined
-                  }
+                <input
+                  type="text"
+                  value={formData.building}
+                  onChange={(e) => {
+                    setFormData({ ...formData, building: e.target.value });
+                    clearFieldError("building");
+                  }}
+                  placeholder={t('address.buildingPlaceholder')}
+                  className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                    errors.building ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
-                {isExtracting && (
-                  <div className="mt-2 text-center text-sm text-blue-600">
-                    جاري استخراج المدينة والمحافظة...
-                  </div>
-                )}
-                {selectedLocation && (
-                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-[8px]">
-                    <p className="text-sm text-green-800 font-medium">
-                      العنوان المختار من الخريطة:
-                    </p>
-                    <p className="text-sm text-gray-700 mt-1">
-                      {selectedLocation.address}
-                    </p>
-                    {selectedLocation.city && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        المدينة: {selectedLocation.city}
-                      </p>
-                    )}
-                    {selectedLocation.governorate && (
-                      <p className="text-xs text-gray-500">
-                        المحافظة: {selectedLocation.governorate}
-                      </p>
-                    )}
-                  </div>
+                {errors.building && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.building}
+                  </p>
                 )}
               </div>
+
+              {/* رقم الشقة ورقم الدور */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    {t('address.apartmentLabel')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.apartmentNumber}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        apartmentNumber: e.target.value,
+                      });
+                      clearFieldError("apartment");
+                    }}
+                    placeholder={t('address.apartmentPlaceholder')}
+                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                      errors.apartment ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.apartment && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.apartment}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    {t('address.floorLabel')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.floor}
+                    onChange={(e) => {
+                      setFormData({ ...formData, floor: e.target.value });
+                      clearFieldError("floor");
+                    }}
+                    placeholder={t('address.floorPlaceholder')}
+                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                      errors.floor ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.floor && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.floor}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* تصنيف العنوان */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  {t('address.addressTypeLabel')} <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-3 flex-wrap">
+                  {(["home", "work", "other"] as AddressTypeValue[]).map(
+                    (typeValue) => (
+                      <button
+                        key={typeValue}
+                        type="button"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            addressType: typeValue,
+                          });
+                          clearFieldError("addressType");
+                        }}
+                        className={`flex items-center gap-2 p-2 md:px-5 md:py-3 border font-semibold rounded-[8px] cursor-pointer ${
+                          formData.addressType === typeValue
+                            ? "border-black bg-[#D2D6DB3D]"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={
+                            formData.addressType === typeValue
+                              ? "text-black"
+                              : "text-gray-700"
+                          }
+                        >
+                          {getAddressTypeIcon(typeValue)}
+                          {getAddressTypeDisplay(typeValue)}
+                        </span>
+                      </button>
+                    ),
+                  )}
+                </div>
+                {errors.addressType && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.addressType}
+                  </p>
+                )}
+              </div>
+
+              {/* Save for future */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.saveForFuture}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      saveForFuture: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4 text-black bg-black rounded"
+                />
+                <span className="text-gray-700">
+                  {t('address.saveForFuture')}
+                </span>
+              </label>
+
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-[8px] hover:bg-gray-50 transition"
+                  disabled={isSubmitting}
+                >
+                  {t('address.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 bg-[#23A6F0] text-white rounded-[8px] hover:bg-[#41b1f1] transition disabled:opacity-50"
+                >
+                  {isSubmitting
+                    ? t('address.saving')
+                    : isEditing
+                      ? t('address.update')
+                      : t('address.save')}
+                </button>
+              </div>
             </div>
-          </form>
-        </div>
+
+            {/* الخريطة */}
+            <div className="lg:w-1/2 order-1 md:order-2">
+              <label className="flex items-center gap-2 text-gray-700 font-medium mb-2">
+                <FaLocationDot className="text-red-500" />
+                {t('address.selectOnMap')}
+              </label>
+              <LocationMap
+                onLocationSelect={handleLocationSelect}
+                initialLocation={
+                  formData.latitude && formData.longitude
+                    ? {
+                        lat: parseFloat(formData.latitude),
+                        lng: parseFloat(formData.longitude),
+                      }
+                    : undefined
+                }
+              />
+              {isExtracting && (
+                <div className="mt-2 text-center text-sm text-blue-600">
+                  {t('address.extractingLocation')}
+                </div>
+              )}
+              {selectedLocation && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-[8px]">
+                  <p className="text-sm text-green-800 font-medium">
+                    {t('address.selectedLocation')}
+                  </p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {selectedLocation.address}
+                  </p>
+                  {selectedLocation.city && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('address.city')}: {selectedLocation.city}
+                    </p>
+                  )}
+                  {selectedLocation.governorate && (
+                    <p className="text-xs text-gray-500">
+                      {t('address.governorate')}: {selectedLocation.governorate}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </form>
       </div>
-    </>
+    </div>
   );
 }

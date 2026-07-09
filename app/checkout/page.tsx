@@ -1,3 +1,4 @@
+// app/checkout/page.tsx (أو components/checkout/CheckoutPage.tsx)
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -12,6 +13,7 @@ import { useCartContext } from "@/contexts/CartContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // استيراد المكونات
 import ContactInfoForm from "@/components/checkout/ContactInfoForm";
@@ -100,19 +102,20 @@ const fetchCartWithParams = async (
   }
 };
 
-// ✅ دالة التحقق من رقم الهاتف حسب الدولة
+// ✅ دالة التحقق من رقم الهاتف حسب الدولة (معدلة للترجمة)
 const validatePhoneNumberByCountry = (
   phoneNumber: string,
   countryCode: string,
+  t: any,
 ): { isValid: boolean; error: string } => {
   const cleanNumber = phoneNumber.replace(/[\s\-]/g, "");
 
   if (!cleanNumber) {
-    return { isValid: false, error: "رقم الهاتف مطلوب" };
+    return { isValid: false, error: t('checkout.phoneRequired') };
   }
 
   if (!/^\d+$/.test(cleanNumber)) {
-    return { isValid: false, error: "يجب أن يحتوي رقم الهاتف على أرقام فقط" };
+    return { isValid: false, error: t('checkout.phoneDigitsOnly') };
   }
 
   const rules: Record<
@@ -126,28 +129,28 @@ const validatePhoneNumberByCountry = (
     }
   > = {
     "+20": {
-      name: "مصر",
+      name: t('checkout.egypt'),
       minLength: 11,
       maxLength: 11,
       startsWith: ["010", "011", "012", "015"],
       pattern: /^01[0125][0-9]{8}$/,
     },
     "+966": {
-      name: "السعودية",
+      name: t('checkout.saudi'),
       minLength: 9,
       maxLength: 9,
       startsWith: ["05"],
       pattern: /^05[0-9]{8}$/,
     },
     "+964": {
-      name: "العراق",
+      name: t('checkout.iraq'),
       minLength: 11,
       maxLength: 11,
       startsWith: ["07"],
       pattern: /^07[0-9]{9}$/,
     },
     "+971": {
-      name: "الإمارات",
+      name: t('checkout.uae'),
       minLength: 9,
       maxLength: 9,
       startsWith: ["05"],
@@ -157,13 +160,17 @@ const validatePhoneNumberByCountry = (
 
   const rule = rules[countryCode];
   if (!rule) {
-    return { isValid: false, error: "كود الدولة غير صالح" };
+    return { isValid: false, error: t('checkout.invalidCountryCode') };
   }
 
   if (cleanNumber.length !== rule.minLength) {
     return {
       isValid: false,
-      error: `رقم الهاتف في ${rule.name} يجب أن يكون ${rule.minLength} أرقام (الطول الحالي: ${cleanNumber.length})`,
+      error: t('checkout.phoneLengthError', { 
+        country: rule.name, 
+        length: rule.minLength,
+        current: cleanNumber.length 
+      }),
     };
   }
 
@@ -173,14 +180,17 @@ const validatePhoneNumberByCountry = (
   if (!startsWithValid) {
     return {
       isValid: false,
-      error: `رقم الهاتف في ${rule.name} يجب أن يبدأ بـ (${rule.startsWith.join(" أو ")})`,
+      error: t('checkout.phoneStartsWithError', { 
+        country: rule.name, 
+        prefixes: rule.startsWith.join(" أو ") 
+      }),
     };
   }
 
   if (!rule.pattern.test(cleanNumber)) {
     return {
       isValid: false,
-      error: `رقم الهاتف غير صحيح لدولة ${rule.name}`,
+      error: t('checkout.phoneInvalidForCountry', { country: rule.name }),
     };
   }
 
@@ -205,7 +215,7 @@ const createOrder = async (orderData: any): Promise<any> => {
 };
 
 // تحويل بيانات السلة
-const transformCartItems = (cart: any): CartItem[] => {
+const transformCartItems = (cart: any, t: any): CartItem[] => {
   if (!cart || !cart.items) return [];
 
   return cart.items.map((item: any) => {
@@ -223,7 +233,7 @@ const transformCartItems = (cart: any): CartItem[] => {
       }
     }
 
-    let brandName = "ماركة";
+    let brandName = t('checkout.defaultBrand');
     if (item.product.brand) {
       if (typeof item.product.brand === "string") {
         brandName = item.product.brand;
@@ -277,6 +287,9 @@ interface AccountData {
 }
 
 export default function CheckoutPage() {
+  const { t } = useTranslation();
+   // ✅ استخدام hook الترجمة
+  
   const {
     cart,
     isLoading: cartLoading,
@@ -303,8 +316,8 @@ export default function CheckoutPage() {
     email: "",
     phone: "",
     name: "",
-    password: "", // ✅ فارغ
-    password_confirmation: "", // ✅ فارغ
+    password: "",
+    password_confirmation: "",
   });
   const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
   const [isSendingAccount, setIsSendingAccount] = useState(false);
@@ -321,14 +334,14 @@ export default function CheckoutPage() {
   // ✅ تتبع آخر قيمة لـ cityId لمنع الاستدعاء المتكرر
   const lastFetchedCityIdRef = useRef<string | null>(null);
 
-  const cartItems = useMemo(() => transformCartItems(cart), [cart]);
+  const cartItems = useMemo(() => transformCartItems(cart, t), [cart, t]);
 
   const [formData, setFormData] = useState<CheckoutFormData>({
     fullName: "",
     phone: "",
     phoneNumber: "",
     phoneCountryCode: "+20",
-    email: "", // ✅ إضافة حقل email
+    email: "",
     deliveryAddress: {
       street: "",
       city: "",
@@ -397,35 +410,29 @@ export default function CheckoutPage() {
     const cityIdChanged = lastFetchedCityIdRef.current !== currentCityId;
 
     if (!deliveryMethodChanged && !cityIdChanged) {
-    
       return;
     }
 
     lastDeliveryMethodRef.current = currentDeliveryMethod;
     lastFetchedCityIdRef.current = currentCityId;
 
-  
-
     const fetchCart = async () => {
       try {
         isFetchingRef.current = true;
         
         if (currentDeliveryMethod === "delivery" && currentCityId) {
-        
           const cartData = await fetchCartWithParams("delivery", currentCityId);
           if (cartData) {
             updateCart(cartData);
           }
         } 
         else if (currentDeliveryMethod === "pickup") {
-       
           const cartData = await fetchCartWithParams("pickup");
           if (cartData) {
             updateCart(cartData);
           }
         } 
         else if (currentDeliveryMethod === "delivery" && !currentCityId) {
-         
           const cartData = await fetchCartWithParams("delivery");
           if (cartData) {
             updateCart(cartData);
@@ -457,7 +464,7 @@ export default function CheckoutPage() {
 
       if (address && address.id) {
         setSelectedAddressId(address.id);
-        toast.success("تم حفظ العنوان بنجاح");
+        toast.success(t('checkout.addressSaved'));
 
         try {
           let cityId = selectedCityIdRef.current;
@@ -487,7 +494,7 @@ export default function CheckoutPage() {
         }
       }
     },
-    [selectedCityId, formData.deliveryMethod, updateCart],
+    [selectedCityId, formData.deliveryMethod, updateCart, t],
   );
 
   // ✅ دالة لاستقبال address_id من عنوان محفوظ تم اختياره
@@ -520,27 +527,27 @@ export default function CheckoutPage() {
   );
 
   const handleCitySelected = useCallback((cityId: string) => {
-   
     selectedCityIdRef.current = cityId;
     setSelectedCityId(cityId);
   }, []);
 
-  // ✅ دالة التحقق من بيانات الحساب (بدون التحقق من كلمة المرور)
+  // ✅ دالة التحقق من بيانات الحساب (معدلة للترجمة)
   const validateAccountData = (): boolean => {
     const errors: Record<string, string> = {};
 
     if (!accountData.email.trim()) {
-      errors.email = "البريد الإلكتروني مطلوب";
+      errors.email = t('checkout.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountData.email)) {
-      errors.email = "البريد الإلكتروني غير صحيح";
+      errors.email = t('checkout.emailInvalid');
     }
 
     if (!accountData.phone.trim()) {
-      errors.phone = "رقم الهاتف مطلوب";
+      errors.phone = t('checkout.phoneRequired');
     } else {
       const phoneValidation = validatePhoneNumberByCountry(
         accountData.phone.replace(/[\s\-]/g, ""),
         "+20",
+        t,
       );
       if (!phoneValidation.isValid) {
         errors.phone = phoneValidation.error;
@@ -548,31 +555,27 @@ export default function CheckoutPage() {
     }
 
     if (!accountData.name.trim()) {
-      errors.name = "الاسم مطلوب";
+      errors.name = t('checkout.nameRequired');
     } else if (accountData.name.trim().length < 3) {
-      errors.name = "الاسم يجب أن يكون 3 أحرف على الأقل";
+      errors.name = t('checkout.nameMinLength');
     }
-
-    // ✅ لا نتحقق من كلمة المرور لأنها ستُرسل فارغة
 
     setAccountErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // ✅ دالة إرسال بيانات الحساب للباك اند (مع كلمة المرور الفارغة)
+  // ✅ دالة إرسال بيانات الحساب للباك اند (معدلة للترجمة)
   const sendAccountDataToBackend = useCallback(async () => {
     if (!createAccount || isSendingAccount) return;
     
-    // التحقق من صحة البيانات (بدون كلمة المرور)
     if (!validateAccountData()) {
-      toast.error("يرجى تصحيح الأخطاء في بيانات الحساب");
+      toast.error(t('checkout.correctAccountErrors'));
       return;
     }
 
     setIsSendingAccount(true);
     
     try {
-      // ✅ إرسال البيانات للباك اند مع كلمة مرور فارغة
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
@@ -582,48 +585,45 @@ export default function CheckoutPage() {
           name: accountData.name,
           email: accountData.email,
           phone: accountData.phone,
-          password: accountData.password || "", // ✅ فارغ
-          password_confirmation: accountData.password_confirmation || "", // ✅ فارغ
+          password: accountData.password || "",
+          password_confirmation: accountData.password_confirmation || "",
         }),
       });
 
       const data = await response.json();
       
       if (data.result === true) {
-        toast.success("تم إنشاء الحساب بنجاح!");
-        // ✅ حفظ التوكن إذا رجعه الباك اند
+        toast.success(t('checkout.accountCreated'));
         if (data.data?.token) {
           localStorage.setItem("auth_token", data.data.token);
         }
       } else {
-        toast.error(data.message || "فشل إنشاء الحساب");
-        setCreateAccount(false); // إلغاء التحديد
+        toast.error(data.message || t('checkout.accountCreationFailed'));
+        setCreateAccount(false);
       }
     } catch (error) {
       console.error("❌ Error creating account:", error);
-      toast.error("حدث خطأ أثناء إنشاء الحساب");
-      setCreateAccount(false); // إلغاء التحديد
+      toast.error(t('checkout.accountCreationError'));
+      setCreateAccount(false);
     } finally {
       setIsSendingAccount(false);
     }
-  }, [createAccount, accountData, isSendingAccount]);
+  }, [createAccount, accountData, isSendingAccount, t]);
 
   // ✅ عند تغيير حالة الـ Checkbox (تشغيل/إيقاف)
   const handleCreateAccountToggle = useCallback(async (checked: boolean) => {
     setCreateAccount(checked);
     
     if (checked) {
-      // ✅ عند التفعيل: تعبئة البيانات من النموذج مع كلمة مرور فارغة
       setAccountData((prev) => ({
         ...prev,
         name: formData.fullName || "",
         phone: formData.phone || "",
         email: formData.email || "",
-        password: "", // ✅ فارغ
-        password_confirmation: "", // ✅ فارغ
+        password: "",
+        password_confirmation: "",
       }));
       
-      // ✅ إرسال البيانات فوراً عند التفعيل
       setTimeout(() => {
         sendAccountDataToBackend();
       }, 100);
@@ -642,7 +642,7 @@ export default function CheckoutPage() {
     }
   }, [formData.fullName, formData.phone, formData.email, createAccount]);
 
-  // ✅ تحضير بيانات الطلب (معدل لدعم الضيف)
+  // ✅ تحضير بيانات الطلب (معدل)
   const prepareOrderData = useCallback(() => {
     const paymentMethodMap: Record<string, string> = {
       cash: "cash",
@@ -656,7 +656,6 @@ export default function CheckoutPage() {
       pickup: "receive",
     };
 
-    // ✅ بناء orderData الأساسي
     const orderData: any = {
       payment_method: paymentMethodMap[formData.paymentMethod] || "cash",
       delivery_method: deliveryMethodMap[formData.deliveryMethod] || "delivery",
@@ -664,23 +663,20 @@ export default function CheckoutPage() {
       create_account: createAccount,
     };
 
-    // ✅ إذا كان الضيف يريد إنشاء حساب، أضف بيانات الحساب (مع كلمة مرور فارغة)
     if (createAccount && isGuest) {
       orderData.account = {
         email: accountData.email,
         phone: accountData.phone,
         name: accountData.name,
-        password: accountData.password || "", // ✅ فارغ
-        password_confirmation: accountData.password_confirmation || "", // ✅ فارغ
+        password: accountData.password || "",
+        password_confirmation: accountData.password_confirmation || "",
       };
     }
 
-    // ✅ إضافة payment_gateway فقط إذا كانت طريقة الدفع هي المحفظة
     if (formData.paymentMethod === "wallet") {
       orderData.payment_gateway = "wallet";
     }
 
-    // ✅ بيانات إضافية للضيف
     if (isGuest) {
       const guestEmail = formData.email || accountData.email || "";
       
@@ -696,31 +692,27 @@ export default function CheckoutPage() {
 
       if (formData.deliveryMethod === "delivery") {
         const cityId = selectedCityIdRef.current || "1";
-      
         additionalData.city_id = cityId;
       }
 
       orderData.additional_data = additionalData;
     }
 
-    // ✅ إذا كان المستخدم مسجل دخول ولديه عنوان
     if (!isGuest && formData.deliveryMethod === "delivery") {
       if (selectedAddressId) {
         orderData.address_id = selectedAddressId;
       }
     }
 
- 
     return orderData;
   }, [formData, selectedAddressId, createAccount, isGuest, accountData]);
 
-  // ✅ إرسال الطلب (معدل)
+  // ✅ إرسال الطلب (معدل للترجمة)
   const handleSubmit = async () => {
     if (isSubmitting || isOrderCompleted) return;
 
-    // ✅ التحقق من البيانات الأساسية
     if (!formData.fullName.trim()) {
-      toast.error("الرجاء إدخال الاسم الكامل");
+      toast.error(t('checkout.fullNameRequired'));
       return;
     }
 
@@ -728,6 +720,7 @@ export default function CheckoutPage() {
       formData.phoneNumber ||
         formData.phone.replace(formData.phoneCountryCode || "", ""),
       formData.phoneCountryCode || "+20",
+      t,
     );
 
     if (!phoneValidation.isValid) {
@@ -738,13 +731,13 @@ export default function CheckoutPage() {
     if (formData.deliveryMethod === "delivery" && !selectedAddressId && isGuest) {
       const address = formData.deliveryAddress;
       if (!address.street || !address.city) {
-        toast.error("الرجاء إدخال بيانات العنوان بالكامل");
+        toast.error(t('checkout.addressRequired'));
         return;
       }
     }
 
     if (formData.deliveryMethod === "delivery" && !selectedAddressId && !isGuest) {
-      toast.error("الرجاء حفظ العنوان أو اختيار عنوان محفوظ أولاً");
+      toast.error(t('checkout.saveAddressFirst'));
       return;
     }
 
@@ -769,11 +762,11 @@ export default function CheckoutPage() {
           console.error("❌ Error refetching cart after order success:", err);
         });
       } else {
-        toast.error(response.message || "حدث خطأ أثناء إنشاء الطلب");
+        toast.error(response.message || t('checkout.orderCreationError'));
       }
     } catch (error) {
       console.error("❌ Error creating order:", error);
-      toast.error("حدث خطأ أثناء إنشاء الطلب");
+      toast.error(t('checkout.orderCreationError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -805,12 +798,12 @@ export default function CheckoutPage() {
   if (!isOrderCompleted && (!cart || cart.items?.length === 0)) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
-        <p className="text-gray-500 mb-4">سلة التسوق فارغة</p>
+        <p className="text-gray-500 mb-4">{t('checkout.emptyCart')}</p>
         <Link
           href="/products"
-          className="bg-[#23A6F0] text-white px-6 py-2 rounded-[8px] "
+          className="bg-[#23A6F0] text-white px-6 py-2 rounded-[8px]"
         >
-          تسوق الآن
+          {t('checkout.shopNow')}
         </Link>
       </div>
     );
@@ -821,14 +814,14 @@ export default function CheckoutPage() {
       <div className="container page-with-padding mx-auto mb-3">
         <div className="mb-6">
           <h1 className="text-xl md:text-xl font-bold text-gray-800 mb-4">
-            إتمام الطلب
+            {t('checkout.checkoutTitle')}
           </h1>
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
             <Link href="/cart" className="hover:text-[#23A6F0] transition">
-              سلة التسوق
+              {t('checkout.cart')}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-[#23A6F0] font-medium">إتمام الطلب</span>
+            <span className="text-[#23A6F0] font-medium">{t('checkout.checkoutTitle')}</span>
           </div>
         </div>
 
@@ -838,6 +831,7 @@ export default function CheckoutPage() {
               formData={formData}
               onFormChange={handleFormChange}
               isGuest={isGuest}
+              t={t}
             />
 
             <DeliveryMethodForm
@@ -845,6 +839,7 @@ export default function CheckoutPage() {
               onDeliveryMethodChange={(method) =>
                 handleFormChange({ deliveryMethod: method })
               }
+              t={t}
             />
 
             {formData.deliveryMethod === "delivery" && (
@@ -858,6 +853,7 @@ export default function CheckoutPage() {
                 onAddressSelected={handleAddressSelected}
                 onCitySelected={handleCitySelected}
                 isGuest={isGuest}
+                t={t}
               />
             )}
 
@@ -871,9 +867,10 @@ export default function CheckoutPage() {
             <NotesForm
               notes={formData.notes}
               onNotesChange={(notes) => handleFormChange({ notes })}
+              t={t}
             />
 
-            {/* ✅ Checkbox إنشاء حساب للضيف (بدون حقول كلمة المرور) */}
+            {/* ✅ Checkbox إنشاء حساب للضيف */}
             {isGuest && (
               <div className="bg-white rounded-[8px] p-4 border border-gray-200 mb-2 md:mb-4">
                 <div className="flex items-start gap-3">
@@ -893,44 +890,14 @@ export default function CheckoutPage() {
                       className="font-semibold text-gray-800 text-sm cursor-pointer flex items-center gap-2"
                     >
                       <User className="w-4 h-4 text-[#23A6F0]" />
-                      إنشاء حساب جديد
+                      {t('checkout.createAccount')}
                       {isSendingAccount && (
-                        <span className="text-xs text-gray-400 mr-2">جاري الإرسال...</span>
+                        <span className="text-xs text-gray-400 mr-2">{t('checkout.sending')}</span>
                       )}
                     </label>
                     <p className="text-xs text-gray-500 mt-1">
-                      سيتم إنشاء حساب باستخدام بياناتك (البريد الإلكتروني، رقم الهاتف، الاسم)
+                      {t('checkout.createAccountDescription')}
                     </p>
-                    
-                    {/* ✅ عرض بيانات الحساب عند التفعيل (بدون كلمة المرور) */}
-                    {/* {createAccount && !isSendingAccount && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
-                        <p className="text-xs text-gray-600">
-                          <span className="font-medium">الاسم:</span> {accountData.name || "..."}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          <span className="font-medium">البريد الإلكتروني:</span> {accountData.email || "..."}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          <span className="font-medium">رقم الهاتف:</span> {accountData.phone || "..."}
-                        </p>
-                       
-                        {Object.keys(accountErrors).length > 0 && (
-                          <div className="mt-2 p-2 bg-red-50 rounded border border-red-200">
-                            {Object.entries(accountErrors).map(([key, error]) => (
-                              <p key={key} className="text-xs text-red-600">• {error}</p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-               
-                    {createAccount && !isSendingAccount && accountData.name && accountData.email && accountData.phone && Object.keys(accountErrors).length === 0 && (
-                      <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                        <p className="text-xs text-green-600">✅ تم إنشاء الحساب بنجاح</p>
-                      </div>
-                    )} */}
                   </div>
                 </div>
               </div>
@@ -941,7 +908,7 @@ export default function CheckoutPage() {
               disabled={isSubmitting || isOrderCompleted}
               className="hidden md:block w-full bg-[#2DA5F3] hover:bg-[#3fadf7] text-white py-3 rounded-[8px] font-semibold text-lg transition disabled:opacity-50"
             >
-              {isSubmitting ? "جاري المعالجة..." : "تأكيد الطلب"}
+              {isSubmitting ? t('checkout.processing') : t('checkout.confirmOrder')}
             </button>
           </div>
 
@@ -956,7 +923,7 @@ export default function CheckoutPage() {
               disabled={isSubmitting || isOrderCompleted}
               className="block md:hidden w-full bg-[#2DA5F3] hover:bg-[#3fadf7] text-white py-3 rounded-[8px] font-semibold text-lg transition disabled:opacity-50"
             >
-              {isSubmitting ? "جاري المعالجة..." : "تأكيد الطلب"}
+              {isSubmitting ? t('checkout.processing') : t('checkout.confirmOrder')}
             </button>
           </div>
         </div>
@@ -974,13 +941,14 @@ export default function CheckoutPage() {
             total: orderResult.total,
           }}
           isGuest={isGuest}
+          t={t}
         />
       )}
     </div>
   );
 }
 
-// ✅ Popup النجاح
+// ✅ Popup النجاح (محدث للترجمة)
 interface SuccessPopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -992,6 +960,7 @@ interface SuccessPopupProps {
     total: number;
   };
   isGuest: boolean;
+  t: any;
 }
 
 function SuccessPopup({
@@ -1002,6 +971,7 @@ function SuccessPopup({
   orderNumber,
   orderDetails,
   isGuest = false,
+  t,
 }: SuccessPopupProps) {
   if (!isOpen) return null;
 
@@ -1015,16 +985,16 @@ function SuccessPopup({
             </div>
           </div>
           <h3 className="text-xl font-bold text-gray-800">
-            تم إتمام طلبك بنجاح
+            {t('checkout.orderSuccess')}
           </h3>
           <p className="text-gray-500 text-sm mt-2">
-            شكراً لتسوقك معنا، طلبك قيد التحضير الآن.
+            {t('checkout.thankYouMessage')}
           </p>
         </div>
 
         <div className="p-1">
           <div className="bg-gray-50 rounded-[8px] p-2 text-center mb-2">
-            <p className="text-xs text-gray-500 mb-1">رقم الطلب</p>
+            <p className="text-xs text-gray-500 mb-1">{t('checkout.orderNumber')}</p>
             <p className="text-xl font-bold text-gray-800">#{orderNumber}</p>
           </div>
         </div>
@@ -1034,14 +1004,14 @@ function SuccessPopup({
             onClick={onGoToHome}
             className="w-full py-2 md:py-3 rounded-[8px] font-medium border transition"
           >
-            العودة إلى الرئيسية
+            {t('checkout.backToHome')}
           </button>
           {!isGuest && (
             <button
               onClick={onGoToOrders}
               className="w-full bg-[#2DA5F3] text-white py-2 rounded-[8px] font-medium hover:bg-[#d41c19] transition"
             >
-              متابعة الطلبات
+              {t('checkout.myOrders')}
             </button>
           )}
         </div>

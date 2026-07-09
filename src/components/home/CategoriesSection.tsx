@@ -140,6 +140,7 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
         {showArrows && (
           <button
             onClick={() => scroll('right')}
+            dir="rtl"
             className="absolute right-5 top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden lg:block"
             aria-label="التمرير لليسار"
           >
@@ -150,6 +151,7 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
         {showArrows && (
           <button
             onClick={() => scroll('left')}
+            dir="rtl"
             className="absolute left-5 top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden lg:block"
             aria-label="التمرير لليمين"
           >

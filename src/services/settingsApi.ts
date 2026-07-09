@@ -31,6 +31,7 @@ export async function getSettings(): Promise<SettingsData> {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'content-type':'application/json',
       },
     });
 

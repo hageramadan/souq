@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -19,7 +20,7 @@ interface LocationMapProps {
   initialLocation?: { lat: number; lng: number };
 }
 
-function LocationMarker({ onLocationSelect, initialLocation }: any) {
+function LocationMarker({ onLocationSelect, initialLocation, t }: any) {
   const [position, setPosition] = useState(initialLocation || null);
   const [address, setAddress] = useState('');
 
@@ -43,7 +44,7 @@ function LocationMarker({ onLocationSelect, initialLocation }: any) {
       onLocationSelect({ lat, lng, address: formattedAddress });
     } catch (error) {
       console.error('Error getting address:', error);
-      const fallbackAddress = `خط الطول: ${lat.toFixed(6)}, خط العرض: ${lng.toFixed(6)}`;
+      const fallbackAddress = `${t('mapComponent.latitude')}: ${lat.toFixed(6)}, ${t('mapComponent.longitude')}: ${lng.toFixed(6)}`;
       setAddress(fallbackAddress);
       onLocationSelect({ lat, lng, address: fallbackAddress });
     }
@@ -61,8 +62,8 @@ function LocationMarker({ onLocationSelect, initialLocation }: any) {
     <Marker position={position}>
       <Popup>
         <div className="text-right">
-          <p className="font-semibold text-sm">الموقع المختار</p>
-          <p className="text-xs text-gray-600 mt-1">{address || 'جاري جلب العنوان...'}</p>
+          <p className="font-semibold text-sm">{t('mapComponent.selectedLocation')}</p>
+          <p className="text-xs text-gray-600 mt-1">{address || t('mapComponent.fetchingAddress')}</p>
         </div>
       </Popup>
     </Marker>
@@ -70,6 +71,7 @@ function LocationMarker({ onLocationSelect, initialLocation }: any) {
 }
 
 export default function MapComponent({ onLocationSelect, initialLocation }: LocationMapProps) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -92,24 +94,24 @@ export default function MapComponent({ onLocationSelect, initialLocation }: Loca
         },
         (error) => {
           console.error('Error getting location:', error);
-          setError('تعذر الحصول على موقعك. الرجاء النقر على الخريطة لتحديد موقعك.');
+          setError(t('mapComponent.locationError'));
           setIsLoading(false);
           setUserLocation({ lat: 30.0444, lng: 31.2357 });
         }
       );
     } else {
-      setError('المتصفح لا يدعم تحديد الموقع');
+      setError(t('mapComponent.browserNotSupported'));
       setIsLoading(false);
       setUserLocation({ lat: 30.0444, lng: 31.2357 });
     }
-  }, [initialLocation]);
+  }, [initialLocation, t]);
 
   if (isLoading) {
     return (
-      <div className="bg-gray-100 rounded-[8px]  h-80 flex items-center justify-center">
+      <div className="bg-gray-100 rounded-[8px] h-80 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">جاري تحميل الخريطة...</p>
+          <p className="text-gray-600">{t('mapComponent.loadingMap')}</p>
         </div>
       </div>
     );
@@ -118,11 +120,11 @@ export default function MapComponent({ onLocationSelect, initialLocation }: Loca
   return (
     <div className="relative">
       {error && (
-        <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-[8px]  text-yellow-700 text-sm">
+        <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-[8px] text-yellow-700 text-sm">
           ⚠️ {error}
         </div>
       )}
-      <div className="rounded-[8px]  overflow-hidden border border-gray-200">
+      <div className="rounded-[8px] overflow-hidden border border-gray-200">
         <MapContainer
           center={userLocation || [30.0444, 31.2357]}
           zoom={13}
@@ -133,11 +135,15 @@ export default function MapComponent({ onLocationSelect, initialLocation }: Loca
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <LocationMarker onLocationSelect={onLocationSelect} initialLocation={userLocation} />
+          <LocationMarker 
+            onLocationSelect={onLocationSelect} 
+            initialLocation={userLocation}
+            t={t}
+          />
         </MapContainer>
       </div>
       <p className="text-xs text-gray-500 mt-2 text-center">
-         انقر على الخريطة لتحديد موقعك بدقة
+        {t('mapComponent.clickToSelect')}
       </p>
     </div>
   );

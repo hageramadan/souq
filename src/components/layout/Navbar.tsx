@@ -4,8 +4,23 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PiSquaresFourLight as MenuIcon} from "react-icons/pi";
-import { Heart, ShoppingCart, User, Search, X, ChevronDown, LogOut, HeartIcon, Package, RotateCcw, UserCircle, Home, RefreshCw, Globe } from "lucide-react";
+import { PiSquaresFourLight as MenuIcon } from "react-icons/pi";
+import {
+  Heart,
+  ShoppingCart,
+  User,
+  Search,
+  X,
+  ChevronDown,
+  LogOut,
+  HeartIcon,
+  Package,
+  RotateCcw,
+  UserCircle,
+  Home,
+  RefreshCw,
+  Globe,
+} from "lucide-react";
 import { useCartContext } from "@/contexts/CartContext";
 import { PiUserBold } from "react-icons/pi";
 import { useState, useRef, useEffect } from "react";
@@ -24,7 +39,7 @@ interface Category {
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
 const getTranslations = (lang: string) => {
-  if (lang === 'en') {
+  if (lang === "en") {
     return {
       home: "Home",
       categories: "Categories",
@@ -74,22 +89,24 @@ export function Navbar() {
   const { isAuthenticated, user, logoutUser, loading } = useAuth();
   const { total: favoritesCount } = useFavorites();
   const { language, setLanguage, updateUserLocale } = useLanguage();
-  
+
   // ✅ الحصول على الترجمات حسب اللغة الحالية
   const t = getTranslations(language);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
-  const [showMobileCategoriesSheet, setShowMobileCategoriesSheet] = useState(false);
+  const [showMobileCategoriesSheet, setShowMobileCategoriesSheet] =
+    useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const [showMobileLanguageDropdown, setShowMobileLanguageDropdown] = useState(false);
-  
+  const [showMobileLanguageDropdown, setShowMobileLanguageDropdown] =
+    useState(false);
+
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
@@ -107,8 +124,8 @@ export function Navbar() {
   // ✅ استمع لتغيرات اللغة وقم بتحديث الـ HTML
   useEffect(() => {
     document.documentElement.lang = language;
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    localStorage.setItem('user_language', language);
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    localStorage.setItem("user_language", language);
   }, [language]);
 
   // جلب الفئات من API
@@ -117,21 +134,21 @@ export function Navbar() {
       try {
         setLoadingCategories(true);
         const categoriesData = await getCategories();
-        
-        const transformedCategories: Category[] = categoriesData.map(cat => ({
+
+        const transformedCategories: Category[] = categoriesData.map((cat) => ({
           id: cat.id,
           name: cat.name,
-          href: `/products?categories=[${cat.id}]`
+          href: `/products?categories=[${cat.id}]`,
         }));
-        
+
         setCategories(transformedCategories);
       } catch (error) {
-        console.error('Error fetching categories for navbar:', error);
+        console.error("Error fetching categories for navbar:", error);
       } finally {
         setLoadingCategories(false);
       }
     };
-    
+
     fetchCategories();
   }, []);
 
@@ -151,8 +168,8 @@ export function Navbar() {
     };
 
     handleScroll();
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [isHomePage]);
 
   // Focus on search input when shown (Desktop)
@@ -165,111 +182,137 @@ export function Navbar() {
   // Close search input when clicking outside (Desktop)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showSearchInput && searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      if (
+        showSearchInput &&
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
         // لا نغلق البحث تلقائياً، نترك المستخدم يقرر الإغلاق
         // setShowSearchInput(false);
         // setSearchQuery("");
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showSearchInput]);
 
   // Close categories dropdown when clicking outside (Desktop only)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showCategoriesDropdown && categoriesRef.current && !categoriesRef.current.contains(event.target as Node)) {
+      if (
+        showCategoriesDropdown &&
+        categoriesRef.current &&
+        !categoriesRef.current.contains(event.target as Node)
+      ) {
         setShowCategoriesDropdown(false);
       }
-      if (showUserDropdown && userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+      if (
+        showUserDropdown &&
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowUserDropdown(false);
       }
-      if (showLanguageDropdown && languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+      if (
+        showLanguageDropdown &&
+        languageDropdownRef.current &&
+        !languageDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowLanguageDropdown(false);
       }
-      if (showMobileLanguageDropdown && mobileLanguageDropdownRef.current && !mobileLanguageDropdownRef.current.contains(event.target as Node)) {
+      if (
+        showMobileLanguageDropdown &&
+        mobileLanguageDropdownRef.current &&
+        !mobileLanguageDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowMobileLanguageDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCategoriesDropdown, showUserDropdown, showLanguageDropdown, showMobileLanguageDropdown]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [
+    showCategoriesDropdown,
+    showUserDropdown,
+    showLanguageDropdown,
+    showMobileLanguageDropdown,
+  ]);
 
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showSearchInput) {
+      if (e.key === "Escape" && showSearchInput) {
         setShowSearchInput(false);
         setSearchQuery("");
       }
-      if (e.key === 'Escape' && showCategoriesDropdown) {
+      if (e.key === "Escape" && showCategoriesDropdown) {
         setShowCategoriesDropdown(false);
       }
-      if (e.key === 'Escape' && showMobileCategoriesSheet) {
+      if (e.key === "Escape" && showMobileCategoriesSheet) {
         setShowMobileCategoriesSheet(false);
       }
-      if (e.key === 'Escape' && showUserDropdown) {
+      if (e.key === "Escape" && showUserDropdown) {
         setShowUserDropdown(false);
       }
-      if (e.key === 'Escape' && showLanguageDropdown) {
+      if (e.key === "Escape" && showLanguageDropdown) {
         setShowLanguageDropdown(false);
       }
-      if (e.key === 'Escape' && showMobileLanguageDropdown) {
+      if (e.key === "Escape" && showMobileLanguageDropdown) {
         setShowMobileLanguageDropdown(false);
       }
     };
-    
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [showSearchInput, showCategoriesDropdown, showMobileCategoriesSheet, showUserDropdown, showLanguageDropdown, showMobileLanguageDropdown]);
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [
+    showSearchInput,
+    showCategoriesDropdown,
+    showMobileCategoriesSheet,
+    showUserDropdown,
+    showLanguageDropdown,
+    showMobileLanguageDropdown,
+  ]);
 
   // ✅ دالة تغيير اللغة - الحل النهائي
-const handleLanguageChange = async (locale: string) => {
-  try {
-   
-    
-    // 1. حفظ اللغة في localStorage
-    localStorage.setItem('user_language', locale);
-  
-    
-    // 2. تحديث HTML attributes
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
-  
-    
-    // 3. تحديث اللغة في Context
-    setLanguage(locale);
-   
-    
-    // 4. إذا كان المستخدم مسجل دخول، تحديث اللغة في الباك اند
-    if (isAuthenticated) {
-    
-      await updateUserLocale(locale);
+  const handleLanguageChange = async (locale: string) => {
+    try {
+      // 1. حفظ اللغة في localStorage
+      localStorage.setItem("user_language", locale);
+
+      // 2. تحديث HTML attributes
+      document.documentElement.lang = locale;
+      document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+
+      // 3. تحديث اللغة في Context
+      setLanguage(locale);
+
+      // 4. إذا كان المستخدم مسجل دخول، تحديث اللغة في الباك اند
+      if (isAuthenticated) {
+        await updateUserLocale(locale);
+      }
+
+      // 5. إغلاق القوائم المنسدلة
+      setShowLanguageDropdown(false);
+      setShowMobileLanguageDropdown(false);
+
+      // 6. عرض رسالة نجاح
+      // toast.success(locale === 'ar' ? '✅ تم تغيير اللغة إلى العربية' : '✅ Language changed to English');
+
+      // 7. ✅ تأكد من حفظ اللغة قبل إعادة التحميل
+      const savedLang = localStorage.getItem("user_language");
+
+      // 8. ✅ إعادة تحميل الصفحة (بدون إضافة ?lang= في الـ URL)
+      window.location.reload();
+    } catch (error) {
+      console.error("Error changing language:", error);
+      const savedLanguage = localStorage.getItem("user_language") || "ar";
+      setLanguage(savedLanguage);
+      toast.error(
+        locale === "ar" ? "❌ فشل تغيير اللغة" : "❌ Failed to change language",
+      );
     }
-    
-    // 5. إغلاق القوائم المنسدلة
-    setShowLanguageDropdown(false);
-    setShowMobileLanguageDropdown(false);
-    
-    // 6. عرض رسالة نجاح
-    // toast.success(locale === 'ar' ? '✅ تم تغيير اللغة إلى العربية' : '✅ Language changed to English');
-    
-    // 7. ✅ تأكد من حفظ اللغة قبل إعادة التحميل
-    const savedLang = localStorage.getItem('user_language');
-   
-    
-    // 8. ✅ إعادة تحميل الصفحة (بدون إضافة ?lang= في الـ URL)
-    window.location.reload();
-    
-  } catch (error) {
-    console.error('Error changing language:', error);
-    const savedLanguage = localStorage.getItem('user_language') || 'ar';
-    setLanguage(savedLanguage);
-    toast.error(locale === 'ar' ? '❌ فشل تغيير اللغة' : '❌ Failed to change language');
-  }
-};
+  };
 
   // ✅ دالة البحث الرئيسية (للديسكتوب والموبايل)
   const handleSearch = (e: React.FormEvent) => {
@@ -322,24 +365,26 @@ const handleLanguageChange = async (locale: string) => {
   // الحرف الأول من اسم المستخدم
   const getUserInitial = () => {
     if (!user) return "";
-    return user.name ? user.name.charAt(0).toUpperCase() : (user.email?.charAt(0).toUpperCase() || "U");
+    return user.name
+      ? user.name.charAt(0).toUpperCase()
+      : user.email?.charAt(0).toUpperCase() || "U";
   };
 
   // تحديد ألوان الناف بار
   const getNavbarStyles = () => {
     if (isHomePage) {
       return {
-        backgroundColor: isScrolled ? '#FFFFFF' : 'transparent',
-        shadow: isScrolled ? 'shadow-md' : 'shadow-none',
-        textColor: isScrolled ? '#112B40' : '#FFFFFF',
-        logoColor: isScrolled ? '#23A6F0' : '#FFFFFF',
+        backgroundColor: isScrolled ? "#FFFFFF" : "transparent",
+        shadow: isScrolled ? "shadow-md" : "shadow-none",
+        textColor: isScrolled ? "#112B40" : "#FFFFFF",
+        logoColor: isScrolled ? "#23A6F0" : "#FFFFFF",
       };
     } else {
       return {
-        backgroundColor: '#FFFFFF',
-        shadow: 'shadow-md',
-        textColor: '#112B40',
-        logoColor: '#23A6F0',
+        backgroundColor: "#FFFFFF",
+        shadow: "shadow-md",
+        textColor: "#112B40",
+        logoColor: "#23A6F0",
       };
     }
   };
@@ -362,16 +407,21 @@ const handleLanguageChange = async (locale: string) => {
   return (
     <>
       {/* Desktop Navigation - يظهر فقط في الشاشات الكبيرة */}
-      <header 
-        className="hidden md:block sticky top-0 z-50 w-full shadow-md bg-white">
+      <header className="hidden md:block sticky top-0 z-50 w-full shadow-md bg-white">
         <div className="container-custom">
           <div className="flex h-20 lg:h-24 items-center justify-between gap-4">
             {/* Logo */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="text-[32px] font-bold transition-colors shrink-0"
             >
-              <Image src="/images/logo.png" alt="Logo" width={1000} height={700} className="object-contain w-24 h-24" />
+              <Image
+                src="/images/logo.png"
+                alt="Logo"
+                width={1000}
+                height={700}
+                className="object-contain w-24 h-24"
+              />
             </Link>
 
             {/* Desktop Navigation Links - ✅ استخدام الترجمات */}
@@ -379,41 +429,51 @@ const handleLanguageChange = async (locale: string) => {
               <Link
                 href="/"
                 className="text-[16px] transition-colors hover:text-[#23A6F0]"
-                style={{ 
-                  color: pathname === '/' ? '#23A6F0' : '#112B40',
-                  fontWeight: pathname === '/' ? '700' : '400'
+                style={{
+                  color: pathname === "/" ? "#23A6F0" : "#112B40",
+                  fontWeight: pathname === "/" ? "700" : "400",
                 }}
               >
                 {t.home}
               </Link>
-              
+
               <div className="relative" ref={categoriesRef}>
                 <button
                   aria-label="categories"
                   className="flex items-center gap-1 text-[16px] transition-colors hover:text-[#23A6F0]"
-                  style={{ 
-                    color: pathname.startsWith('/categories') ? '#23A6F0' : '#112B40',
-                    fontWeight: pathname.startsWith('/categories') ? '700' : '400'
+                  style={{
+                    color: pathname.startsWith("/categories")
+                      ? "#23A6F0"
+                      : "#112B40",
+                    fontWeight: pathname.startsWith("/categories")
+                      ? "700"
+                      : "400",
                   }}
-                  onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                  onClick={() =>
+                    setShowCategoriesDropdown(!showCategoriesDropdown)
+                  }
                   onMouseEnter={() => setShowCategoriesDropdown(true)}
                 >
                   {t.categories}
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform duration-200 ${showCategoriesDropdown ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 {/* Categories Dropdown - Desktop */}
                 {showCategoriesDropdown && (
-                  <div 
+                  <div
                     className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
-                    style={{ borderColor: '#e2e8f0' }}
+                    style={{ borderColor: "#e2e8f0" }}
                     onMouseLeave={() => setShowCategoriesDropdown(false)}
                   >
                     <div className="py-2">
                       {loadingCategories ? (
                         <div className="px-4 py-3 text-center">
                           <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-[#23A6F0] border-r-transparent"></div>
-                          <p className="text-xs text-gray-500 mt-1">{t.loading}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {t.loading}
+                          </p>
                         </div>
                       ) : categories.length > 0 ? (
                         categories.map((category) => (
@@ -421,17 +481,23 @@ const handleLanguageChange = async (locale: string) => {
                             key={category.id}
                             href={category.href}
                             className="block px-4 py-2 text-[14px] transition-colors hover:bg-gray-50"
-                            style={{ color: '#112B40' }}
+                            style={{ color: "#112B40" }}
                             onClick={() => setShowCategoriesDropdown(false)}
-                            onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                            onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "#23A6F0")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color = "#112B40")
+                            }
                           >
                             {category.name}
                           </Link>
                         ))
                       ) : (
                         <div className="px-4 py-3 text-center">
-                          <p className="text-xs text-gray-500">{t.noCategories}</p>
+                          <p className="text-xs text-gray-500">
+                            {t.noCategories}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -442,9 +508,9 @@ const handleLanguageChange = async (locale: string) => {
               <Link
                 href="/contact"
                 className="text-[16px] transition-colors hover:text-[#23A6F0]"
-                style={{ 
-                  color: pathname === '/contact' ? '#23A6F0' : '#112B40',
-                  fontWeight: pathname === '/contact' ? '700' : '400'
+                style={{
+                  color: pathname === "/contact" ? "#23A6F0" : "#112B40",
+                  fontWeight: pathname === "/contact" ? "700" : "400",
                 }}
               >
                 {t.contact}
@@ -456,13 +522,13 @@ const handleLanguageChange = async (locale: string) => {
               {/* Search Button - Desktop */}
               <div className="relative" ref={searchContainerRef}>
                 {!showSearchInput ? (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     aria-label="search"
                     onClick={() => setShowSearchInput(true)}
                     className="relative z-10 hover:bg-gray-100 rounded-[10px]"
-                    style={{ color: '#195073' }}
+                    style={{ color: "#195073" }}
                   >
                     <Search className="h-5 w-5" />
                   </Button>
@@ -475,7 +541,7 @@ const handleLanguageChange = async (locale: string) => {
                           type="search"
                           placeholder={t.search}
                           className="w-64 h-10 ps-9 pe-9 border border-gray-300 rounded-full bg-white focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
-                          style={{ color: '#195073' }}
+                          style={{ color: "#195073" }}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -504,17 +570,17 @@ const handleLanguageChange = async (locale: string) => {
               </div>
 
               {/* Favorites */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                asChild 
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
                 className="relative hover:bg-gray-100 rounded-[10px]"
-                style={{ color: '#195073' }}
+                style={{ color: "#195073" }}
               >
                 <Link href="/account/wishlist">
                   {favoritesCount > 0 && (
                     <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                      {favoritesCount > 99 ? '99+' : favoritesCount}
+                      {favoritesCount > 99 ? "99+" : favoritesCount}
                     </span>
                   )}
                   <Heart className="h-[20px] w-[20px]" />
@@ -522,17 +588,17 @@ const handleLanguageChange = async (locale: string) => {
               </Button>
 
               {/* Cart */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                asChild 
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
                 className="relative hover:bg-gray-100 rounded-[10px] group"
-                style={{ color: '#195073' }}
+                style={{ color: "#195073" }}
               >
                 <Link href="/cart">
                   {itemsCount > 0 && (
                     <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA] text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                      {itemsCount > 99 ? '99+' : itemsCount}
+                      {itemsCount > 99 ? "99+" : itemsCount}
                     </span>
                   )}
                   <ShoppingCart className="h-5 w-5" />
@@ -551,12 +617,12 @@ const handleLanguageChange = async (locale: string) => {
                   size="icon"
                   onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
                   className="relative z-10 hover:bg-gray-100 rounded-[10px]"
-                  style={{ color: '#195073' }}
+                  style={{ color: "#195073" }}
                   aria-label="تغيير اللغة"
                 >
                   <Globe className="h-5 w-5" />
                   <span className="absolute -bottom-1 text-[10px] font-bold">
-                    {language === 'ar' ? 'ع' : 'EN'}
+                    {language === "ar" ? "ع" : "EN"}
                   </span>
                 </Button>
 
@@ -564,20 +630,24 @@ const handleLanguageChange = async (locale: string) => {
                   <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg border shadow-xl z-50">
                     <div className="py-2">
                       <button
-                        onClick={() => handleLanguageChange('ar')}
-                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'ar' ? 'text-[#23A6F0] font-bold' : ''}`}
+                        onClick={() => handleLanguageChange("ar")}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === "ar" ? "text-[#23A6F0] font-bold" : ""}`}
                       >
                         <span className="text-lg">🇸🇦</span>
                         العربية
-                        {language === 'ar' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                        {language === "ar" && (
+                          <span className="mr-auto text-[#23A6F0]">✓</span>
+                        )}
                       </button>
                       <button
-                        onClick={() => handleLanguageChange('en')}
-                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'en' ? 'text-[#23A6F0] font-bold' : ''}`}
+                        onClick={() => handleLanguageChange("en")}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === "en" ? "text-[#23A6F0] font-bold" : ""}`}
                       >
                         <span className="text-lg">🇬🇧</span>
                         English
-                        {language === 'en' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                        {language === "en" && (
+                          <span className="mr-auto text-[#23A6F0]">✓</span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -594,33 +664,64 @@ const handleLanguageChange = async (locale: string) => {
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#23A6F0] to-[#1a7fb3] flex items-center justify-center text-white font-bold text-sm">
                       {getUserInitial()}
                     </div>
-                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showUserDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform duration-200 ${showUserDropdown ? "rotate-180" : ""}`}
+                    />
                   </button>
 
                   {showUserDropdown && (
                     <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg border shadow-xl z-50">
                       <div className="py-2">
                         <div className="px-4 py-3 border-b border-gray-100">
-                          <p className="text-sm font-semibold text-gray-800">{user.name || "مستخدم"}</p>
-                          <p className="text-xs text-gray-500 mt-0.5 text-end" dir="ltr">{user.country_code} {user.phone || ""}</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {user.name || "مستخدم"}
+                          </p>
+                          {user.phone && (
+                            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                              <span dir="ltr">
+                                {" "}
+                                {user.country_code || " "} <></>
+                                {user.phone}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        <Link href="/account/wishlist" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
+                        <Link
+                          href="/account/wishlist"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50"
+                          onClick={() => setShowUserDropdown(false)}
+                        >
                           <HeartIcon className="h-4 w-4" />
                           <span>{t.wishlist}</span>
                         </Link>
-                        <Link href="/account/orders" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
+                        <Link
+                          href="/account/orders"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50"
+                          onClick={() => setShowUserDropdown(false)}
+                        >
                           <Package className="h-4 w-4" />
                           <span>{t.orders}</span>
                         </Link>
-                        <Link href="/account/returns" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
+                        <Link
+                          href="/account/returns"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50"
+                          onClick={() => setShowUserDropdown(false)}
+                        >
                           <RefreshCw className="h-4 w-4" />
                           <span>{t.returns}</span>
                         </Link>
-                        <Link href="/account" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setShowUserDropdown(false)}>
+                        <Link
+                          href="/account"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50"
+                          onClick={() => setShowUserDropdown(false)}
+                        >
                           <UserCircle className="h-4 w-4" />
                           <span>{t.profile}</span>
                         </Link>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 border-t border-gray-100 mt-1 text-red-500">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 border-t border-gray-100 mt-1 text-red-500"
+                        >
                           <LogOut className="h-4 w-4" />
                           <span>{t.logout}</span>
                         </button>
@@ -629,10 +730,16 @@ const handleLanguageChange = async (locale: string) => {
                   )}
                 </div>
               ) : (
-                <Button asChild variant="ghost" className="hover:bg-gray-100 gap-2 rounded-[16px]">
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="hover:bg-gray-100 gap-2 rounded-[16px]"
+                >
                   <Link href="/auth/login">
-                    <PiUserBold className="h-5 w-5 text-[#195073]"  />
-                    <span className="text-[14px] font-bold  text-[#195073]" >{t.login}</span>
+                    <PiUserBold className="h-5 w-5 text-[#195073]" />
+                    <span className="text-[14px] font-bold  text-[#195073]">
+                      {t.login}
+                    </span>
                   </Link>
                 </Button>
               )}
@@ -642,12 +749,18 @@ const handleLanguageChange = async (locale: string) => {
       </header>
 
       {/* ========== MOBILE VIEW ========== */}
-      
+
       {/* الشريط العلوي للموبايل */}
       <div className="md:hidden sticky top-0 z-50 w-full bg-white shadow-md">
         <div className="px-2 py-3 flex items-center justify-between">
           <Link href="/" className="shrink-0">
-            <Image src="/images/logo.png" alt="Logo" width={2000} height={500} className="object-contain w-16 h-16" />
+            <Image
+              src="/images/logo.png"
+              alt="Logo"
+              width={2000}
+              height={500}
+              className="object-contain w-16 h-16"
+            />
           </Link>
 
           {!showSearchInput ? (
@@ -661,40 +774,48 @@ const handleLanguageChange = async (locale: string) => {
               >
                 <Search className="h-5 w-5 text-[#195073]" />
               </Button>
-              
+
               {/* Language Selector - Mobile */}
               <div className="relative" ref={mobileLanguageDropdownRef}>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setShowMobileLanguageDropdown(!showMobileLanguageDropdown)}
+                  onClick={() =>
+                    setShowMobileLanguageDropdown(!showMobileLanguageDropdown)
+                  }
                   className="hover:bg-gray-100 rounded-full relative"
                   aria-label="تغيير اللغة"
                 >
                   <Globe className="h-5 w-5 text-[#195073]" />
                   <span className="absolute -bottom-1 text-[8px] font-bold text-[#195073]">
-                    {language === 'ar' ? 'ع' : 'EN'}
+                    {language === "ar" ? "ع" : "EN"}
                   </span>
                 </Button>
 
                 {showMobileLanguageDropdown && (
-                  <div className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === 'en' ? 'right-0' : 'left-0'}`} >
+                  <div
+                    className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === "en" ? "right-0" : "left-0"}`}
+                  >
                     <div className="py-2">
                       <button
-                        onClick={() => handleLanguageChange('ar')}
-                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'ar' ? 'text-[#23A6F0] font-bold' : ''}`}
+                        onClick={() => handleLanguageChange("ar")}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === "ar" ? "text-[#23A6F0] font-bold" : ""}`}
                       >
                         <span className="text-lg">🇸🇦</span>
                         العربية
-                        {language === 'ar' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                        {language === "ar" && (
+                          <span className="mr-auto text-[#23A6F0]">✓</span>
+                        )}
                       </button>
                       <button
-                        onClick={() => handleLanguageChange('en')}
-                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === 'en' ? 'text-[#23A6F0] font-bold' : ''}`}
+                        onClick={() => handleLanguageChange("en")}
+                        className={`w-full text-right px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${language === "en" ? "text-[#23A6F0] font-bold" : ""}`}
                       >
                         <span className="text-lg">🇬🇧</span>
                         English
-                        {language === 'en' && <span className="mr-auto text-[#23A6F0]">✓</span>}
+                        {language === "en" && (
+                          <span className="mr-auto text-[#23A6F0]">✓</span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -702,14 +823,17 @@ const handleLanguageChange = async (locale: string) => {
               </div>
             </div>
           ) : (
-            <div className="relative flex-1 mx-2" ref={mobileSearchContainerRef}>
+            <div
+              className="relative flex-1 mx-2"
+              ref={mobileSearchContainerRef}
+            >
               <form onSubmit={handleSearch} className="relative">
                 <Input
                   ref={mobileSearchInputRef}
                   type="search"
                   placeholder={t.search}
                   className="w-full h-10 ps-9 pe-9 bg-gray-100 border-0 rounded-full focus:ring-2 focus:ring-[#23A6F0]"
-                  style={{ color: '#195073' }}
+                  style={{ color: "#195073" }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -735,16 +859,22 @@ const handleLanguageChange = async (locale: string) => {
 
         {/* Mobile Menu - ✅ استخدام الترجمات */}
         {mobileMenuOpen && (
-          <div className="border-t py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 bg-white" style={{ borderColor: '#e2e8f0' }}>
+          <div
+            className="border-t py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 bg-white"
+            style={{ borderColor: "#e2e8f0" }}
+          >
             <form onSubmit={handleSearch} className="relative px-3">
-              <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: '#94a3b8' }} />
+              <Search
+                className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4"
+                style={{ color: "#94a3b8" }}
+              />
               <Input
                 type="search"
                 placeholder={t.search}
                 className="w-full h-10 ps-9 bg-gray-50"
-                style={{ 
-                  color: '#112B40',
-                  borderColor: '#e2e8f0'
+                style={{
+                  color: "#112B40",
+                  borderColor: "#e2e8f0",
                 }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -752,33 +882,38 @@ const handleLanguageChange = async (locale: string) => {
             </form>
 
             <div className="flex items-center justify-around px-3 py-2 border-b border-gray-100">
-              <Link 
-                href="/account/wishlist" 
+              <Link
+                href="/account/wishlist"
                 className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors relative"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {favoritesCount > 0 && (
                   <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
-                    {favoritesCount > 99 ? '99+' : favoritesCount}
+                    {favoritesCount > 99 ? "99+" : favoritesCount}
                   </span>
                 )}
-                <Heart className="h-5 w-5" style={{ color: '#195073' }} />
-                <span className="text-xs" style={{ color: '#195073' }}>{t.favorites}</span>
+                <Heart className="h-5 w-5" style={{ color: "#195073" }} />
+                <span className="text-xs" style={{ color: "#195073" }}>
+                  {t.favorites}
+                </span>
               </Link>
-              
-              <Link 
-                href="/cart" 
+
+              <Link
+                href="/cart"
                 className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors relative"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {itemsCount > 0 && (
                   <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
-                    {itemsCount > 99 ? '99+' : itemsCount}
+                    {itemsCount > 99 ? "99+" : itemsCount}
                   </span>
                 )}
-                <ShoppingCart className="h-5 w-5" style={{ color: '#195073' }} />
-                <span className="text-xs" style={{ color: '#195073' }}>
-                  {t.cart} {isGuest && itemsCount > 0 && '(Guest)'}
+                <ShoppingCart
+                  className="h-5 w-5"
+                  style={{ color: "#195073" }}
+                />
+                <span className="text-xs" style={{ color: "#195073" }}>
+                  {t.cart} {isGuest && itemsCount > 0 && "(Guest)"}
                 </span>
               </Link>
 
@@ -787,47 +922,51 @@ const handleLanguageChange = async (locale: string) => {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#23A6F0] to-[#1a7fb3] flex items-center justify-center text-white font-bold text-sm">
                     {getUserInitial()}
                   </div>
-                  <span className="text-xs" style={{ color: '#195073' }}>{t.account}</span>
+                  <span className="text-xs" style={{ color: "#195073" }}>
+                    {t.account}
+                  </span>
                 </div>
               ) : (
-                <Link 
-                  href="/auth/login" 
+                <Link
+                  href="/auth/login"
                   className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <User className="h-5 w-5" style={{ color: '#195073' }} />
-                  <span className="text-xs" style={{ color: '#195073' }}>{t.login}</span>
+                  <User className="h-5 w-5" style={{ color: "#195073" }} />
+                  <span className="text-xs" style={{ color: "#195073" }}>
+                    {t.login}
+                  </span>
                 </Link>
               )}
             </div>
 
             {isAuthenticated && user && (
               <div className="px-3 space-y-1 border-b border-gray-100 pb-3">
-                <Link 
-                  href="/account/orders" 
+                <Link
+                  href="/account/orders"
                   className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-gray-50"
-                  style={{ color: '#112B40' }}
+                  style={{ color: "#112B40" }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Package className="h-4 w-4" />
                   <span>{t.orders}</span>
                 </Link>
-                <Link 
-                  href="/account/returns" 
+                <Link
+                  href="/account/returns"
                   className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-gray-50"
-                  style={{ color: '#112B40' }}
+                  style={{ color: "#112B40" }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <RotateCcw className="h-4 w-4" />
                   <span>{t.returns}</span>
                 </Link>
-                <button 
+                <button
                   onClick={() => {
                     handleLogout();
                     setMobileMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-gray-50"
-                  style={{ color: '#23A6F0' }}
+                  style={{ color: "#23A6F0" }}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>{t.logout}</span>
@@ -847,42 +986,52 @@ const handleLanguageChange = async (locale: string) => {
               <Link
                 href="/"
                 className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50"
-                style={{ color: '#112B40' }}
+                style={{ color: "#112B40" }}
                 onClick={() => setMobileMenuOpen(false)}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#23A6F0")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#112B40")}
               >
                 {t.home}
               </Link>
-              
+
               <div className="space-y-2">
                 <button
                   aria-label="categories"
                   className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50 flex items-center justify-between w-full"
-                  style={{ color: '#112B40' }}
-                  onClick={() => setShowMobileCategoriesSheet(!showMobileCategoriesSheet)}
+                  style={{ color: "#112B40" }}
+                  onClick={() =>
+                    setShowMobileCategoriesSheet(!showMobileCategoriesSheet)
+                  }
                 >
                   {t.categories}
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showMobileCategoriesSheet ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform duration-200 ${showMobileCategoriesSheet ? "rotate-180" : ""}`}
+                  />
                 </button>
-                
+
                 {showMobileCategoriesSheet && (
                   <div className="mr-4 space-y-1">
                     {loadingCategories ? (
-                      <div className="px-3 py-2 text-sm text-gray-500">{t.loading}</div>
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        {t.loading}
+                      </div>
                     ) : (
                       categories.map((category) => (
                         <Link
                           key={category.id}
                           href={category.href}
                           className="block px-3 py-2 text-[14px] rounded-md transition-colors hover:bg-gray-50"
-                          style={{ color: '#112B40' }}
+                          style={{ color: "#112B40" }}
                           onClick={() => {
                             setMobileMenuOpen(false);
                             setShowMobileCategoriesSheet(false);
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                          onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.color = "#23A6F0")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.color = "#112B40")
+                          }
                         >
                           {category.name}
                         </Link>
@@ -895,10 +1044,10 @@ const handleLanguageChange = async (locale: string) => {
               <Link
                 href="/contact"
                 className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50"
-                style={{ color: '#112B40' }}
+                style={{ color: "#112B40" }}
                 onClick={() => setMobileMenuOpen(false)}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#23A6F0'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#23A6F0")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#112B40")}
               >
                 {t.contact}
               </Link>
@@ -908,7 +1057,10 @@ const handleLanguageChange = async (locale: string) => {
       </div>
 
       {/* القائمة السفلية للموبايل (Bottom Navigation Bar) - ✅ استخدام الترجمات */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg" style={{ borderColor: '#e2e8f0' }}>
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg"
+        style={{ borderColor: "#e2e8f0" }}
+      >
         <div className="flex items-center justify-around py-2">
           {/* Home */}
           <Link
@@ -919,8 +1071,14 @@ const handleLanguageChange = async (locale: string) => {
               setShowMobileCategoriesSheet(false);
             }}
           >
-            <Home className="h-5 w-5" style={{ color: pathname === '/' ? '#23A6F0' : '#666' }} />
-            <span className="text-[10px]" style={{ color: pathname === '/' ? '#23A6F0' : '#666' }}>
+            <Home
+              className="h-5 w-5"
+              style={{ color: pathname === "/" ? "#23A6F0" : "#666" }}
+            />
+            <span
+              className="text-[10px]"
+              style={{ color: pathname === "/" ? "#23A6F0" : "#666" }}
+            >
               {t.home}
             </span>
           </Link>
@@ -933,8 +1091,18 @@ const handleLanguageChange = async (locale: string) => {
             }}
             className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors"
           >
-            <MenuIcon className="h-5 w-5" style={{ color: pathname.startsWith('/categories') ? '#23A6F0' : '#666' }} />
-            <span className="text-[10px]" style={{ color: pathname.startsWith('/categories') ? '#23A6F0' : '#666' }}>
+            <MenuIcon
+              className="h-5 w-5"
+              style={{
+                color: pathname.startsWith("/categories") ? "#23A6F0" : "#666",
+              }}
+            />
+            <span
+              className="text-[10px]"
+              style={{
+                color: pathname.startsWith("/categories") ? "#23A6F0" : "#666",
+              }}
+            >
               {t.categories}
             </span>
           </button>
@@ -949,14 +1117,24 @@ const handleLanguageChange = async (locale: string) => {
             }}
           >
             <div className="relative">
-              <Heart className="h-5 w-5" style={{ color: pathname === '/account/wishlist' ? '#23A6F0' : '#666' }} />
+              <Heart
+                className="h-5 w-5"
+                style={{
+                  color: pathname === "/account/wishlist" ? "#23A6F0" : "#666",
+                }}
+              />
               {favoritesCount > 0 && (
                 <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
-                  {favoritesCount > 99 ? '99+' : favoritesCount}
+                  {favoritesCount > 99 ? "99+" : favoritesCount}
                 </span>
               )}
             </div>
-            <span className="text-[10px]" style={{ color: pathname === '/account/wishlist' ? '#23A6F0' : '#666' }}>
+            <span
+              className="text-[10px]"
+              style={{
+                color: pathname === "/account/wishlist" ? "#23A6F0" : "#666",
+              }}
+            >
               {t.favorites}
             </span>
           </Link>
@@ -971,14 +1149,20 @@ const handleLanguageChange = async (locale: string) => {
             }}
           >
             <div className="relative">
-              <ShoppingCart className="h-5 w-5" style={{ color: pathname === '/cart' ? '#23A6F0' : '#666' }} />
+              <ShoppingCart
+                className="h-5 w-5"
+                style={{ color: pathname === "/cart" ? "#23A6F0" : "#666" }}
+              />
               {itemsCount > 0 && (
                 <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
-                  {itemsCount > 99 ? '99+' : itemsCount}
+                  {itemsCount > 99 ? "99+" : itemsCount}
                 </span>
               )}
             </div>
-            <span className="text-[10px]" style={{ color: pathname === '/cart' ? '#23A6F0' : '#666' }}>
+            <span
+              className="text-[10px]"
+              style={{ color: pathname === "/cart" ? "#23A6F0" : "#666" }}
+            >
               {t.cart}
             </span>
           </Link>
@@ -996,7 +1180,10 @@ const handleLanguageChange = async (locale: string) => {
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#23A6F0] to-[#1a7fb3] flex items-center justify-center text-white font-bold text-[10px]">
                 {getUserInitial()}
               </div>
-              <span className="text-[10px]" style={{ color: pathname === '/account' ? '#23A6F0' : '#666' }}>
+              <span
+                className="text-[10px]"
+                style={{ color: pathname === "/account" ? "#23A6F0" : "#666" }}
+              >
                 {t.account}
               </span>
             </Link>
@@ -1009,8 +1196,8 @@ const handleLanguageChange = async (locale: string) => {
                 setShowMobileCategoriesSheet(false);
               }}
             >
-              <User className="h-5 w-5" style={{ color: '#666' }} />
-              <span className="text-[10px]" style={{ color: '#666' }}>
+              <User className="h-5 w-5" style={{ color: "#666" }} />
+              <span className="text-[10px]" style={{ color: "#666" }}>
                 {t.login}
               </span>
             </Link>
@@ -1021,15 +1208,20 @@ const handleLanguageChange = async (locale: string) => {
       {/* Sheet / Modal للفئات في الموبايل */}
       {showMobileCategoriesSheet && (
         <>
-          <div 
+          <div
             className="md:hidden fixed inset-0 bg-black/50 z-50 transition-opacity"
             onClick={() => setShowMobileCategoriesSheet(false)}
           />
           <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl animate-in slide-in-from-bottom duration-300 max-h-[70vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-              <h3 className="text-lg font-bold" style={{ color: '#112B40' }}>{t.allCategories}</h3>
-              <button onClick={() => setShowMobileCategoriesSheet(false)} className="p-1 rounded-full hover:bg-gray-100">
-                <X className="h-5 w-5" style={{ color: '#666' }} />
+              <h3 className="text-lg font-bold" style={{ color: "#112B40" }}>
+                {t.allCategories}
+              </h3>
+              <button
+                onClick={() => setShowMobileCategoriesSheet(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" style={{ color: "#666" }} />
               </button>
             </div>
             <div className="p-4">
@@ -1045,7 +1237,7 @@ const handleLanguageChange = async (locale: string) => {
                       key={category.id}
                       href={category.href}
                       className="block px-4 py-3 text-[15px] rounded-lg transition-colors hover:bg-gray-50 border-b border-gray-100"
-                      style={{ color: '#112B40' }}
+                      style={{ color: "#112B40" }}
                       onClick={() => setShowMobileCategoriesSheet(false)}
                     >
                       {category.name}

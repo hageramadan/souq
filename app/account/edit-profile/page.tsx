@@ -3,19 +3,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { FaUser, FaCamera, FaArrowRight, FaEye, FaEyeSlash } from "react-icons/fa";
-import toast, { Toaster } from "react-hot-toast";
+import {FaCamera, FaArrowRight} from "react-icons/fa";
+import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { changePassword, updateUserProfile, getUserProfile } from "@/services/api";
-import { Loader } from "lucide-react";
 import PhoneInput from "@/components/contact/PhoneInput";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function EditProfilePage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const router = useRouter();
+  const { language } = useLanguage();
   const { user, isAuthenticated, loading: authLoading, logoutUser, updateUserData } = useAuth();
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  // const [showNewPassword, setShowNewPassword] = useState(false);
+  // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   
@@ -115,7 +118,7 @@ export default function EditProfilePage() {
   // التحقق من حالة تسجيل الدخول
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      toast.error("الرجاء تسجيل الدخول أولاً", {
+      toast.error(t('editProfile.loginRequired'), {
         duration: 2000,
         position: "top-center",
       });
@@ -123,7 +126,7 @@ export default function EditProfilePage() {
         router.push("/auth/login");
       }, 1500);
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, authLoading, router, t]);
 
   // تنظيف معاينة الصورة
   useEffect(() => {
@@ -138,12 +141,12 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الصورة يجب أن يكون أقل من 2 ميجابايت");
+        toast.error(t('editProfile.imageSizeError'));
         return;
       }
       
       if (!file.type.startsWith('image/')) {
-        toast.error("الرجاء اختيار ملف صورة صالح");
+        toast.error(t('editProfile.invalidImageType'));
         return;
       }
       
@@ -175,16 +178,16 @@ export default function EditProfilePage() {
 
     // التحقق من الاسم
     if (!formData.name.trim()) {
-      newErrors.name = "الاسم الكامل مطلوب";
+      newErrors.name = t('editProfile.nameRequired');
     } else if (formData.name.trim().length < 3) {
-      newErrors.name = "الاسم يجب أن يكون 3 أحرف على الأقل";
+      newErrors.name = t('editProfile.nameMinLength');
     }
 
     // التحقق من البريد الإلكتروني
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        newErrors.email = "البريد الإلكتروني غير صحيح";
+        newErrors.email = t('editProfile.invalidEmail');
       }
     }
 
@@ -192,13 +195,13 @@ export default function EditProfilePage() {
     if (formData.phone) {
       const phoneRegex = /^[0-9]{10,15}$/;
       if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-        newErrors.phone = "رقم الهاتف غير صحيح (10-15 رقم)";
+        newErrors.phone = t('editProfile.invalidPhone');
       }
     }
 
     // التحقق من كود الدولة
     if (formData.country_code && !formData.country_code.startsWith('+')) {
-      newErrors.country_code = "كود الدولة يجب أن يبدأ بـ +";
+      newErrors.country_code = t('editProfile.invalidCountryCode');
     }
 
     // التحقق من كلمة المرور
@@ -208,20 +211,20 @@ export default function EditProfilePage() {
 
     if (hasCurrentPassword || hasNewPassword || hasConfirmPassword) {
       if (!hasCurrentPassword) {
-        newErrors.currentPassword = "الرجاء إدخال كلمة المرور الحالية";
+        newErrors.currentPassword = t('editProfile.currentPasswordRequired');
       }
       if (!hasNewPassword) {
-        newErrors.newPassword = "الرجاء إدخال كلمة المرور الجديدة";
+        newErrors.newPassword = t('editProfile.newPasswordRequired');
       }
       if (!hasConfirmPassword) {
-        newErrors.confirmPassword = "الرجاء تأكيد كلمة المرور الجديدة";
+        newErrors.confirmPassword = t('editProfile.confirmPasswordRequired');
       }
       if (hasCurrentPassword && hasNewPassword && hasConfirmPassword) {
         if (formData.newPassword.length < 6) {
-          newErrors.newPassword = "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل";
+          newErrors.newPassword = t('editProfile.passwordMinLength');
         }
         if (formData.newPassword !== formData.confirmPassword) {
-          newErrors.confirmPassword = "كلمة المرور الجديدة غير متطابقة";
+          newErrors.confirmPassword = t('editProfile.passwordMismatch');
         }
       }
     }
@@ -250,7 +253,7 @@ export default function EditProfilePage() {
     }
     
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-      toast.error("الرجاء ملء جميع حقول كلمة المرور");
+      toast.error(t('editProfile.fillAllPasswordFields'));
       return false;
     }
     
@@ -262,15 +265,15 @@ export default function EditProfilePage() {
       });
 
       if (result.result) {
-        toast.success("تم تغيير كلمة المرور بنجاح! ✅");
+        toast.success(t('editProfile.passwordChangeSuccess'));
         return true;
       } else {
-        toast.error(result.message || "فشل تغيير كلمة المرور");
+        toast.error(result.message || t('editProfile.passwordChangeFailed'));
         return false;
       }
     } catch (error) {
       console.error("Error changing password:", error);
-      toast.error("حدث خطأ أثناء تغيير كلمة المرور");
+      toast.error(t('editProfile.passwordChangeError'));
       return false;
     }
   };
@@ -316,12 +319,12 @@ export default function EditProfilePage() {
         await fetchUserProfile();
         return true;
       } else {
-        toast.error(result.message || "فشل تحديث المعلومات الشخصية");
+        toast.error(result.message || t('editProfile.profileUpdateFailed'));
         return false;
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("حدث خطأ أثناء تحديث المعلومات الشخصية");
+      toast.error(t('editProfile.profileUpdateError'));
       return false;
     }
   };
@@ -338,7 +341,7 @@ export default function EditProfilePage() {
     }
     
     if (!hasChanges()) {
-      toast.error("لا توجد تغييرات لحفظها", {
+      toast.error(t('editProfile.noChanges'), {
         duration: 2000,
         position: "top-center",
       });
@@ -382,7 +385,7 @@ export default function EditProfilePage() {
         confirmPassword: "",
       }));
       
-      toast.success("تم تحديث الملف الشخصي بنجاح ✅", {
+      toast.success(t('editProfile.profileUpdateSuccess'), {
         duration: 3000,
         position: "top-center",
       });
@@ -392,7 +395,7 @@ export default function EditProfilePage() {
       }, 1500);
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("حدث خطأ أثناء تحديث الملف الشخصي", {
+      toast.error(t('editProfile.profileUpdateError'), {
         duration: 3000,
         position: "top-center",
       });
@@ -450,12 +453,13 @@ export default function EditProfilePage() {
           {/* سهم الرجوع */}
           <div className="flex items-center gap-4 mb-6">
             <button
+            
               onClick={() => router.back()}
               className="p-2 hover:bg-gray-100 rounded-full transition"
             >
-              <FaArrowRight className="w-5 h-5 text-gray-600" />
+              <FaArrowRight className={`h-5 w-5 ${language === 'en' ? 'rotate-180' : ''}`}/>
             </button>
-            <h1 className="text-lg md:text-xl font-bold text-[#180100]">تعديل الملف الشخصي</h1>
+            <h1 className="text-lg md:text-xl font-bold text-[#180100]">{t('editProfile.title')}</h1>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -495,7 +499,7 @@ export default function EditProfilePage() {
 
                 <div className="mr-4">
                   <h2 className="text-xl font-bold text-gray-800 mb-1">
-                    {formData.name || "مستخدم"}
+                    {formData.name || t('editProfile.user')}
                   </h2>
                   {formData.phone && (
                     <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
@@ -511,13 +515,13 @@ export default function EditProfilePage() {
               {/* المعلومات الشخصية */}
               <div className="mb-6">
                 <h2 className="text-lg font-bold text-gray-800 pb-2 mb-4">
-                  المعلومات الشخصية
+                  {t('editProfile.personalInfo')}
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-3">
                   <div className="mb-4">
                     <label className="block text-gray-700 font-medium mb-2">
-                      الاسم الكامل <span className="text-red-500">*</span>
+                      {t('editProfile.fullName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -526,7 +530,7 @@ export default function EditProfilePage() {
                         setFormData({ ...formData, name: e.target.value });
                         clearFieldError("name");
                       }}
-                      placeholder="أدخل الاسم الكامل"
+                      placeholder={t('editProfile.fullNamePlaceholder')}
                       disabled={isSubmitting}
                       className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
                         errors.name ? "border-red-500" : "border-gray-300"
@@ -537,44 +541,142 @@ export default function EditProfilePage() {
                     )}
                   </div>
 
-                  
-
                   {/* حقل رقم الهاتف باستخدام مكون PhoneInput */}
+                  <div className="mb-4">
+                    <label className="block text-gray-700 font-medium mb-2">
+                      {t('editProfile.phone')}
+                    </label>
+                    <PhoneInput
+                      value={fullPhoneValue}
+                      onChange={handlePhoneChange}
+                    />
+                  </div>
+                </div>
+                
                 <div className="mb-4">
                   <label className="block text-gray-700 font-medium mb-2">
-                    رقم الجوال
+                    {t('editProfile.email')}
                   </label>
-                  <PhoneInput
-                    value={fullPhoneValue}
-                    onChange={handlePhoneChange}
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      clearFieldError("email");
+                    }}
+                    placeholder={t('editProfile.emailPlaceholder')}
+                    disabled={isSubmitting}
+                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    } ${isSubmitting ? "opacity-50" : ""}`}
                   />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
-                </div>
-<div className="mb-4">
-                    <label className="block text-gray-700 font-medium mb-2">
-                      البريد الإلكتروني
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => {
-                        setFormData({ ...formData, email: e.target.value });
-                        clearFieldError("email");
-                      }}
-                      placeholder="example@email.com"
-                      disabled={isSubmitting}
-                      className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
-                        errors.email ? "border-red-500" : "border-gray-300"
-                      } ${isSubmitting ? "opacity-50" : ""}`}
-                    />
-                    {errors.email && (
-                      <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                    )}
-                  </div>
-                
               </div>
 
-            
+              {/* تغيير كلمة المرور */}
+              {/* <div className="mb-6">
+                <h2 className="text-lg font-bold text-gray-800 pb-2 mb-4 border-b border-gray-100">
+                  {t('editProfile.changePassword')}
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="mb-3">
+                    <label className="block text-gray-700 font-medium mb-2">
+                      {t('editProfile.currentPassword')}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={formData.currentPassword}
+                        onChange={(e) => {
+                          setFormData({ ...formData, currentPassword: e.target.value });
+                          clearFieldError("currentPassword");
+                        }}
+                        placeholder={t('editProfile.currentPasswordPlaceholder')}
+                        disabled={isSubmitting}
+                        className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                          errors.currentPassword ? "border-red-500" : "border-gray-300"
+                        } ${isSubmitting ? "opacity-50" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                      >
+                        {showCurrentPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.currentPassword && (
+                      <p className="text-red-500 text-xs mt-1">{errors.currentPassword}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="block text-gray-700 font-medium mb-2">
+                      {t('editProfile.newPassword')}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        value={formData.newPassword}
+                        onChange={(e) => {
+                          setFormData({ ...formData, newPassword: e.target.value });
+                          clearFieldError("newPassword");
+                        }}
+                        placeholder={t('editProfile.newPasswordPlaceholder')}
+                        disabled={isSubmitting}
+                        className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                          errors.newPassword ? "border-red-500" : "border-gray-300"
+                        } ${isSubmitting ? "opacity-50" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                      >
+                        {showNewPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.newPassword && (
+                      <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="block text-gray-700 font-medium mb-2">
+                      {t('editProfile.confirmPassword')}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={(e) => {
+                          setFormData({ ...formData, confirmPassword: e.target.value });
+                          clearFieldError("confirmPassword");
+                        }}
+                        placeholder={t('editProfile.confirmPasswordPlaceholder')}
+                        disabled={isSubmitting}
+                        className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                          errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                        } ${isSubmitting ? "opacity-50" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                      >
+                        {showConfirmPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                    )}
+                  </div>
+                </div>
+              </div> */}
 
               {/* أزرار الإجراءات */}
               <div className="flex gap-3">
@@ -584,7 +686,7 @@ export default function EditProfilePage() {
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-[8px] hover:bg-gray-50 transition disabled:opacity-50"
                 >
-                  إلغاء
+                  {t('editProfile.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -594,10 +696,10 @@ export default function EditProfilePage() {
                   {isSubmitting ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      جاري الحفظ...
+                      {t('editProfile.saving')}
                     </>
                   ) : (
-                    "حفظ "
+                    t('editProfile.save')
                   )}
                 </button>
               </div>

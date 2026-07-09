@@ -1,4 +1,3 @@
-// app/account/orders/[id]/return/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { IoCopyOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ========== إعدادات API ==========
 const API_URL = 'https://admin.souqkaber.com/api';
@@ -79,22 +79,22 @@ interface OrderDetails {
   items: OrderItem[];
 }
 
-// ========== خيارات طريقة استرداد المبلغ ==========
-const refundMethods = [
+// ========== خيارات طريقة استرداد المبلغ (معدلة للترجمة) ==========
+const getRefundMethods = (t: any) => [
   { 
     id: "wallet", 
-    name: "المحفظة الإلكترونية", 
-    description: "سيتم إضافة المبلغ إلى محفظتك"
+    name: t('return.wallet'), 
+    description: t('return.walletDescription')
   },
 ];
 
-// ========== دوال استخراج الخصائص ==========
+// ========== دوال استخراج الخصائص (معدلة للترجمة) ==========
 
 // جلب الذاكرة (RAM)
 const getMemory = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const memoryAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "الذاكرة"
+    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM"
   );
   return memoryAttr?.value || null;
 };
@@ -103,7 +103,8 @@ const getMemory = (item: OrderItem): string | null => {
 const getStorage = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const storageAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "هارد ديسك"
+    (attr) => attr.attribute_type.name === "هارد ديسك" || 
+      attr.attribute_type.name === "Hard disk"
   );
   return storageAttr?.value || null;
 };
@@ -112,7 +113,8 @@ const getStorage = (item: OrderItem): string | null => {
 const getColor = (item: OrderItem): { name: string; hex: string | null } | null => {
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "اللون" || attr.attribute_type.name === "لون"
+    (attr) => attr.attribute_type.name === "اللون" || attr.attribute_type.name === "لون" || 
+      attr.attribute_type.name === "color"
   );
   if (!colorAttr) return null;
   
@@ -122,8 +124,8 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
   };
 };
 
-// ========== دالة جلب تفاصيل الطلب ==========
-const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> => {
+// ========== دالة جلب تفاصيل الطلب (معدلة للترجمة) ==========
+const fetchOrderDetails = async (orderId: string, t: any): Promise<OrderDetails | null> => {
   try {
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: 'GET',
@@ -131,15 +133,15 @@ const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> 
     });
     
     const data = await response.json();
-   
     
     if (data.result === true && data.data) {
       const order = data.data;
+      const locale = t('common.lang') === 'en' ? 'en-US' : 'ar-EG';
       return {
         id: order.id,
         order_number: order.order_number,
         orderNumber: order.order_number,
-        date: new Date(order.created_at).toLocaleDateString("ar-EG", {
+        date: new Date(order.created_at).toLocaleDateString(locale, {
           year: "numeric",
           month: "long",
           day: "numeric",
@@ -156,7 +158,7 @@ const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> 
           price: item.unit_price,
           total_price: item.total_price,
           images: item.images || [],
-          image: item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.png",
+          image: item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.jpg",
           variant: item.variant || null,
         })),
       };
@@ -164,16 +166,17 @@ const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> 
     return null;
   } catch (error) {
     console.error("❌ Error fetching order details:", error);
-    toast.error("حدث خطأ في جلب تفاصيل الطلب");
+    toast.error(t('return.fetchError'));
     return null;
   }
 };
 
-// ========== دالة تقديم طلب إرجاع ==========
+// ========== دالة تقديم طلب إرجاع (معدلة للترجمة) ==========
 const submitReturnRequest = async (
   orderId: number,
   refundMethod: string,
-  notes: string
+  notes: string,
+  t: any
 ): Promise<{ success: boolean; message: string; data?: any }> => {
   try {
     const response = await fetch(`${API_URL}/returns`, {
@@ -187,42 +190,42 @@ const submitReturnRequest = async (
     });
     
     const data = await response.json();
-   
     
     if (data.result === true && data.errNum === 200) {
       return { 
         success: true, 
-        message: data.message || "تم تقديم طلب الإرجاع بنجاح",
+        message: data.message || t('return.submitSuccess'),
         data: data.data
       };
     } else {
       return { 
         success: false, 
-        message: data.message || "حدث خطأ أثناء تقديم طلب الإرجاع" 
+        message: data.message || t('return.submitError') 
       };
     }
   } catch (error) {
     console.error("❌ Error submitting return request:", error);
     return { 
       success: false, 
-      message: "حدث خطأ في الاتصال بالخادم" 
+      message: t('return.serverError') 
     };
   }
 };
 
 // ========== تنظيف رابط الصورة ==========
 const cleanImageUrl = (url: string): string => {
-  if (!url) return "/images/placeholder-product.png";
+  if (!url) return "/images/placeholder-product.jpg";
   if (url.startsWith("/storage")) {
     return `https://admin.souqkaber.com${url}`;
   }
   return url;
 };
 
-// ========== تنسيق التاريخ ==========
-const formatDate = (dateString: string): string => {
+// ========== تنسيق التاريخ (معدل للترجمة) ==========
+const formatDate = (dateString: string, t: any): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("ar-EG", {
+  const locale = t('common.lang') === 'en' ? 'en-US' : 'ar-EG';
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -230,6 +233,7 @@ const formatDate = (dateString: string): string => {
 };
 
 export default function ReturnRequestPage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const params = useParams();
   const router = useRouter();
   const orderId = params.id as string;
@@ -241,11 +245,14 @@ export default function ReturnRequestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // ✅ الحصول على خيارات الاسترداد مع الترجمة
+  const refundMethods = getRefundMethods(t);
+
   // جلب تفاصيل الطلب عند تحميل الصفحة
   useEffect(() => {
     const loadOrder = async () => {
       setLoading(true);
-      const orderData = await fetchOrderDetails(orderId);
+      const orderData = await fetchOrderDetails(orderId, t);
       setOrder(orderData);
       setLoading(false);
     };
@@ -253,13 +260,13 @@ export default function ReturnRequestPage() {
     if (orderId) {
       loadOrder();
     }
-  }, [orderId]);
+  }, [orderId, t]);
 
   // دالة تقديم طلب الإرجاع
   const handleSubmit = async () => {
     // التحقق من اختيار طريقة استرداد المبلغ
     if (!refundMethod) {
-      toast.error("الرجاء اختيار طريقة استرداد المبلغ", {
+      toast.error(t('return.selectRefundMethod'), {
         duration: 3000,
         position: "top-center",
       });
@@ -270,16 +277,15 @@ export default function ReturnRequestPage() {
 
     setIsSubmitting(true);
     
-    const result = await submitReturnRequest(order.id, refundMethod, notes);
+    const result = await submitReturnRequest(order.id, refundMethod, notes, t);
     
     if (result.success) {
       setShowSuccess(true);
       
-      // عرض رسالة نجاح إضافية
       toast.success(result.message, {
         duration: 4000,
         position: "top-center",
-        icon: "✅",
+        icon: "",
       });
     } else {
       toast.error(result.message, {
@@ -301,7 +307,7 @@ export default function ReturnRequestPage() {
   const copyOrderNumber = () => {
     if (order) {
       navigator.clipboard.writeText(order.order_number);
-      toast.success("تم نسخ رقم الطلب", {
+      toast.success(t('return.copied'), {
         duration: 2000,
         position: "top-center",
       });
@@ -313,7 +319,7 @@ export default function ReturnRequestPage() {
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto px-4 py-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
-          <p className="text-gray-500 mt-4">جاري تحميل بيانات الطلب...</p>
+          <p className="text-gray-500 mt-4">{t('return.loading')}</p>
         </div>
       </div>
     );
@@ -325,14 +331,14 @@ export default function ReturnRequestPage() {
         <div className="container mx-auto px-4 py-8 text-center">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">
-            الطلب غير موجود
+            {t('return.orderNotFound')}
           </h2>
-          <p className="text-gray-500 mb-4">عذراً، لا يمكننا العثور على هذا الطلب</p>
+          <p className="text-gray-500 mb-4">{t('return.orderNotFoundMessage')}</p>
           <Link
             href="/account/orders"
             className="inline-block bg-[#23A6F0] text-white px-6 py-2 rounded-lg"
           >
-            العودة إلى الطلبات
+            {t('return.backToOrders')}
           </Link>
         </div>
       </div>
@@ -344,23 +350,23 @@ export default function ReturnRequestPage() {
       <div className="container mx-auto mb-3 px-4 md:px-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-          <Link href="/account" className="hover:text-[#23A6F0] transition">حسابي</Link>
+          <Link href="/account" className="hover:text-[#23A6F0] transition">{t('return.myAccount')}</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/account/orders" className="hover:text-[#23A6F0] transition">طلباتي</Link>
+          <Link href="/account/orders" className="hover:text-[#23A6F0] transition">{t('return.myOrders')}</Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-[#23A6F0] font-medium">طلب إرجاع</span>
+          <span className="text-[#23A6F0] font-medium">{t('return.returnRequest')}</span>
         </div>
 
         <div>
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-right">
-            طلب إرجاع
+            {t('return.returnRequest')}
           </h1>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
             {/* رقم الطلب والتاريخ */}
             <div>
               <div className="flex items-center gap-3 text-xl text-[#180100] font-bold">
-                <p>رقم الطلب</p>
+                <p>{t('return.orderNumber')}</p>
                 <div className="flex items-center gap-1">
                   <p>{order.order_number}</p>
                   <IoCopyOutline 
@@ -377,12 +383,11 @@ export default function ReturnRequestPage() {
             {/* المنتجات مع عرض اللون والذاكرة والهارد ديسك */}
             <div>
               <p className="text-gray-600 mb-3">
-                المنتجات ({order.items.length})
+                {t('return.products')} ({order.items.length})
               </p>
               {order.items.map((item, idx) => {
-                const productImage = item.image || (item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.png");
+                const productImage = item.image || (item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.jpg");
                 
-                // ✅ استخراج الخصائص من الـ variant
                 const memory = getMemory(item);
                 const storage = getStorage(item);
                 const color = getColor(item);
@@ -395,12 +400,12 @@ export default function ReturnRequestPage() {
                     <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                       <Image
                         src={productImage}
-                        alt={item.title || item.name || "منتج"}
+                        alt={item.title || item.name || t('return.product')}
                         width={80}
                         height={80}
                         className="object-cover w-full h-full"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/images/placeholder-product.png";
+                          (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
                         }}
                       />
                     </div>
@@ -409,28 +414,25 @@ export default function ReturnRequestPage() {
                         <div>
                           <p className="font-bold text-gray-800">{item.title || item.name}</p>
                           
-                          {/* ✅ عرض الخصائص (اللون، الذاكرة، الهارد ديسك) */}
+                          {/* عرض الخصائص */}
                           <div className="flex flex-wrap gap-2 mt-1.5">
-                            {/* عرض الذاكرة (RAM) */}
                             {memory && (
                               <span className="inline-flex items-center gap-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
-                                <span className="font-medium">الذاكرة:</span>
+                                <span className="font-medium">{t('return.memory')}:</span>
                                 <span>{memory}</span>
                               </span>
                             )}
                             
-                            {/* عرض الهارد ديسك */}
                             {storage && (
                               <span className="inline-flex items-center gap-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
-                                <span className="font-medium">هارد ديسك:</span>
+                                <span className="font-medium">{t('return.storage')}:</span>
                                 <span>{storage}</span>
                               </span>
                             )}
                             
-                            {/* عرض اللون */}
                             {color && (
                               <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
-                                <span className="font-medium">اللون:</span>
+                                <span className="font-medium">{t('return.color')}:</span>
                                 <span>{color.name}</span>
                                 {color.hex && (
                                   <span 
@@ -443,12 +445,12 @@ export default function ReturnRequestPage() {
                           </div>
                           
                           <p className="text-xs text-gray-600 mt-1">
-                            الكمية: x{item.quantity}
+                            {t('return.quantity')}: x{item.quantity}
                           </p>
                         </div>
                         <div>
                           <p className="font-bold text-gray-800 md:text-base text-xs flex gap-1">
-                            {(item.unit_price || item.price || 0).toFixed(2)} EGP
+                            {(item.unit_price || item.price || 0).toFixed(2)} {t('return.currency')}
                           </p>
                         </div>
                       </div>
@@ -462,12 +464,12 @@ export default function ReturnRequestPage() {
           {/* ملاحظات */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 space-y-6 my-4">
             <label className="block text-[#252525] text-lg md:text-2xl font-bold mb-2">
-              ملاحظات
+              {t('return.notes')}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="قم بإدخال ملاحظاتك الإضافية.."
+              placeholder={t('return.notesPlaceholder')}
               className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#23A6F0] resize-none"
               rows={3}
             />
@@ -476,7 +478,7 @@ export default function ReturnRequestPage() {
           {/* طريقة استرداد المبلغ */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 space-y-6 my-4">
             <label className="block text-[#252525] text-lg md:text-2xl font-bold mb-2 lg:mb-4">
-              طريقة استرداد المبلغ
+              {t('return.refundMethod')}
             </label>
             <div className="space-y-3">
               {refundMethods.map((method) => (
@@ -518,10 +520,10 @@ export default function ReturnRequestPage() {
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                جاري تقديم الطلب...
+                {t('return.submitting')}
               </div>
             ) : (
-              "تأكيد طلب الإرجاع"
+              t('return.confirmReturn')
             )}
           </button>
         </div>
@@ -536,17 +538,18 @@ export default function ReturnRequestPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">تم تقديم طلب الإرجاع بنجاح</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">{t('return.successTitle')}</h3>
             <p className="text-gray-500 mb-6">
-              رقم الطلب: <span className="font-bold text-[#23A6F0]">{order.order_number}</span>
+              {t('return.successMessage')}{" "}
+              <span className="font-bold text-[#23A6F0]">{order.order_number}</span>
               <br />
-              سيتم معالجة طلبك والتواصل معك قريباً
+              {t('return.successDescription')}
             </p>
             <button
               onClick={handleCloseSuccess}
               className="w-full bg-[#000000] text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition"
             >
-              العودة إلى الطلبات
+              {t('return.backToOrders')}
             </button>
           </div>
         </div>

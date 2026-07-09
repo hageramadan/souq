@@ -552,6 +552,7 @@ export function LeastPriceProducts() {
             {currentIndex >= 0 && (
               <button
                 onClick={() => scrollByAmount("left")}
+                dir="rtl"
                 className={`${
                   language === "en"
                     ? "end-2 md:end-[-30px]"
@@ -568,6 +569,7 @@ export function LeastPriceProducts() {
             {currentIndex <= maxIndex && (
               <button
                 onClick={() => scrollByAmount("right")}
+                dir="rtl"
                 className={`${
                   language === "en"
                     ? "start-2 md:start-[-30px]"

@@ -9,6 +9,7 @@ import DeliveryAddressForm from "./DeliveryAddressForm";
 import PaymentMethodForm from "./PaymentMethodForm";
 import NotesForm from "./NotesForm";
 import SuccessPopup from "./SuccessPopup";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface CheckoutFormProps {
   formData: CheckoutFormData;
@@ -16,6 +17,7 @@ interface CheckoutFormProps {
   onSubmit: () => Promise<void>;
   total: number;
   isSubmitting?: boolean;
+   isGuest?: boolean;
 }
 
 export default function CheckoutForm({ 
@@ -23,8 +25,11 @@ export default function CheckoutForm({
   onFormChange, 
   onSubmit, 
   total,
-  isSubmitting: externalIsSubmitting = false 
+  isSubmitting: externalIsSubmitting = false,
+  isGuest = false, 
 }: CheckoutFormProps) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  
   const [showPopup, setShowPopup] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [internalIsSubmitting, setInternalIsSubmitting] = useState(false);
@@ -37,18 +42,14 @@ export default function CheckoutForm({
     setInternalIsSubmitting(true);
     
     try {
-      // استدعاء دالة onSubmit الأصلية (إرسال الطلب للخادم)
       await onSubmit();
       
-      // إنشاء رقم طلب عشوائي (يمكن استلامه من الـ API)
       const newOrderNumber = `#${Math.floor(10000 + Math.random() * 90000)}`;
       setOrderNumber(newOrderNumber);
       
-      // إظهار البوب اب
       setShowPopup(true);
     } catch (error) {
       console.error("Error submitting order:", error);
-      // يمكن إضافة رسالة خطأ هنا
     } finally {
       setInternalIsSubmitting(false);
     }
@@ -56,14 +57,12 @@ export default function CheckoutForm({
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    // يمكن إعادة توجيه المستخدم أو تنظيف الفورم هنا
   };
 
-  // تحضير تفاصيل الطلب للبوب اب
   const orderDetails = {
     itemsCount: 0,
     total: total,
-    deliveryDate: getDeliveryDate(formData.deliveryMethod),
+    deliveryDate: getDeliveryDate(formData.deliveryMethod, t),
     address: formData.deliveryMethod === "delivery" && formData.deliveryAddress 
       ? `${formData.deliveryAddress.city} - ${formData.deliveryAddress.governorate}`
       : undefined
@@ -74,14 +73,16 @@ export default function CheckoutForm({
       <ContactInfoForm 
         formData={formData} 
         onFormChange={onFormChange} 
+        isGuest={formData.isGuest}
+         t={t} 
       />
       
       <DeliveryMethodForm 
         deliveryMethod={formData.deliveryMethod}
         onDeliveryMethodChange={(method) => onFormChange({ deliveryMethod: method })}
+        t={t}
       />
       
-      {/* إضافة قيمة افتراضية لـ addressData إذا كانت undefined */}
       <DeliveryAddressForm 
         show={formData.deliveryMethod === "delivery"}
         addressData={formData.deliveryAddress || {
@@ -95,23 +96,26 @@ export default function CheckoutForm({
         onAddressChange={(address) => onFormChange({ deliveryAddress: address })}
         onAddressSaved={() => {}}
         onAddressSelected={() => {}}
+        isGuest={formData.isGuest}
+        t={t}
       />
       
       <PaymentMethodForm 
         paymentMethod={formData.paymentMethod}
         onPaymentMethodChange={(method) => onFormChange({ paymentMethod: method as "cash" | "card" | "mada" | "wallet" })}
+        
       />
       
       <NotesForm 
         notes={formData.notes}
         onNotesChange={(notes) => onFormChange({ notes })}
+        t={t}
       />
       
-      {/* زر إتمام الطلب - يظهر فقط في الموبايل */}
       <button
         onClick={handleSubmit}
         disabled={isSubmitting || !formData.deliveryMethod}
-        className={`w-full md:mb-4 text-white py-3  rounded-[8px]  font-semibold text-lg transition ${
+        className={`w-full md:mb-4 text-white py-3 rounded-[8px] font-semibold text-lg transition ${
           isSubmitting || !formData.deliveryMethod
             ? "bg-gray-400 cursor-not-allowed opacity-70"
             : "bg-[#000000] hover:bg-gray-800"
@@ -123,37 +127,36 @@ export default function CheckoutForm({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            جاري المعالجة...
+            {t('checkout.processing')}
           </span>
         ) : (
-          "تأكيد الطلب"
+          t('checkout.confirmOrder')
         )}
       </button>
       
-      {/* رسالة توضيحية عند عدم اختيار طريقة الاستلام */}
       {!formData.deliveryMethod && (
         <p className="text-xs text-amber-600 text-center mt-2">
-          ⚠️ الرجاء اختيار طريقة الاستلام أولاً
+          ⚠️ {t('checkout.selectDeliveryMethod')}
         </p>
       )}
 
-      {/* Popup النجاح */}
       <SuccessPopup
         isOpen={showPopup}
         onClose={handleClosePopup}
         orderNumber={orderNumber}
         orderDetails={orderDetails}
+        t={t}
       />
     </>
   );
 }
 
 // دالة مساعدة لحساب تاريخ التوصيل المتوقع
-function getDeliveryDate(deliveryMethod: "pickup" | "delivery" | null): string {
+function getDeliveryDate(deliveryMethod: "pickup" | "delivery" | null, t: any): string {
   if (deliveryMethod === "delivery") {
     const date = new Date();
-    date.setDate(date.getDate() + 3); // بعد 3 أيام
-    return date.toLocaleDateString("ar-EG", { 
+    date.setDate(date.getDate() + 3);
+    return date.toLocaleDateString(t('common.lang') === 'en' ? "en-US" : "ar-EG", { 
       weekday: "long", 
       year: "numeric", 
       month: "long", 
@@ -161,13 +164,13 @@ function getDeliveryDate(deliveryMethod: "pickup" | "delivery" | null): string {
     });
   } else if (deliveryMethod === "pickup") {
     const date = new Date();
-    date.setDate(date.getDate() + 1); // بعد يوم واحد للاستلام من الفرع
-    return date.toLocaleDateString("ar-EG", { 
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString(t('common.lang') === 'en' ? "en-US" : "ar-EG", { 
       weekday: "long", 
       year: "numeric", 
       month: "long", 
       day: "numeric" 
     });
   }
-  return "غير محدد";
+  return t('checkout.undefined');
 }

@@ -4,6 +4,8 @@
 import Link from "next/link";
 import { PromoCodeInput } from "./PromoCodeInput";
 import { FaArrowAltCircleLeft, FaArrowLeft } from "react-icons/fa";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CartSummaryProps {
   subtotal: number;
@@ -28,36 +30,54 @@ export function CartSummary({
   onRemovePromoCode,
   isApplying = false,
 }: CartSummaryProps) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+ 
   const isDeliveryFree = deliveryFee === 0;
   
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 sticky top-24 mb-5">
       <h1 className="text-lg lg:text-xl font-bold text-[#180100] pb-2">
-        ملخص الطلب
+        {t('cartSummary.title')}
       </h1>
 
       <div className="space-y-4 py-4">
-        <SummaryRow label="المبلغ الإجمالي" value={subtotal} />
+        <SummaryRow 
+          label={t('cartSummary.subtotal')} 
+          value={subtotal} 
+          t={t}
+        />
         
         {totalDiscount > 0 && (
-          <SummaryRow label="خصم" value={-totalDiscount} isDiscount />
+          <SummaryRow 
+            label={t('cartSummary.discount')} 
+            value={-totalDiscount} 
+            isDiscount 
+            t={t}
+          />
         )}
         
         {promoDiscount > 0 && (
-          <SummaryRow label="خصم " value={-promoDiscount} isDiscount />
+          <SummaryRow 
+            label={t('cartSummary.promoDiscount')} 
+            value={-promoDiscount} 
+            isDiscount 
+            t={t}
+          />
         )}
         
         <SummaryRow 
-          label="رسوم التوصيل" 
-          value={"--"} 
+          label={t('cartSummary.deliveryFee')} 
+          value={t('cartSummary.free')} 
+          t={t}
         />
 
         <div className="border-t border-gray-200 my-2" />
 
         <SummaryRow 
-          label="الإجمالي" 
+          label={t('cartSummary.total')} 
           value={total} 
           isTotal 
+          t={t}
         />
       </div>
 
@@ -69,7 +89,7 @@ export function CartSummary({
       />
 
       {/* زر إكمال الطلب */}
-      <CheckoutButton />
+      <CheckoutButton t={t} />
     </div>
   );
 }
@@ -78,17 +98,19 @@ const SummaryRow = ({
   label, 
   value, 
   isDiscount = false, 
-  isTotal = false 
+  isTotal = false,
+  t,
 }: { 
   label: string; 
   value: number | string; 
   isDiscount?: boolean; 
   isTotal?: boolean;
+  t: any;
 }) => {
   const formatValue = (val: number | string) => {
     if (typeof val === "string") return val;
-    if (isDiscount) return `-EGP ${Math.abs(val).toLocaleString()}`;
-    return `EGP ${val.toLocaleString()}`;
+    if (isDiscount) return `-${t('cartSummary.currency')} ${Math.abs(val).toLocaleString()}`;
+    return `${t('cartSummary.currency')} ${val.toLocaleString()}`;
   };
 
   const getValueClassName = () => {
@@ -110,13 +132,12 @@ const SummaryRow = ({
   );
 };
 
-const CheckoutButton = () => (
-  <Link href="/checkout" className="flex items-center justify-center gap-2 mt-4 w-full bg-[#2DA5F3] text-white py-2  rounded-[8px]  font-bold text-lg transition-all duration-300 shadow-md hover:shadow-lg hover:bg-[#3fabf3]">
+const CheckoutButton = ({ t }: { t: any }) => (
+  
+  <Link href="/checkout" className="flex items-center justify-center gap-2 mt-4 w-full bg-[#2DA5F3] text-white py-2 rounded-[8px] font-bold text-lg transition-all duration-300 shadow-md hover:shadow-lg hover:bg-[#3fabf3]">
     <button className="">
-      إكمال الطلب
-
+      {t('cartSummary.checkout')}
     </button>
-    <FaArrowLeft className="w-4 h-4"/>
-
+    {/* <FaArrowLeft className={`h-4 w-4 ${language === 'en' ? 'rotate-180' : ''}`}/> */}
   </Link>
 );

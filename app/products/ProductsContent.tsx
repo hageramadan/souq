@@ -103,7 +103,7 @@ const extractColorsFromVariants = (
 
 export default function ProductsContent() {
   const searchParams = useSearchParams();
-  const { t } = useTranslation(); // ✅ استخدام hook الترجمة بدلاً من useLanguage
+  const { t } = useTranslation();
 
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +122,11 @@ export default function ProductsContent() {
   const [allBrands, setAllBrands] = useState<
     Array<{ id: number; name: string }>
   >([]);
+  const [categoryBrands, setCategoryBrands] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
+  const [isCategorySpecificBrands, setIsCategorySpecificBrands] = useState(false);
 
   // حالة الترتيب
   const [sortBy, setSortBy] = useState<string>("all");
@@ -133,8 +137,8 @@ export default function ProductsContent() {
   const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFilterChangeRef = useRef(false);
-
-  // ✅ تحميل البراندات
+const [loadingSliders, setLoadingSliders] = useState(false);
+  // ✅ تحميل البراندات العامة
   useEffect(() => {
     const fetchBrands = async () => {
       try {
@@ -147,34 +151,77 @@ export default function ProductsContent() {
     fetchBrands();
   }, []);
 
+  // ✅ تحميل بيانات الفئة - التعديل الرئيسي
   useEffect(() => {
     const categoriesParam = searchParams.get("categories");
-    if (categoriesParam) {
+    
+    const loadCategoryData = async () => {
       try {
-        const categoryIds = JSON.parse(categoriesParam);
-        if (categoryIds && categoryIds.length > 0) {
-          const categoryId = categoryIds[0];
-          setCurrentCategoryId(categoryId);
-          setFilters((prev) => ({ ...prev, categoryIds: [categoryId] }));
-
-          const fetchCategoryData = async () => {
-            const categories = await getCategories();
-            const category = categories.find((c) => c.id === categoryId);
-            if (category) {
-              setCategoryName(category.name);
-              // ✅ جلب السلايدرات الخاصة بهذه الفئة
-              if (category.sliders && category.sliders.length > 0) {
-                setCategorySliders(category.sliders);
-              }
-            }
-          };
-          fetchCategoryData();
+         setLoadingSliders(true);
+        // إذا لم توجد فئة محددة
+        if (!categoriesParam) {
+          setCategoryBrands(allBrands);
+          setIsCategorySpecificBrands(false);
+          setCategoryName(null);
+          setCategorySliders([]);
+          setCurrentCategoryId(null);
+          return;
         }
-      } catch (e) {
-        console.error("Error parsing categories param:", e);
+
+        const categoryIds = JSON.parse(categoriesParam);
+        if (!categoryIds || categoryIds.length === 0) {
+          setCategoryBrands(allBrands);
+          setIsCategorySpecificBrands(false);
+          setCategoryName(null);
+          setCategorySliders([]);
+          setCurrentCategoryId(null);
+          return;
+        }
+
+        const categoryId = categoryIds[0];
+        setCurrentCategoryId(categoryId);
+        setFilters((prev) => ({ ...prev, categoryIds: [categoryId] }));
+
+        // جلب جميع الفئات من الـ API
+        const categories = await getCategories();
+        const category = categories.find((c) => c.id === categoryId);
+
+        if (category) {
+          setCategoryName(category.name);
+
+          // جلب السلايدرات
+          if (category.sliders && category.sliders.length > 0) {
+            setCategorySliders(category.sliders);
+          } else {
+            setCategorySliders([]);
+          }
+
+          // ✅ جلب براندات الفئة
+          if (category.brands && category.brands.length > 0) {
+            console.log("✅ Category brands found:", category.brands);
+            setCategoryBrands(category.brands);
+            setIsCategorySpecificBrands(true);
+          } else {
+            console.log("⚠️ No category brands, using all brands");
+            setCategoryBrands(allBrands.length > 0 ? allBrands : []);
+            setIsCategorySpecificBrands(false);
+          }
+        } else {
+          // إذا لم يتم العثور على الفئة
+          setCategoryBrands(allBrands.length > 0 ? allBrands : []);
+          setIsCategorySpecificBrands(false);
+          setCategoryName(null);
+          setCategorySliders([]);
+        }
+      } catch (error) {
+        console.error("Error loading category data:", error);
+        setCategoryBrands(allBrands.length > 0 ? allBrands : []);
+        setIsCategorySpecificBrands(false);
       }
-    }
-  }, [searchParams]);
+    };
+
+    loadCategoryData();
+  }, [searchParams, allBrands]);
 
   const loadProducts = useCallback(async () => {
     if (abortControllerRef.current) {
@@ -361,7 +408,7 @@ export default function ProductsContent() {
     }
 
     const cleanImageUrl = (url: string) => {
-      if (!url) return "/placeholder-image.jpg";
+      if (!url) return "/images/placeholder-product.jpg";
       if (url.startsWith("/storage")) {
         return `https://admin.souqkaber.com${url}`;
       }
@@ -412,23 +459,22 @@ export default function ProductsContent() {
     return count;
   };
 
-  // ✅ استخدام t() بدلاً من getText
-  const getSortLabel = () => {
-    switch (sortBy) {
-      case "all":
-        return t("products.sortAll");
-      case "price_asc":
-        return t("products.sortPriceAsc");
-      case "price_desc":
-        return t("products.sortPriceDesc");
-      case "best_seller":
-        return t("products.sortBestSeller");
-      case "offers":
-        return t("products.sortOffers");
-      default:
-        return t("products.sortAll");
-    }
-  };
+  // ✅ تحديد البراندات التي سيتم عرضها
+  // ✅ تحديد البراندات التي سيتم عرضها - مع التأكد من مسح البراندات القديمة
+const displayBrands = useMemo(() => {
+  // إذا كانت الفئة محددة ولديها براندات خاصة
+  if (currentCategoryId !== null && isCategorySpecificBrands) {
+    return categoryBrands;
+  }
+  
+  // إذا كانت الفئة محددة ولكن ليس لديها براندات
+  if (currentCategoryId !== null && !isCategorySpecificBrands) {
+    return []; // ✅ عرض فارغ بدلاً من البراندات العامة
+  }
+  
+  // إذا لم توجد فئة محددة، استخدم البراندات العامة
+  return allBrands;
+}, [currentCategoryId, isCategorySpecificBrands, categoryBrands, allBrands]);
 
   return (
     <div className="min-h-screen">
@@ -468,26 +514,31 @@ export default function ProductsContent() {
 
       <div className="container mx-auto px-4 pb-16 ">
         {/* ✅ Category Slider */}
-        {categorySliders.length > 0 && (
-          <div className="mb-2">
-            <CategorySlider
-              sliders={categorySliders}
-              categoryName={categoryName || undefined}
-              categoryId={currentCategoryId || undefined}
-              autoplay={true}
-              autoplayDelay={5000}
-            />
-          </div>
-        )}
+     
+{categorySliders.length > 0 && (
+  <div className="mb-2" key={currentCategoryId}> {/* ✅ إضافة key */}
+    <CategorySlider
+      sliders={categorySliders}
+      categoryName={categoryName || undefined}
+      categoryId={currentCategoryId || undefined}
+      autoplay={true}
+      autoplayDelay={5000}
+    />
+  </div>
+)}
 
-        {/* ✅ BrandSlider */}
-        <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4 ">
+        {/* ✅ BrandSlider - يعرض براندات الفئة المختارة */}
+       { categoryBrands.length > 0 &&(
+         <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4 ">
           <BrandSlider
-            brands={allBrands}
+            brands={displayBrands}
             selectedBrands={selectedBrands}
             onBrandToggle={handleBrandToggle}
+            showCategoryBrandsLabel={isCategorySpecificBrands}
+            categoryName={categoryName || undefined}
           />
         </div>
+       ) }
        
         {/* فلتر الترتيب - نسخة سطح المكتب (sort-section1) */}
         <div className="sort-section1">
@@ -744,6 +795,7 @@ export default function ProductsContent() {
             <ProductFilters
               onFilterChange={handleFilterChange}
               lang={t("common.lang")}
+              categoryId={currentCategoryId}
             />
           </div>
         </div>
@@ -798,6 +850,7 @@ export default function ProductsContent() {
               isMobile={true}
               onClose={() => setIsMobileFilterOpen(false)}
               lang={t("common.lang")}
+              categoryId={currentCategoryId}
             />
           </div>
         </div>

@@ -197,7 +197,9 @@ export function Hero() {
   }
 
   return (
-    <section className="relative w-full h-[55vh] lg:h-[70vh] overflow-hidden bg-gray-900">
+    <div>
+     { slides.length > 0 && (
+       <section className="relative w-full h-[55vh] lg:h-[70vh] overflow-hidden bg-gray-900">
       <div 
         ref={containerRef}
         className={`relative w-full h-full overflow-hidden ${
@@ -346,5 +348,8 @@ export function Hero() {
         </div>
       )}
     </section>
+     ) }
+    </div>
+   
   );
 }

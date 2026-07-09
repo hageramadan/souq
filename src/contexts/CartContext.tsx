@@ -15,6 +15,7 @@ import {
   clearGuestToken,
 } from '@/services/cart';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CartContextType {
   cart: CartData | null;
@@ -32,12 +33,14 @@ interface CartContextType {
   updateCart: (newCart: CartData | null) => void;
   getItemQuantity: (productId: number) => number;
   setGuestToken: (token: string) => void;
-  clearGuestMode: () => void; // ✅ دالة جديدة لمسح وضع الضيف
+  clearGuestMode: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  
   const [cart, setCart] = useState<CartData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
@@ -180,15 +183,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
           }
         }
         
-        toast.success(response.message || 'تم إضافة المنتج إلى السلة');
+        toast.success(response.message || t('cart.addSuccess'));
         await fetchCartData(false);
         return true;
       } else {
-        toast.error(response.message || 'فشل في إضافة المنتج');
+        toast.error(response.message || t('cart.addFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في إضافة المنتج');
+      toast.error(t('cart.addError'));
       return false;
     } finally {
       setIsMutating(false);
@@ -202,15 +205,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await updateCartItemQuantity(cartItemId, quantity);
       
       if (response.result === true && response.data) {
-        toast.success('تم تحديث الكمية بنجاح');
+        toast.success(t('cart.updateSuccess'));
         await fetchCartData(false);
         return true;
       } else {
-        toast.error(response.message || 'فشل في تحديث الكمية');
+        toast.error(response.message || t('cart.updateFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في تحديث الكمية');
+      toast.error(t('cart.updateError'));
       return false;
     } finally {
       setIsMutating(false);
@@ -224,15 +227,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await removeFromCart(cartItemId);
       
       if (response.result === true) {
-        toast.success('تم إزالة المنتج من السلة');
+        toast.success(t('cart.removeSuccess'));
         await fetchCartData(false);
         return true;
       } else {
-        toast.error(response.message || 'فشل في إزالة المنتج');
+        toast.error(response.message || t('cart.removeFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في إزالة المنتج');
+      toast.error(t('cart.removeError'));
       return false;
     } finally {
       setIsMutating(false);
@@ -246,15 +249,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await clearCart();
       
       if (response.result === true) {
-        toast.success('تم تفريغ السلة بنجاح');
+        toast.success(t('cart.clearAllSuccess'));
         await fetchCartData(false);
         return true;
       } else {
-        toast.error(response.message || 'فشل في تفريغ السلة');
+        toast.error(response.message || t('cart.clearAllFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في تفريغ السلة');
+      toast.error(t('cart.clearAllError'));
       return false;
     } finally {
       setIsMutating(false);
@@ -284,7 +287,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     updateCart,
     getItemQuantity,
     setGuestToken,
-    clearGuestMode, // ✅ دالة جديدة
+    clearGuestMode,
   };
 
   return (

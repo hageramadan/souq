@@ -62,18 +62,12 @@ export function CategorySlider({
   const { language } = useLanguage();
   const t = getTranslations(language);
   
+  // ✅ تعريف جميع الـ Hooks أولاً (قبل أي return)
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const autoplayRef = useRef<NodeJS.Timeout | null>(null);
-
-  // ✅ إذا لم توجد سلايدرات
-  if (!sliders || sliders.length === 0) {
-    return null;
-  }
-
-  const currentSlider = sliders[currentIndex];
 
   // ✅ التنقل بين السلايدرات
   const goToSlide = useCallback((index: number) => {
@@ -166,6 +160,13 @@ export function CategorySlider({
     setIsDragging(false);
   }, []);
 
+  // ✅ التحقق من وجود سلايدرات (بعد تعريف جميع الـ Hooks)
+  if (!sliders || sliders.length === 0) {
+    return null;
+  }
+
+  const currentSlider = sliders[currentIndex];
+
   return (
     <div 
       className={`relative w-full overflow-hidden rounded-2xl ${className}`}
@@ -226,7 +227,7 @@ export function CategorySlider({
         {/* صورة السلايدر - نفس أبعاد AdsHome */}
         <div className="mt-4 md:mt-0 flex justify-center">
           <Image 
-            src={`${API_BASE_URL}${currentSlider?.image}`}
+            src={currentSlider?.image ? `${API_BASE_URL}${currentSlider.image.trim()}` : '/images/placeholder-product.jpg'}
             alt={currentSlider?.title || "Slider image"}
             className="w-[250px] md:w-[416px] h-[150px] md:h-[304px] lg:w-[536px] lg:h-[424px] object-contain rounded-lg"
             width={536}

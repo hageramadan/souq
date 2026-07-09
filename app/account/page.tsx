@@ -17,12 +17,19 @@ import {
 } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLanguage } from "@/contexts/LanguageContext";
 export default function AccountPage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const router = useRouter();
+  const {language} = useLanguage()
   const { user, isAuthenticated, loading, logoutUser } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
+  const [isClient, setIsClient] = useState(false);
+  // ✅ دالة مساعدة لاستخراج الرصيد والعملة من البيانات
+    useEffect(() => {
+    setIsClient(true);
+  }, []);
   // حالات الرصيد
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>("EGP");
@@ -130,19 +137,6 @@ export default function AccountPage() {
     }
   }, [isAuthenticated]);
 
-  // التحقق من حالة تسجيل الدخول
-  // useEffect(() => {
-  //   if (!loading && !isAuthenticated) {
-  //     toast.error("الرجاء تسجيل الدخول أولاً", {
-  //       duration: 2000,
-  //       position: "top-center",
-  //     });
-  //     setTimeout(() => {
-  //       router.push("/auth/login");
-  //     }, 1500);
-  //   }
-  // }, [isAuthenticated, loading, router]);
-
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -152,7 +146,7 @@ export default function AccountPage() {
     
     await logoutUser();
     
-    toast.success("تم تسجيل الخروج بنجاح 👋", {
+    toast.success(t('account.logoutSuccess'), {
       duration: 2000,
       position: "top-center",
     });
@@ -166,28 +160,29 @@ export default function AccountPage() {
     setShowLogoutModal(false);
   };
 
+  // ✅ قائمة عناصر القائمة مع ترجمة
   const menuItems = [
     {
       id: 1,
-      title: "طلباتي",
+      title: t('account.myOrders'),
       icon: <TbChecklist className="w-5 h-5" />,
       href: "/account/orders",
     },
     {
       id: 2,
-      title: "المرتجعات",
+      title: t('account.myReturns'),
       icon: <TbTruckReturn className="w-5 h-5" />,
       href: "/account/returns",
     },
     {
       id: 3,
-      title: "العناوين المحفوظة",
+      title: t('account.savedAddresses'),
       icon: <SlLocationPin className="w-5 h-5" />,
       href: "/account/address",
     },
     {
       id: 4,
-      title: "المفضلة",
+      title: t('account.wishlist'),
       icon: <FaRegHeart className="w-5 h-5" />,
       href: "/account/wishlist",
     },
@@ -199,7 +194,7 @@ export default function AccountPage() {
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-gray-300 border-t-[#23A6F0] rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري تحميل بيانات الحساب...</p>
+          {/* <p className="text-gray-600">{t('account.loadingAccount')}</p> */}
         </div>
       </div>
     );
@@ -219,10 +214,12 @@ export default function AccountPage() {
           </div>
           
           <h3 className="text-2xl font-bold text-gray-800 mb-2">
-            ! مرحباً بك
+            {t('account.welcomeMessage')}
           </h3>
           <p className="text-gray-600 mb-6 text-lg">
-            يرجى <span className="text-[#23A6F0] font-semibold">تسجيل الدخول</span> أولاً للوصول إلى ملفك الشخصي
+            {t('account.loginRequiredMessage')}{" "}
+            <span className="text-[#23A6F0] font-semibold">{t('account.login')}</span>{" "}
+            {t('account.toAccessProfile')}
           </p>
           
           <div className="space-y-3">
@@ -230,21 +227,21 @@ export default function AccountPage() {
               onClick={() => router.push("/auth/login")}
               className="w-full px-6 py-3 bg-[#23A6F0] text-white rounded-xl hover:bg-[#3b82f6] transition-all duration-300 font-semibold text-lg shadow-md hover:shadow-lg"
             >
-              تسجيل الدخول الآن
+              {t('account.loginNow')}
             </button>
             
             <button
               onClick={() => router.push("/")}
               className="w-full px-6 py-2 text-gray-600 hover:text-[#23A6F0] transition-colors duration-300 text-sm"
             >
-              العودة إلى الصفحة الرئيسية
+              {t('account.backToHome')}
             </button>
           </div>
         </div>
         
         {/* رسالة تأكيد إضافية */}
         <p className="mt-4 text-sm text-gray-500">
-          🔒 هذا القسم محمي ويتطلب مصادقة
+          🔒 {t('account.protectedSection')}
         </p>
       </div>
     </div>
@@ -263,7 +260,7 @@ export default function AccountPage() {
   // تنسيق عرض الرصيد
   const displayBalance = () => {
     if (loadingWallet) {
-      return <span className="text-[#0A0500] text-base md:text-xl font-extrabold">جاري التحميل...</span>;
+      return <span className="text-[#0A0500] text-base md:text-xl font-extrabold">{t('account.loadingBalance')}</span>;
     }
     if (walletBalance !== null) {
       return (
@@ -281,7 +278,7 @@ export default function AccountPage() {
         <div className="container mx-auto pb-4">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-[#180100]">حسابي</h1>
+            <h1 className="text-xl font-bold text-[#180100]">{t('account.myAccount')}</h1>
           </div>
 
           {/* Profile Card */}
@@ -320,7 +317,7 @@ export default function AccountPage() {
               {/* User Info - بيانات حقيقية من Context */}
               <div className="mr-2 md:mr-4">
                 <h2 className="text-xl font-bold text-gray-800 mb-1">
-                  {user.name || "مستخدم"}
+                  {user.name || t('account.user')}
                 </h2>
                
                 {/* عرض رقم الهاتف مع كود الدولة */}
@@ -340,21 +337,21 @@ export default function AccountPage() {
                 className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-[8px] hover:bg-gray-50 transition text-gray-700"
               >
                 <FaRegEdit className="w-4 h-4" />
-                <span>تعديل الملف الشخصي</span>
+                <span>{t('account.editProfile')}</span>
               </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center justify-center gap-2 px-4 py-2 border border-red-200 rounded-[8px] hover:bg-red-50 transition text-red-600"
               >
                 <FaSignOutAlt className="w-4 h-4" />
-                <span>تسجيل الخروج</span>
+                <span>{t('account.logout')}</span>
               </button>
             </div>
           </div>
 
           {/* Wallet Section - الرصيد من الـ API */}
           <div className="space-y-3 bg-wallet rounded-[8px] p-2 md:p-4 shadow-sm mb-6">
-            <h2 className="text-lg font-bold text-gray-800">المحفظة</h2>
+            <h2 className="text-lg font-bold text-gray-800">{t('account.wallet')}</h2>
             <Link
               href="/account/wallet"
               className="flex items-center justify-between bg-white rounded-[8px] p-3 lg:p-4 hover:shadow-md transition-shadow border border-gray-200"
@@ -362,10 +359,10 @@ export default function AccountPage() {
               <div className="flex items-center gap-2 md:gap-4">
                 <div className="bg-gray-100 p-2 rounded-full">
                   <div className="text-gray-600">
-                    <Image src="/images/wallet.png" alt="Wallet" width={20} height={20} />
+                    <Image src="/images/wallet.png" alt={t('account.wallet')} width={20} height={20} />
                   </div>
                 </div>
-                <span className="text-gray-700 text-sm md:text-xl font-bold">الرصيد الحالي</span>
+                <span className="text-gray-700 text-sm md:text-xl font-bold">{t('account.currentBalance')}</span>
               </div>
               {/* عرض الرصيد من الـ API */}
               {displayBalance()}
@@ -386,7 +383,7 @@ export default function AccountPage() {
                   </div>
                   <span className="text-gray-700 text-base md:text-xl font-medium">{item.title}</span>
                 </div>
-                <FaChevronLeft className="w-4 h-4 text-gray-400" />
+                <FaChevronLeft className={`h-4 w-4 text-gray-400 ${isClient && language === 'en' ? 'rotate-180' : ''}`} />
               </Link>
             ))}
              <button
@@ -394,7 +391,7 @@ export default function AccountPage() {
                 className="md:hidden w-full flex items-center justify-center gap-2 px-4 py-2 border border-red-200 rounded-[8px] hover:bg-red-50 transition text-red-600"
               >
                 <FaSignOutAlt className="w-4 h-4" />
-                <span>تسجيل الخروج</span>
+                <span>{t('account.logout')}</span>
               </button>
           </div>
         </div>
@@ -405,7 +402,7 @@ export default function AccountPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-lg font-bold text-gray-800">تسجيل الخروج</h3>
+              <h3 className="text-lg font-bold text-gray-800">{t('account.logoutConfirm')}</h3>
               <button
                 onClick={cancelLogout}
                 className="text-gray-400 hover:text-gray-600 transition"
@@ -420,10 +417,10 @@ export default function AccountPage() {
                   <FaSignOutAlt className="w-8 h-8 text-red-600" />
                 </div>
                 <p className="text-gray-700 text-lg font-medium mb-2">
-                  هل أنت متأكد من تسجيل الخروج؟
+                  {t('account.logoutConfirmMessage')}
                 </p>
                 <p className="text-gray-500 text-sm">
-                  ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى حسابك.
+                  {t('account.logoutWarning')}
                 </p>
               </div>
             </div>
@@ -433,13 +430,13 @@ export default function AccountPage() {
                 onClick={cancelLogout}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-[8px] hover:bg-gray-50 transition"
               >
-                إلغاء
+                {t('account.cancel')}
               </button>
               <button
                 onClick={confirmLogout}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-[8px] hover:bg-red-700 transition"
               >
-                تسجيل الخروج
+                {t('account.logout')}
               </button>
             </div>
           </div>

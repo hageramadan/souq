@@ -8,6 +8,7 @@ import { FaPlus, FaMinus } from "react-icons/fa6";
 import toast from "react-hot-toast";
 import { CartItemDisplay } from "./CartPage";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface CartItemCardProps {
   item: CartItemDisplay;
@@ -50,11 +51,14 @@ const getColorDisplay = (colorName: string, colorHex?: string): string => {
   };
   return colorMap[colorName] || "#cccccc";
 };
+
 export function CartItemCard({
   item,
   onUpdateQuantity,
   onRemove,
 }: CartItemCardProps) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  
   const {
     id,
     productId,
@@ -78,7 +82,6 @@ export function CartItemCard({
 
   const isProductFavorite = isFavorite(productId);
   const brandName = getBrandName(brand);
-  
 
   // دالة إضافة/إزالة من المفضلة
   const handleToggleFavorite = async () => {
@@ -92,40 +95,41 @@ export function CartItemCard({
   };
 
   // دالة معالجة زر الحذف مع Toast مخصص للتأكيد
-  const handleRemove = () => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-3 p-3" dir="rtl">
-          <p className="text-gray-800 text-sm font-medium">
-            هل أنت متأكد من حذف{" "}
-            <span className="font-bold text-blue-500">{name}</span> من سلة
-            التسوق؟
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => {
-                toast.dismiss(t.id);
-                onRemove(id);
-              }}
-              className="px-4 py-1.5  bg-red-500 text-white text-sm rounded-[8px] hover:bg-red-600 transition font-medium"
-            >
-              نعم، احذف
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-[8px] hover:bg-gray-300 transition font-medium"
-            >
-              إلغاء
-            </button>
-          </div>
+  // components/cart/CartCard.tsx
+
+const handleRemove = () => {
+  toast(
+    (toastInstance) => ( // ✅ تغيير اسم المعامل من t إلى toastInstance
+      <div className="flex flex-col gap-3 p-3" >
+        <p className="text-gray-800 text-sm font-medium">
+          {t('cart.confirmDelete')}{" "}
+          <span className="font-bold text-blue-500">{name}</span> {t('cart.fromCart')}
+        </p>
+        <div className="flex justify-center gap-3">
+          <button
+            onClick={() => {
+              toast.dismiss(toastInstance.id); // ✅ استخدام toastInstance.id
+              onRemove(id);
+            }}
+            className="px-4 py-1.5 bg-red-500 text-white text-sm rounded-[8px] hover:bg-red-600 transition font-medium"
+          >
+            {t('cart.yesDelete')}
+          </button>
+          <button
+            onClick={() => toast.dismiss(toastInstance.id)} // ✅ استخدام toastInstance.id
+            className="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-[8px] hover:bg-gray-300 transition font-medium"
+          >
+            {t('cart.cancel')}
+          </button>
         </div>
-      ),
-      {
-        duration: 5000,
-        style: { maxWidth: "380px", padding: "0", borderRadius: "16px" },
-      },
-    );
-  };
+      </div>
+    ),
+    {
+      duration: 5000,
+      style: { maxWidth: "380px", padding: "0", borderRadius: "16px" },
+    }
+  );
+};
 
   return (
     <>
@@ -148,21 +152,23 @@ export function CartItemCard({
                 memory={memory}
                 storage={storage}
                 size={size}
+                t={t}
               />
               <ActionButtonsLarge
                 isSaved={isProductFavorite}
                 onToggleFavorite={handleToggleFavorite}
                 isMutating={isMutating}
                 onRemove={handleRemove}
+                t={t}
               />
             </div>
             <div className="flex flex-wrap items-center justify-between mt-2 gap-3">
-              {/* ✅ عرض total_price بدلاً من price فقط */}
               <ProductPriceLarge
                 price={price}
                 originalPrice={originalPrice}
                 totalPrice={totalPrice}
                 quantity={quantity}
+                t={t}
               />
               <QuantityControlLarge
                 id={id}
@@ -175,7 +181,7 @@ export function CartItemCard({
       </div>
 
       {/* تنسيق الموبايل */}
-      <div className="md:hidden bg-white  rounded-[8px]  border border-gray-100 p-2 hover:shadow-md transition-shadow duration-300">
+      <div className="md:hidden bg-white rounded-[8px] border border-gray-100 p-2 hover:shadow-md transition-shadow duration-300">
         <div className="flex gap-2">
           <ProductImageMobile
             id={parseInt(productId)}
@@ -193,21 +199,23 @@ export function CartItemCard({
                 memory={memory}
                 storage={storage}
                 size={size}
+                t={t}
               />
               <ActionButtonsMobile
                 isSaved={isProductFavorite}
                 onToggleFavorite={handleToggleFavorite}
                 isMutating={isMutating}
                 onRemove={handleRemove}
+                t={t}
               />
             </div>
             <div className="flex items-center justify-between mt-1">
-              {/* ✅ عرض total_price بدلاً من price فقط */}
               <ProductPriceMobile
                 price={price}
                 originalPrice={originalPrice}
                 totalPrice={totalPrice}
                 quantity={quantity}
+                t={t}
               />
               <QuantityControlMobile
                 id={id}
@@ -265,6 +273,7 @@ const ProductDetailsLarge = ({
   memory,
   storage,
   size,
+  t,
 }: {
   id: number;
   name: string;
@@ -274,6 +283,7 @@ const ProductDetailsLarge = ({
   memory: string;
   storage: string;
   size: string;
+  t: any;
 }) => {
   const colorCode = getColorDisplay(color, colorHex);
 
@@ -286,46 +296,45 @@ const ProductDetailsLarge = ({
       </Link>
       
       <div className="flex flex-col gap-2 mt-2 text-sm">
-       
-{color && color !== "-" && (
-  <span className="font-extrabold flex items-center gap-2">
-    اللون:
-    <span className="text-gray-800 font-normal flex items-center gap-2">
-      <span
-        className="w-4 h-4 rounded-full border border-gray-300"
-        style={{ backgroundColor: colorCode }}
-      />
-      {color}
-    </span>
-  </span>
-)}
-{/* ✅ إذا كان هناك Hex ولكن لا يوجد اسم لون، اعرض اللون كـ "لون" مع الدائرة فقط */}
-{!color && colorHex && (
-  <span className="font-extrabold flex items-center gap-2">
-    اللون:
-    <span className="text-gray-800 font-normal flex items-center gap-2">
-      <span
-        className="w-4 h-4 rounded-full border border-gray-300"
-        style={{ backgroundColor: colorHex }}
-      />
-      لون
-    </span>
-  </span>
-)}
+        {color && color !== "-" && (
+          <span className="font-extrabold flex items-center gap-2">
+            {t('cart.color')}:
+            <span className="text-gray-800 font-normal flex items-center gap-2">
+              <span
+                className="w-4 h-4 rounded-full border border-gray-300"
+                style={{ backgroundColor: colorCode }}
+              />
+              {color}
+            </span>
+          </span>
+        )}
+        {/* ✅ إذا كان هناك Hex ولكن لا يوجد اسم لون، اعرض اللون كـ "لون" مع الدائرة فقط */}
+        {!color && colorHex && (
+          <span className="font-extrabold flex items-center gap-2">
+            {t('cart.color')}:
+            <span className="text-gray-800 font-normal flex items-center gap-2">
+              <span
+                className="w-4 h-4 rounded-full border border-gray-300"
+                style={{ backgroundColor: colorHex }}
+              />
+              {t('cart.colorLabel')}
+            </span>
+          </span>
+        )}
         {memory && (
           <span className="font-extrabold">
-            الذاكرة: <span className="text-gray-800 font-normal">{memory}</span>
+            {t('cart.memory')}: <span className="text-gray-800 font-normal">{memory}</span>
           </span>
         )}
         {storage && (
           <span className="font-extrabold">
-            الهارد ديسك:{" "}
+            {t('cart.storage')}:{" "}
             <span className="text-gray-800 font-normal">{storage}</span>
           </span>
         )}
         {size && (
           <span className="font-extrabold">
-            المقاس: <span className="text-gray-800 font-normal">{size}</span>
+            {t('cart.size')}: <span className="text-gray-800 font-normal">{size}</span>
           </span>
         )}
       </div>
@@ -338,33 +347,31 @@ const ProductPriceLarge = ({
   originalPrice,
   totalPrice,
   quantity,
+  t,
 }: {
   price: number;
   originalPrice?: number;
   totalPrice: number;
   quantity: number;
+  t: any;
 }) => (
   <div className="flex flex-col gap-1">
-    {/* السعر الأصلي مشطوب + السعر النهائي جنب بعض */}
     <div className="flex items-center gap-2">
       {originalPrice && originalPrice > price && (
         <span className="text-sm text-gray-400 line-through">
-          {originalPrice.toLocaleString()} EGP
+          {originalPrice.toLocaleString()} {t('cart.currency')}
         </span>
       )}
-       {/* سعر الوحدة */}
-    <div className="text-xs text-gray-500">
-      {price.toLocaleString()} EGP / قطعة
-    </div>
-       </div>
-      <div className="flex items-center gap-0.5">
-        <span className="text-lg font-bold text-[#23A6F0]">
-        {totalPrice.toLocaleString()} EGP
-      </span>
-      <span className="text-xs text-gray-400">(الإجمالي)</span>
-   
+      <div className="text-xs text-gray-500">
+        {price.toLocaleString()} {t('cart.currency')} / {t('cart.perItem')}
       </div>
-   
+    </div>
+    <div className="flex items-center gap-0.5">
+      <span className="text-lg font-bold text-[#23A6F0]">
+        {totalPrice.toLocaleString()} {t('cart.currency')}
+      </span>
+      <span className="text-xs text-gray-400">({t('cart.total')})</span>
+    </div>
   </div>
 );
 
@@ -402,11 +409,13 @@ const ActionButtonsLarge = ({
   onToggleFavorite,
   isMutating,
   onRemove,
+  t,
 }: {
   isSaved: boolean;
   onToggleFavorite: () => void;
   isMutating: boolean;
   onRemove: () => void;
+  t: any;
 }) => (
   <div className="flex items-center gap-3">
     <button
@@ -419,7 +428,7 @@ const ActionButtonsLarge = ({
       }`}
     >
       <Heart className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-      <span>{isSaved ? "ألغاء الحفظ" : "حفظ"}</span>
+      <span>{isSaved ? t('cart.removeFromFavorites') : t('cart.save')}</span>
     </button>
     <span className="text-gray-300">|</span>
     <button
@@ -427,7 +436,7 @@ const ActionButtonsLarge = ({
       className="flex items-center gap-1 text-sm text-[#180100] hover:text-red-500 transition"
     >
       <Trash2 className="w-4 h-4" />
-      <span>حذف</span>
+      <span>{t('cart.delete')}</span>
     </button>
   </div>
 );
@@ -475,6 +484,7 @@ const ProductDetailsMobile = ({
   memory,
   storage,
   size,
+  t,
 }: {
   id: number;
   name: string;
@@ -484,6 +494,7 @@ const ProductDetailsMobile = ({
   memory: string;
   storage: string;
   size: string;
+  t: any;
 }) => {
   const colorCode = getColorDisplay(color, colorHex);
 
@@ -496,42 +507,40 @@ const ProductDetailsMobile = ({
       </Link>
       {brand && <p className="text-xs text-gray-500">{brand}</p>}
       <div className="flex flex-wrap gap-1 mt-0.5 text-xs text-gray-600 items-center">
-        
-{color && color !== "-" && (
-  <span className="font-extrabold flex items-center gap-2">
-    اللون:
-    <span className="text-gray-800 font-normal flex items-center gap-2">
-      <span
-        className="w-4 h-4 rounded-full border border-gray-300"
-        style={{ backgroundColor: colorCode }}
-      />
-      {color}
-    </span>
-  </span>
-)}
-{/* ✅ إذا كان هناك Hex ولكن لا يوجد اسم لون، اعرض اللون كـ "لون" مع الدائرة فقط */}
-{!color && colorHex && (
-  <span className="font-extrabold flex items-center gap-2">
-    اللون:
-    <span className="text-gray-800 font-normal flex items-center gap-2">
-      <span
-        className="w-4 h-4 rounded-full border border-gray-300"
-        style={{ backgroundColor: colorHex }}
-      />
-      لون
-    </span>
-  </span>
-)}
+        {color && color !== "-" && (
+          <span className="font-extrabold flex items-center gap-2">
+            {t('cart.color')}:
+            <span className="text-gray-800 font-normal flex items-center gap-2">
+              <span
+                className="w-4 h-4 rounded-full border border-gray-300"
+                style={{ backgroundColor: colorCode }}
+              />
+              {color}
+            </span>
+          </span>
+        )}
+        {!color && colorHex && (
+          <span className="font-extrabold flex items-center gap-2">
+            {t('cart.color')}:
+            <span className="text-gray-800 font-normal flex items-center gap-2">
+              <span
+                className="w-4 h-4 rounded-full border border-gray-300"
+                style={{ backgroundColor: colorHex }}
+              />
+              {t('cart.colorLabel')}
+            </span>
+          </span>
+        )}
         {memory && (
           <>
             <span className="text-gray-300">|</span>
-            <span>ذاكرة: {memory}</span>
+            <span>{t('cart.memory')}: {memory}</span>
           </>
         )}
         {storage && (
           <>
             <span className="text-gray-300">|</span>
-            <span>تخزين: {storage}</span>
+            <span>{t('cart.storage')}: {storage}</span>
           </>
         )}
         {size && (
@@ -550,33 +559,31 @@ const ProductPriceMobile = ({
   originalPrice,
   totalPrice,
   quantity,
+  t,
 }: {
   price: number;
   originalPrice?: number;
   totalPrice: number;
   quantity: number;
+  t: any;
 }) => (
   <div className="flex flex-col">
-    {/* سعر الوحدة */}
-  
-    {/* السعر الأصلي مشطوب + السعر النهائي جنب بعض */}
     <div className="flex items-center gap-1.5">
       {originalPrice && originalPrice > price && (
         <span className="text-[10px] text-gray-400 line-through">
           {originalPrice.toLocaleString()}
         </span>
       )}
-        <div className="text-[9px] text-gray-400">
-      {price.toLocaleString()} / قطعة
-    </div>
+      <div className="text-[9px] text-gray-400">
+        {price.toLocaleString()} / {t('cart.perItem')}
       </div>
-      <span className="text-sm font-bold text-[#23A6F0]">
-        {totalPrice.toLocaleString()} EGP
-      </span>
-    
-    
+    </div>
+    <span className="text-sm font-bold text-[#23A6F0]">
+      {totalPrice.toLocaleString()} {t('cart.currency')}
+    </span>
   </div>
 );
+
 const QuantityControlMobile = ({
   id,
   quantity,
@@ -613,11 +620,13 @@ const ActionButtonsMobile = ({
   onToggleFavorite,
   isMutating,
   onRemove,
+  t,
 }: {
   isSaved: boolean;
   onToggleFavorite: () => void;
   isMutating: boolean;
   onRemove: () => void;
+  t: any;
 }) => (
   <div className="flex items-end gap-1.5">
     <button
@@ -628,14 +637,14 @@ const ActionButtonsMobile = ({
       }`}
     >
       <Heart className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
-      <span>{isSaved ? "إزالة" : "حفظ"}</span>
+      <span>{isSaved ? t('cart.remove') : t('cart.save')}</span>
     </button>
     <button
       onClick={onRemove}
       className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-red-500 transition"
     >
       <Trash2 className="w-3.5 h-3.5" />
-      <span>حذف</span>
+      <span>{t('cart.delete')}</span>
     </button>
   </div>
 );

@@ -74,6 +74,7 @@ export function AdsHome() {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          'content-type':'application/json',
           'Accept-Language': getAcceptLanguageHeader(),
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
@@ -190,8 +191,9 @@ export function AdsHome() {
   const currentAd = ads[currentAdIndex];
 
   return (
-    <section className="py-6 md:py-12 bg-white">
-      <div className="container-custom">
+    <section className="">
+      {ads.length > 0 &&(
+ <div className="container-custom py-6 md:py-12 bg-white">
         <div className="bg-[#F2F8FD] rounded-2xl grid grid-cols-2 items-center justify-between px-2 md:px-10 py-6 md:py-8 relative overflow-hidden">
           
           {/* أزرار التنقل (إذا كان هناك أكثر من إعلان) */}
@@ -283,6 +285,9 @@ export function AdsHome() {
           </div>
         )}
       </div>
-    </section>
+   
+      )}
+       </section>
+     
   )
 }

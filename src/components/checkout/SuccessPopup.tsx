@@ -14,13 +14,15 @@ interface SuccessPopupProps {
     deliveryDate?: string;
     address?: string;
   };
+  t: any; // ✅ إضافة t
 }
 
 export default function SuccessPopup({ 
   isOpen, 
   onClose, 
   orderNumber,
-  orderDetails 
+  orderDetails,
+  t 
 }: SuccessPopupProps) {
   const router = useRouter();
 
@@ -28,11 +30,8 @@ export default function SuccessPopup({
 
   return (
     <>
-      {/* الخلفية المعتمة */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        {/* البوب اب */}
         <div className="bg-white rounded-2xl max-w-md w-full shadow-xl animate-in fade-in zoom-in duration-300">
-          {/* رأس البوب اب */}
           <div className="relative p-6 text-center border-b border-gray-100">
             <button
               onClick={onClose}
@@ -45,43 +44,37 @@ export default function SuccessPopup({
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-800">تم إتمام طلبك بنجاح</h3>
+            <h3 className="text-xl font-bold text-gray-800">{t('checkout.orderSuccess')}</h3>
             <p className="text-gray-500 text-sm mt-2">
-              شكراً لتسوقك مع <span className="font-semibold text-[#23A6F0]">متجرك</span>، 
-              طلبك قيد التحضير الآن.
+              {t('checkout.thankYou')} <span className="font-semibold text-[#23A6F0]">{t('checkout.storeName')}</span>，{t('checkout.orderPreparing')}
             </p>
           </div>
 
-          {/* محتوى البوب اب */}
           <div className="p-6 space-y-4">
-            {/* رقم الطلب */}
-            <div className="bg-gray-50  rounded-[8px]  p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">رقم الطلب</p>
+            <div className="bg-gray-50 rounded-[8px] p-4 text-center">
+              <p className="text-xs text-gray-500 mb-1">{t('checkout.orderNumber')}</p>
               <p className="text-xl font-bold text-gray-800">{orderNumber}</p>
             </div>
-
-         
           </div>
 
-          {/* أزرار */}
           <div className="p-6 pt-0 flex gap-3">
             <button
               onClick={() => {
                 onClose();
                 router.push("/");
               }}
-              className="flex-1 bg-[#23A6F0] text-white py-3  rounded-[8px]  font-medium hover:bg-[#2eacf5] transition shadow-sm"
+              className="flex-1 bg-[#23A6F0] text-white py-3 rounded-[8px] font-medium hover:bg-[#2eacf5] transition shadow-sm"
             >
-              العودة للرئيسية
+              {t('checkout.backToHome')}
             </button>
             <button
               onClick={() => {
                 onClose();
                 router.push("/account/orders");
               }}
-              className="flex-1 border border-gray-300 text-gray-700 py-3  rounded-[8px]  font-medium hover:bg-gray-50 transition"
+              className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-[8px] font-medium hover:bg-gray-50 transition"
             >
-              طلباتي
+              {t('checkout.myOrders')}
             </button>
           </div>
         </div>

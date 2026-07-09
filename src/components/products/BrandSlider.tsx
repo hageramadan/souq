@@ -17,13 +17,17 @@ interface BrandSliderProps {
   selectedBrands?: number[];
   onBrandToggle?: (brandId: number) => void;
   className?: string;
+  showCategoryBrandsLabel?: boolean; // ✅ إضافة
+  categoryName?: string; // ✅ إضافة
 }
 
 export function BrandSlider({ 
   brands, 
   selectedBrands = [], 
   onBrandToggle,
-  className = '' 
+  className = '',
+  showCategoryBrandsLabel = false, // ✅ إضافة
+  categoryName = '' // ✅ إضافة
 }: BrandSliderProps) {
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   
@@ -172,15 +176,15 @@ export function BrandSlider({
     checkScrollButtons();
   }, [brands, checkScrollButtons]);
 
-  // ✅ الحصول على اتجاه اللغة من الترجمة
-  const isRTL = t('common.dir') === 'rtl';
-
+  
   return (
     <div className={`relative w-full ${className}`}>
+      
+
       {/* حاوية البراندات مع السحب */}
       <div className="relative group">
         {/* سهم اليسار */}
-        {showLeftArrow && (
+        {/* {showLeftArrow && (
           <button
             onClick={scrollLeftHandler}
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110 hidden md:flex items-center justify-center"
@@ -193,7 +197,7 @@ export function BrandSlider({
           >
             <ChevronLeft className="w-5 h-5 text-[#112B40]" />
           </button>
-        )}
+        )} */}
 
         {/* حاوية التمرير */}
         <div
@@ -214,7 +218,8 @@ export function BrandSlider({
           onTouchEnd={handleTouchEnd}
         >
           {/* زر الكل */}
-          <div
+          {brands.length > 0 &&(
+<div
             className="flex-shrink-0 scroll-snap-start"
             style={{ scrollSnapAlign: 'start' }}
           >
@@ -235,6 +240,8 @@ export function BrandSlider({
               </span>
             </button>
           </div>
+          )}
+          
 
           {/* قائمة البراندات */}
           {brands.map((brand) => {
@@ -269,7 +276,7 @@ export function BrandSlider({
         </div>
 
         {/* سهم اليمين */}
-        {showRightArrow && (
+        {/* {showRightArrow && (
           <button
             onClick={scrollRightHandler}
             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110 hidden md:flex items-center justify-center"
@@ -282,7 +289,7 @@ export function BrandSlider({
           >
             <ChevronRight className="w-5 h-5 text-[#112B40]" />
           </button>
-        )}
+        )} */}
       </div>
 
       {/* CSS لإخفاء شريط التمرير */}

@@ -3,19 +3,22 @@
 
 import { NotesFormProps } from "./types";
 
-export default function NotesForm({ notes, onNotesChange }: NotesFormProps) {
+interface NotesFormExtendedProps extends NotesFormProps {
+  t: any; // ✅ إضافة t
+}
+
+export default function NotesForm({ notes, onNotesChange, t }: NotesFormExtendedProps) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mb-5">
       <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-      
-        ملاحظات
+        {t('checkout.notes')}
       </h2>
       <textarea
         value={notes}
         onChange={(e) => onNotesChange(e.target.value)}
         rows={3}
-        placeholder="قم بإدخال ملاحظاتك الإضافية.."
-        className="w-full px-4 py-3 border border-gray-200  rounded-[8px]  focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent transition resize-none"
+        placeholder={t('checkout.notesPlaceholder')}
+        className="w-full px-4 py-3 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent transition resize-none"
       />
     </div>
   );

@@ -1,10 +1,13 @@
-// app/terms/page.tsx
+// app/privacy/page.tsx
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Home, ShoppingBag, Phone, Mail, MapPin } from "lucide-react";
+import { ChevronRight, Home, ShoppingBag, Phone, Mail, MapPin, Shield, Database, Eye, Cookie } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
-export default function TermsPage() {
+export default function PrivacyPage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+
   return (
     <div className="bg-gradient-to-l min-h-screen from-[#bdcbf12a] to-[#feecea3b]">
       <div className="container mx-auto px-4 py-6 md:py-8">
@@ -14,90 +17,74 @@ export default function TermsPage() {
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Link href="/" className="hover:text-[#23A6F0] transition flex items-center gap-1">
               <Home className="w-4 h-4" />
-              الرئيسية
+              {t('common.home')}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-[#23A6F0] font-medium">الشروط والأحكام</span>
+            <span className="text-[#23A6F0] font-medium">{t('privacy.title')}</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 ">
-        
-
-          {/* Main Content - Left Side */}
+        <div className="grid grid-cols-1">
           <div className="lg:col-span-3 order-1 lg:order-2">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
               {/* Header */}
               <div className="text-center mb-8 pb-4 border-b border-gray-100">
-                <h1 className="text-xl md:text-xl font-bold text-gray-800 mb-3">الشروط والأحكام</h1>
+                <h1 className="text-xl md:text-xl font-bold text-gray-800 mb-3">{t('privacy.title')}</h1>
                 <p className="text-gray-500 text-sm">
-                  باستخدامك لموقع <span className="font-semibold text-gray-700">******</span>، فإنك توافق على الشروط والأحكام التالية. 
-                  يرجى قراءتها بعناية قبل إتمام أي عملية شراء.
+                  {t('privacy.intro')} <span className="font-semibold text-gray-700">{t('common.storeName')}</span> {t('privacy.introCont')}
                 </p>
               </div>
 
               <div className="space-y-8">
-                {/* 1. التعريفات */}
-                <Section title="التعريفات">
-                  <p><strong className="text-gray-800">******/ نحن / الشركة:</strong> تشير إلى متجر****** الإلكتروني لتوصيل المنتجات.</p>
-                  <p><strong className="text-gray-800">العميل / المستخدم / أنت:</strong> يشير إلى أي شخص يستخدم الموقع أو التطبيق أو يقوم بعملية شراء.</p>
-                  <p><strong className="text-gray-800">الخدمة:</strong> تشمل بيع وتوصيل المنتجات عبر الموقع الإلكتروني وتطبيق الجوال.</p>
+                {/* 1. البيانات التي نجمعها */}
+                <Section title={t('privacy.collect.title')} icon={<Database className="w-4 h-4" />}>
+                  <p><strong className="text-gray-800">{t('privacy.collect.personal')}:</strong> {t('privacy.collect.personalDesc')}</p>
+                  <p><strong className="text-gray-800">{t('privacy.collect.technical')}:</strong> {t('privacy.collect.technicalDesc')}</p>
                 </Section>
 
-                {/* 2. الأهلية */}
-                <Section title=" الأهلية">
-                  <p>يجب أن يكون عمر المستخدم 18 سنة أو أكثر لإنشاء حساب وإجراء عمليات الشراء. بإتمام عملية الشراء، يقر المستخدم بأنه مؤهل قانونياً للتعاقد.</p>
+                {/* 2. كيف نستخدم بياناتك */}
+                <Section title={t('privacy.use.title')} icon={<Eye className="w-4 h-4" />}>
+                  <p>{t('privacy.use.desc')}</p>
+                  <ul className="list-disc ps-5 space-y-1 mt-2">
+                    <li>{t('privacy.use.processOrders')}</li>
+                    <li>{t('privacy.use.communicate')}</li>
+                    <li>{t('privacy.use.offers')}</li>
+                    <li>{t('privacy.use.improve')}</li>
+                  </ul>
                 </Section>
 
-                {/* 3. المنتجات والأسعار */}
-                <Section title=" المنتجات والأسعار">
-                  <p>جميع المنتجات المعروضة تخضع للتوفر. نبذل أقصى جهد لعرض صور دقيقة وأوصاف صحيحة. الأسعار المعروضة بالريال السعودي (ر.س) وتشمل جميع الضرائب المطبقة. نحتفظ بحق تعديل الأسعار في أي وقت دون إشعار مسبق، لكن الأسعار المؤكدة عند تقديم الطلب لن تتغير.</p>
+                {/* 3. حماية البيانات */}
+                <Section title={t('privacy.protection.title')} icon={<Shield className="w-4 h-4" />}>
+                  <p>{t('privacy.protection.desc')}</p>
                 </Section>
 
-                {/* 4. الطلب والدفع */}
-                <Section title=" الطلب والدفع">
-                  <p>الحد الأدنى للطلب هو 3.000 ر.س. يتم قبول الدفع عبر بوابة حسابي (Hesabi) والتي تشمل فيزا وماستركارد وأبل باي.</p>
-                  <p>تأكيد الطلب يعتبر عقداً ملزماً بين الطرفين. نحتفظ بحق رفض أو إلغاء أي طلب في حال عدم توفر المنتج أو وجود خطأ في الأسعار أو معلومات الطلب.</p>
+                {/* 4. مشاركة البيانات مع أطراف ثالثة */}
+                <Section title={t('privacy.sharing.title')}>
+                  <p>{t('privacy.sharing.desc')}</p>
                 </Section>
 
-                {/* 5. التوصيل */}
-                <Section title=" التوصيل">
-                  <p>نوصل لجميع مناطق السعودية من الساعة 10:00 صباحاً حتى 10:00 مساءً. أوقات التوصيل المذكورة تقديرية وقد تتأثر بالظروف الجوية أو الازدحام أو ظروف أخرى خارجة عن إرادتنا.</p>
-                  <p>العميل مسؤول عن تقديم عنوان توصيل صحيح ورقم هاتف فعال. في حال تعذر التوصيل بسبب معلومات خاطئة من العميل، قد يتحمل العميل رسوم توصيل إضافية.</p>
+                {/* 5. ملفات تعريف الارتباط (Cookies) */}
+                <Section title={t('privacy.cookies.title')} icon={<Cookie className="w-4 h-4" />}>
+                  <p>{t('privacy.cookies.desc')}</p>
                 </Section>
 
-                {/* 6. الاسترجاع والاستبدال */}
-                <Section title=" الاسترجاع والاستبدال">
-                  <p>تخضع عمليات الاسترجاع والاستبدال لسياسة الاسترجاع والاستبدال المنشورة على موقعنا. يجب تقديم طلب الاسترجاع أو الاستبدال خلال 24 ساعة من استلام الطلب.</p>
+                {/* 6. حقوقك */}
+                <Section title={t('privacy.rights.title')}>
+                  <p>{t('privacy.rights.desc')}</p>
+                  <ul className="list-disc ps-5 space-y-1 mt-2">
+                    <li>{t('privacy.rights.access')}</li>
+                    <li>{t('privacy.rights.correct')}</li>
+                    <li>{t('privacy.rights.delete')}</li>
+                    <li>{t('privacy.rights.unsubscribe')}</li>
+                  </ul>
+                  <p className="mt-3">{t('privacy.rights.contact')}</p>
                 </Section>
 
-                {/* 7. حساب المستخدم */}
-                <Section title=" حساب المستخدم">
-                  <p>المستخدم مسؤول عن الحفاظ على سرية بيانات حسابه وكلمة المرور. أي نشاط يتم عبر حسابك يعتبر مسؤوليتك. يجب إبلاغنا فوراً عن أي استخدام غير مصرح به لحسابك.</p>
-                </Section>
-
-                {/* 8. الملكية الفكرية */}
-                <Section title=" الملكية الفكرية">
-                  <p>جميع المحتويات المعروضة على الموقع والتطبيق بما في ذلك الشعار والتصاميم والنصوص والصور هي ملكية خاصة لـ <strong>******</strong> ومحمية بموجب قوانين الملكية الفكرية. يُمنع نسخ أو استخدام أي محتوى بدون إذن كتابي مسبق.</p>
-                </Section>
-
-                {/* 9. تحديد المسؤولية */}
-                <Section title=" تحديد المسؤولية">
-                  <p>لا نتحمل المسؤولية عن أي أضرار غير مباشرة ناتجة عن استخدام خدماتنا. مسؤوليتنا القصوى لا تتجاوز قيمة الطلب المعني.</p>
-                </Section>
-
-                {/* 10. القانون الواجب التطبيق */}
-                <Section title=" القانون الواجب التطبيق">
-                  <p>تخضع هذه الشروط والأحكام لقوانين دولة السعودية. أي نزاع ينشأ عن استخدام خدماتنا يخضع للاختصاص القضائي لمحاكم دولة السعودية.</p>
-                </Section>
-
-                {/* 11. التعديلات */}
-                <Section title="  التعديلات">
-                  <p>نحتفظ بحق تعديل هذه الشروط والأحكام في أي وقت. التعديلات تصبح سارية فور نشرها على الموقع. استمرارك في استخدام خدماتنا بعد التعديل يعتبر موافقة على الشروط المحدثة.</p>
+                {/* 7. تعديل سياسة الخصوصية */}
+                <Section title={t('privacy.amendments.title')}>
+                  <p>{t('privacy.amendments.desc')}</p>
                 </Section>
               </div>
-
-            
             </div>
           </div>
         </div>
@@ -107,11 +94,12 @@ export default function TermsPage() {
 }
 
 // مكون القسم
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="pb-6">
       <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
         <span className="w-1.5 h-6 bg-black rounded-full"></span>
+        {icon && <span className="text-[#23A6F0]">{icon}</span>}
         {title}
       </h2>
       <div className="text-gray-600 text-sm leading-relaxed space-y-2 ps-2">

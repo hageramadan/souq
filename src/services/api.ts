@@ -171,6 +171,7 @@ export async function getCategories(lang?: string): Promise<CategoryData[]> {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'content-type':'application/json',
         'Accept-Language': acceptLanguage,
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',

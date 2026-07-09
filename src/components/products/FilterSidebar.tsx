@@ -16,6 +16,7 @@ import { Slider } from '@/components/ui/slider';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { CategoryData, Brand } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // ============================================================================
 // Types
@@ -71,6 +72,7 @@ export interface ProductFiltersProps {
   isMobile?: boolean;
   onClose?: () => void;
   lang?: string;
+  categoryId?: number | null;
 }
 
 interface FilterSectionProps {
@@ -324,7 +326,7 @@ function CheckboxFilterListInner<T, K extends string | number>({
   getBadgeColor,
   showMoreText = 'عرض المزيد',
   showLessText = 'عرض أقل',
-  moreCategoriesText = 'فئات أخرى',
+  moreCategoriesText = 'عناصر أخرى',
   initialDisplayCount = 4,
 }: CheckboxFilterListProps<T, K>) {
   const [showAll, setShowAll] = useState(false);
@@ -413,7 +415,7 @@ const ColorSwatchList = memo(function ColorSwatchList({
   loadingMessage,
   showMoreText = 'عرض المزيد',
   showLessText = 'عرض أقل',
-  moreCategoriesText = 'فئات أخرى',
+  moreCategoriesText = 'عناصر أخرى',
   initialDisplayCount = 4,
 }: ColorSwatchListProps) {
   const [showAll, setShowAll] = useState(false);
@@ -486,11 +488,18 @@ const ColorSwatchList = memo(function ColorSwatchList({
 // Main component
 // ============================================================================
 
-export default function ProductFilters({ onFilterChange, isMobile = false, onClose, lang: propLang }: ProductFiltersProps) {
+export default function ProductFilters({ onFilterChange, isMobile = false, onClose, lang: propLang ,categoryId: propCategoryId = null}: ProductFiltersProps) {
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  const {language} = useLanguage(); // ✅ الحصول على اللغة الحالية
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null); // ✅ لتتبع الفئة المختارة
-  
+  const [isClient, setIsClient] = useState(false);
   const onFilterChangeRef = useRef(onFilterChange);
+    useEffect(() => {
+    setSelectedCategoryId(propCategoryId);
+  }, [propCategoryId]);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   useEffect(() => {
     onFilterChangeRef.current = onFilterChange;
@@ -501,13 +510,19 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
 
   const [tempMinPrice, tempMaxPrice] = state.tempPriceRange;
 
-  // ✅ الحصول على البراندات الخاصة بالقسم المختار
+  // ✅ الحصول على البراندات الخاصة بالقسم المختار - التعديل الرئيسي
   const getBrandsForSelectedCategory = useCallback(() => {
-    // إذا تم اختيار فئة، استخدم برانداتها
-    if (selectedCategoryId !== null && categoryBrands[selectedCategoryId]) {
-      return categoryBrands[selectedCategoryId];
+    // إذا تم اختيار فئة
+    if (selectedCategoryId !== null) {
+      // تحقق مما إذا كانت الفئة لديها براندات
+      const categoryBrandsList = categoryBrands[selectedCategoryId];
+      if (categoryBrandsList && categoryBrandsList.length > 0) {
+        return categoryBrandsList; // ✅ عرض براندات الفئة فقط
+      }
+      // إذا كانت الفئة ليس لديها براندات، ارجع مصفوفة فارغة
+      return [];
     }
-    // وإلا استخدم كل البراندات العامة
+    // إذا لم يتم اختيار فئة، استخدم البراندات العامة
     return brands;
   }, [selectedCategoryId, categoryBrands, brands]);
 
@@ -652,6 +667,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
             : 'sticky top-[10%] mx-auto my-3 w-[340px]'
         }
       `}
+      suppressHydrationWarning 
     >
       <h3 className="text-[18.28px] mb-4 text-[#180100] flex justify-between items-center">
         {t('filter.title')}
@@ -708,7 +724,9 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                   onClick={handleApplyPriceFilter}
                   className="w-[32.89px] bg-[#2DA5F3] text-white py-2 rounded-[8px] transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-[#1a8bd4]"
                 >
-                  <FaArrowLeft className="w-5 h-5" />
+                  <FaArrowLeft 
+                    className={`h-4 w-4 ${isClient && language === 'en' ? 'rotate-180' : ''}`}
+                  />
                 </button>
               </div>
             )}
@@ -717,7 +735,8 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
       </FilterSection>
 
       {/* ===== فلتر الفئات ===== */}
-      <FilterSection title={t('filter.categories')}>
+      {categories.length > 0 && (
+          <FilterSection title={t('filter.categories')}>
         <CheckboxFilterList
           items={categories}
           selectedValues={state.selectedCategories}
@@ -732,6 +751,8 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
           initialDisplayCount={4}
         />
       </FilterSection>
+      )}
+    
 
       {/* ===== ✅ فلتر الفئات الفرعية ===== */}
       {allSubcategories.length > 0 && (
@@ -753,7 +774,9 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
       )}
 
       {/* ===== فلتر الألوان ===== */}
-      <FilterSection title={t('filter.colors')}>
+      {
+        colors.length > 0 && (
+          <FilterSection title={t('filter.colors')}>
         <ColorSwatchList
           colors={colors}
           selectedColors={state.selectedColors}
@@ -765,9 +788,12 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
           initialDisplayCount={4}
         />
       </FilterSection>
+        )
+      }
 
       {/* ===== فلتر المواصفات (RAM / HDD) ===== */}
-      <FilterSection title={t('filter.specifications')}>
+      {sizes.length > 0 && (
+         <FilterSection title={t('filter.specifications')}>
         <CheckboxFilterList
           items={sizes}
           selectedValues={state.selectedAttributeIds}
@@ -783,17 +809,15 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
           initialDisplayCount={4}
         />
       </FilterSection>
+      )}
+     
 
       {/* ===== ✅ فلتر العلامات التجارية - براندات القسم المختار ===== */}
-      <FilterSection title={t('filter.brands')}>
-        {displayBrands.length > 0 ? (
+     
+        {displayBrands.length > 0 && (
+           <FilterSection title={t('filter.brands')}>
           <div className="space-y-2">
-            {/* ✅ عرض اسم القسم إذا كانت براندات خاصة بقسم */}
-            {isCategorySpecificBrands && selectedCategoryName && (
-              <p className="text-xs text-gray-400 mb-2 font-medium">
-                {t('filter.brandsFor')} {selectedCategoryName}
-              </p>
-            )}
+            
             <CheckboxFilterList
               items={displayBrands}
               selectedValues={state.selectedBrands}
@@ -808,15 +832,9 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
               initialDisplayCount={4}
             />
           </div>
-        ) : (
-          <p className="text-sm text-gray-400">
-            {selectedCategoryId !== null 
-              ? t('filter.noBrandsForCategory')
-              : t('filter.selectCategoryToSeeBrands')
-            }
-          </p>
+          </FilterSection>
         )}
-      </FilterSection>
+      
 
       {/* ✅ زر تطبيق الفلاتر (يظهر فقط في الموبايل) */}
       {isMobile && (

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { IoCopyOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import Pagination from '@/components/products/Pagination';
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ========== إعدادات API ==========
 const API_URL = 'https://admin.souqkaber.com/api';
@@ -123,21 +124,24 @@ interface ReturnsResponse {
   };
 }
 
-// حالة المرتجع مع التنسيق العربي
-const returnStatusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: "قيد المراجعة", color: "status-return-pending", icon: Clock },
-  refunded: { label: "تم الاسترداد", color: "status-return-refunded", icon: DollarSign },
-  rejected: { label: "مرفوض", color: "status-return-rejected", icon: XCircle },
-};
+// ========== الحصول على إعدادات حالة المرتجع مع الترجمة ==========
+const getReturnStatusConfig = (t: any) => ({
+  pending: { label: t('returns.statusPending'), color: "status-return-pending", icon: Clock },
+  approved: { label: t('returns.statusApproved'), color: "status-return-approved", icon: CheckCircle },
+  picked_up: { label: t('returns.statusPickedUp'), color: "status-return-picked", icon: Truck },
+  inspected: { label: t('returns.statusInspected'), color: "status-return-inspected", icon: PackageCheck },
+  refunded: { label: t('returns.statusRefunded'), color: "status-return-refunded", icon: DollarSign },
+  rejected: { label: t('returns.statusRejected'), color: "status-return-rejected", icon: XCircle },
+  cancelled: { label: t('returns.statusCancelled'), color: "status-return-cancelled", icon: AlertCircle }
+});
 
 type FilterStatus = "all" | "pending" | "refunded" | "rejected";
 
 // ========== دالة جلب المرتجعات من API مع Pagination ==========
-const fetchReturns = async (page: number = 1, perPage: number = 10): Promise<{ returns: Return[], pagination: any }> => {
+const fetchReturns = async (page: number = 1, perPage: number = 10, t: any): Promise<{ returns: Return[], pagination: any }> => {
   // ✅ منع التكرار في نفس الثانية
   const now = Date.now();
   if (isFetching || (now - lastFetchTime < 300)) {
-   
     return {
       returns: [],
       pagination: {
@@ -157,22 +161,18 @@ const fetchReturns = async (page: number = 1, perPage: number = 10): Promise<{ r
   lastFetchTime = now;
   
   try {
-  
     const response = await fetch(`${API_URL}/returns?page=${page}&per_page=${perPage}`, {
       method: 'GET',
       headers: getHeaders(),
     });
     
     const data: ReturnsResponse = await response.json();
-   
     
     if (data.result === true && data.errNum === 200 && data.data.returns) {
       const returns = data.data.returns.map((returnItem) => ({
         ...returnItem,
         returnNumber: `#R${String(returnItem.id).padStart(5, '0')}`,
       }));
-      
-   
       
       return {
         returns: returns,
@@ -195,7 +195,7 @@ const fetchReturns = async (page: number = 1, perPage: number = 10): Promise<{ r
     };
   } catch (error) {
     console.error("❌ Error fetching returns:", error);
-    toast.error("حدث خطأ في جلب بيانات المرتجعات");
+    toast.error(t('returns.fetchError'));
     return {
       returns: [],
       pagination: {
@@ -216,7 +216,7 @@ const fetchReturns = async (page: number = 1, perPage: number = 10): Promise<{ r
 
 // ========== تنظيف رابط الصورة ==========
 const cleanImageUrl = (url: string): string => {
-  if (!url) return "/images/placeholder-product.png";
+  if (!url) return "/images/placeholder-product.jpg";
   if (url.startsWith("/storage")) {
     return `https://admin.souqkaber.com${url}`;
   }
@@ -224,10 +224,11 @@ const cleanImageUrl = (url: string): string => {
 };
 
 // ========== تنسيق التاريخ ==========
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string, t: any): string => {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-EG", {
+    const locale = t('common.lang') === 'en' ? 'en-US' : 'ar-EG';
+    return date.toLocaleDateString(locale, {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -251,22 +252,22 @@ const mapStatusToKey = (statusLabel: string): string => {
 };
 
 // ========== ترجمة طريقة استرداد المبلغ ==========
-const translateRefundMethod = (method: string): string => {
+const translateRefundMethod = (method: string, t: any): string => {
   const methodMap: Record<string, string> = {
-    "wallet": "محفظة التطبيق",
-    "bank": "تحويل بنكي",
-    "card": "بطاقة الدفع",
+    "wallet": t('returns.wallet'),
+    "bank": t('returns.bank'),
+    "card": t('returns.card'),
   };
   return methodMap[method] || method;
 };
 
-// ========== دوال استخراج الخصائص (تم التعديل) ==========
+// ========== دوال استخراج الخصائص ==========
 
 // جلب الذاكرة
 const getMemory = (item: ReturnProductItem): string | null => {
   if (!item.variant?.attributes) return null;
   const memoryAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "الذاكرة"
+    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM"
   );
   return memoryAttr?.value || null;
 };
@@ -275,7 +276,8 @@ const getMemory = (item: ReturnProductItem): string | null => {
 const getStorage = (item: ReturnProductItem): string | null => {
   if (!item.variant?.attributes) return null;
   const storageAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "هارد ديسك"
+    (attr) => attr.attribute_type.name === "هارد ديسك" || 
+      attr.attribute_type.name === "Hard disk"
   );
   return storageAttr?.value || null;
 };
@@ -284,7 +286,8 @@ const getStorage = (item: ReturnProductItem): string | null => {
 const getColor = (item: ReturnProductItem): { name: string; hex: string | null } | null => {
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "لون"
+    (attr) => attr.attribute_type.name === "لون" || 
+      attr.attribute_type.name === "color"
   );
   if (!colorAttr) return null;
   
@@ -295,6 +298,7 @@ const getColor = (item: ReturnProductItem): { name: string; hex: string | null }
 };
 
 export default function ReturnsPage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const router = useRouter();
   const [returns, setReturns] = useState<Return[]>([]);
   const [loading, setLoading] = useState(true);
@@ -310,6 +314,9 @@ export default function ReturnsPage() {
     next_page: null,
     previous_page: null
   });
+  
+  // ✅ الحصول على إعدادات الحالة مع الترجمة
+  const returnStatusConfig = getReturnStatusConfig(t);
   
   // ✅ استخدام ref لمنع التكرار
   const hasLoadedRef = useRef(false);
@@ -327,11 +334,9 @@ export default function ReturnsPage() {
     
     setLoading(true);
     try {
-      const result = await fetchReturns(page, itemsPerPage);
+      const result = await fetchReturns(page, itemsPerPage, t);
       
       if (!abortControllerRef.current?.signal.aborted) {
-       
-        
         setReturns(result.returns);
         setPagination(result.pagination);
         hasLoadedRef.current = true;
@@ -339,19 +344,18 @@ export default function ReturnsPage() {
     } catch (error) {
       if (!abortControllerRef.current?.signal.aborted) {
         console.error("❌ Error loading returns:", error);
-        toast.error("حدث خطأ في تحميل المرتجعات");
+        toast.error(t('returns.loadError'));
       }
     } finally {
       if (!abortControllerRef.current?.signal.aborted) {
         setLoading(false);
       }
     }
-  }, [itemsPerPage]);
+  }, [itemsPerPage, t]);
 
   // ========== تحميل الصفحة الأولى ==========
   useEffect(() => {
     if (!hasLoadedRef.current) {
-    
       loadReturns(1);
     }
     
@@ -364,7 +368,6 @@ export default function ReturnsPage() {
 
   // ========== تغيير الصفحة ==========
   const handlePageChange = useCallback((newPage: number) => {
-  
     if (newPage >= 1 && newPage <= pagination.last_page) {
       loadReturns(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -390,7 +393,7 @@ export default function ReturnsPage() {
   const copyToClipboard = (text: string, label: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     navigator.clipboard.writeText(text);
-    toast.success(`تم نسخ ${label}`, {
+    toast.success(t('returns.copied', { label }), {
       duration: 2000,
       position: "top-center",
     });
@@ -398,8 +401,6 @@ export default function ReturnsPage() {
 
   // ========== فلترة المرتجعات حسب الحالة (فلتر محلي) ==========
   const filteredReturns = useMemo(() => {
-  
-    
     if (filterStatus === "all") {
       return returns;
     }
@@ -407,15 +408,14 @@ export default function ReturnsPage() {
       const statusKey = mapStatusToKey(returnItem.status_label);
       return statusKey === filterStatus;
     });
-  
     return filtered;
   }, [returns, filterStatus]);
 
   const statusFilters: { value: FilterStatus; label: string }[] = [
-    { value: "all", label: "الكل" },
-    { value: "pending", label: "قيد الانتظار" },
-    { value: "refunded", label: "تم الاسترداد" },
-    { value: "rejected", label: "مرفوض" }
+    { value: "all", label: t('returns.filterAll') },
+    { value: "pending", label: t('returns.filterPending') },
+    { value: "refunded", label: t('returns.filterRefunded') },
+    { value: "rejected", label: t('returns.filterRejected') }
   ];
 
   if (loading) {
@@ -425,7 +425,7 @@ export default function ReturnsPage() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
-              <p className="text-gray-500 mt-4">جاري تحميل المرتجعات...</p>
+              <p className="text-gray-500 mt-4">{t('returns.loading')}</p>
             </div>
           </div>
         </div>
@@ -439,8 +439,7 @@ export default function ReturnsPage() {
         {/* العنوان */}
         <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <RefreshCw className="w-6 h-6 sm:w-7 sm:h-7 text-[#23A6F0]" />
-          <h1 className="text-xl sm:text-xl font-bold text-gray-800">المرتجعات</h1>
-         
+          <h1 className="text-xl sm:text-xl font-bold text-gray-800">{t('returns.title')}</h1>
         </div>
 
         {/* فلتر الحالات */}
@@ -449,7 +448,6 @@ export default function ReturnsPage() {
             <button
               key={filter.value}
               onClick={() => {
-               
                 setFilterStatus(filter.value);
               }}
               className={`whitespace-nowrap px-4 sm:px-5 md:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition ${
@@ -469,20 +467,20 @@ export default function ReturnsPage() {
             <div className="mt-8 md:mt-12 rounded-2xl p-8 sm:p-12 text-center">
               <RefreshCw className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
               <p className="text-gray-500 text-sm sm:text-base">
-                {returns.length === 0 ? "لا توجد مرتجعات حتى الآن" : "لا توجد مرتجعات في هذه الفئة"}
+                {returns.length === 0 ? t('returns.noReturns') : t('returns.noFilteredReturns')}
               </p>
             </div>
           ) : (
             filteredReturns.map((returnItem) => {
               const statusKey = mapStatusToKey(returnItem.status_label);
-              const status = returnStatusConfig[statusKey] || returnStatusConfig.pending;
+             const status = returnStatusConfig[statusKey as keyof typeof returnStatusConfig] || returnStatusConfig.pending;
               const StatusIcon = status.icon;
               const isExpanded = expandedReturnId === returnItem.id;
               const itemsCount = returnItem.order?.items?.length || 0;
               const totalRefund = returnItem.order?.total_amount || 0;
 
               return (
-                <div key={returnItem.id} className="bg-white  rounded-[8px]  sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div key={returnItem.id} className="bg-white rounded-[8px] sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                   {/* رأس المرتجع */}
                   <div 
                     className="p-4 sm:p-5 cursor-pointer hover:bg-gray-50 transition"
@@ -499,7 +497,7 @@ export default function ReturnsPage() {
                             }}
                             className="flex gap-2 sm:gap-4 items-center text-base sm:text-[20px] font-bold text-[#180100] cursor-pointer hover:opacity-70 transition"
                           >
-                            <h1 className="text-sm sm:text-base">رقم المرتجع</h1>
+                            <h1 className="text-sm sm:text-base">{t('returns.returnNumber')}</h1>
                             <div className="flex gap-1 sm:gap-2 items-center">
                               <p className="font-bold text-gray-800 text-sm sm:text-base">
                                 #{String(returnItem.id).padStart(5, '0')}
@@ -508,14 +506,14 @@ export default function ReturnsPage() {
                                 className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:text-[#23A6F0] transition"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  copyToClipboard(`#${String(returnItem.id).padStart(5, '0')}`, "رقم المرتجع");
+                                  copyToClipboard(`#${String(returnItem.id).padStart(5, '0')}`, t('returns.returnNumber'));
                                 }}
                               />
                             </div>
                           </div>
                           <div className="flex gap-2 sm:gap-4 items-center text-sm sm:text-base text-gray-500">
                             <span className="hidden sm:inline">|</span>
-                            <h1 className="text-xs sm:text-sm">الطلب</h1>
+                            <h1 className="text-xs sm:text-sm">{t('returns.order')}</h1>
                             <div className="flex gap-1 sm:gap-2 items-center">
                               <p 
                                 className="text-gray-600 text-xs sm:text-sm cursor-pointer hover:text-[#23A6F0] hover:underline transition"
@@ -527,7 +525,7 @@ export default function ReturnsPage() {
                                 className="w-3 h-3 sm:w-4 sm:h-4 cursor-pointer hover:text-[#23A6F0] transition"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  copyToClipboard(returnItem.order?.order_number || "", "رقم الطلب");
+                                  copyToClipboard(returnItem.order?.order_number || "", t('returns.orderNumber'));
                                 }}
                               />
                             </div>
@@ -546,18 +544,18 @@ export default function ReturnsPage() {
                       </div>
 
                       {/* الصف الثاني: التاريخ */}
-                      <p className="text-sm sm:text-[18px] text-[#333333]">{formatDate(returnItem.created_at)}</p>
+                      <p className="text-sm sm:text-[18px] text-[#333333]">{formatDate(returnItem.created_at, t)}</p>
                       
                       {/* الصف الثالث: عدد المنتجات والمبلغ المسترد */}
                       <div className="flex flex-wrap justify-between items-center gap-2">
                         <div className="flex gap-2 items-center text-sm sm:text-base">
-                          <p className="text-[#180100]">المنتجات</p>
+                          <p className="text-[#180100]">{t('returns.products')}</p>
                           <span className="text-gray-500">({itemsCount})</span>
                         </div>
                         {statusKey === "refunded" && totalRefund > 0 && (
                           <div className="flex gap-1 items-center text-sm font-semibold text-green-600">
                             <DollarSign className="w-4 h-4" />
-                            <span>تم استرداد EGP {totalRefund.toFixed(2)}</span>
+                            <span>{t('returns.refundedAmount')} {t('returns.currency')} {totalRefund.toFixed(2)}</span>
                           </div>
                         )}
                       </div>
@@ -569,19 +567,16 @@ export default function ReturnsPage() {
                     <div className="border-t border-gray-100 p-4 sm:p-5 bg-gray-50">
                       <div className="space-y-3 sm:space-y-4">
                         {returnItem.order?.items?.map((item, idx) => {
-                          // ✅ استخدام صورة المتغير أولاً إذا كانت موجودة
                           const variantImage = item.variant?.variant_image 
                             ? cleanImageUrl(item.variant.variant_image) 
                             : null;
                           
                           const productImage = item.images && item.images[0] 
                             ? cleanImageUrl(item.images[0]) 
-                            : "/images/placeholder-product.png";
+                            : "/images/placeholder-product.jpg";
 
-                          // ✅ اختيار الصورة المناسبة (أولوية لصورة المتغير)
                           const displayImage = variantImage || productImage;
                           
-                          // ========== استخدام الدوال الجديدة ==========
                           const memory = getMemory(item);
                           const storage = getStorage(item);
                           const color = getColor(item);
@@ -590,15 +585,15 @@ export default function ReturnsPage() {
                             <div key={idx} className="flex gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-gray-200 last:border-0 last:pb-0">
                               {/* صورة المنتج */}
                               <div className="flex-shrink-0">
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-[8px] sm: rounded-[8px]  overflow-hidden relative">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-[8px] overflow-hidden relative">
                                   <Image 
                                     src={displayImage} 
-                                    alt={item.title || item.name || "منتج"} 
+                                    alt={item.title || item.name || t('returns.product')} 
                                     width={80} 
                                     height={80} 
                                     className="object-cover w-full h-full"
                                     onError={(e) => {
-                                      (e.target as HTMLImageElement).src = "/images/placeholder-product.png";
+                                      (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
                                     }}
                                   />
                                 </div>
@@ -609,31 +604,27 @@ export default function ReturnsPage() {
                                 <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                                   <div>
                                     <p className="font-medium text-gray-800 text-sm sm:text-base">
-                                      {item.title || item.name || "منتج"}
+                                      {item.title || item.name || t('returns.product')}
                                     </p>
                                     
-                                    {/* ========== عرض جميع الخصائص ========== */}
                                     <div className="flex flex-wrap gap-2 mt-1.5">
-                                      {/* عرض الذاكرة */}
                                       {memory && (
                                         <span className="inline-flex items-center gap-1 text-xs bg-white px-2 py-0.5 rounded-full text-gray-700 border border-gray-200">
-                                          <span className="font-medium">الذاكرة:</span>
+                                          <span className="font-medium">{t('returns.memory')}:</span>
                                           <span>{memory}</span>
                                         </span>
                                       )}
                                       
-                                      {/* عرض الهارد ديسك */}
                                       {storage && (
                                         <span className="inline-flex items-center gap-1 text-xs bg-white px-2 py-0.5 rounded-full text-gray-700 border border-gray-200">
-                                          <span className="font-medium">هارد ديسك:</span>
+                                          <span className="font-medium">{t('returns.storage')}:</span>
                                           <span>{storage}</span>
                                         </span>
                                       )}
                                       
-                                      {/* عرض اللون */}
                                       {color && (
                                         <span className="inline-flex items-center gap-1.5 text-xs bg-white px-2 py-0.5 rounded-full text-gray-700 border border-gray-200">
-                                          <span className="font-medium">اللون:</span>
+                                          <span className="font-medium">{t('returns.color')}:</span>
                                           <span>{color.name}</span>
                                           {color.hex && (
                                             <span 
@@ -646,13 +637,13 @@ export default function ReturnsPage() {
                                     </div>
                                     
                                     <div className="flex flex-wrap gap-2 sm:gap-3 mt-1 text-[10px] sm:text-xs text-gray-500">
-                                      <span>الكمية: x{item.quantity}</span>
-                                      <span>السعر: EGP {(item.unit_price || 0).toFixed(2)}</span>
+                                      <span>{t('returns.quantity')}: x{item.quantity}</span>
+                                      <span>{t('returns.price')}: {t('returns.currency')} {(item.unit_price || 0).toFixed(2)}</span>
                                     </div>
                                   </div>
                                   <div className="text-left sm:text-right">
                                     <p className="font-semibold text-[#000000] text-sm sm:text-base">
-                                      EGP {(item.total_price || item.unit_price * item.quantity || 0).toFixed(2)}
+                                      {t('returns.currency')} {(item.total_price || item.unit_price * item.quantity || 0).toFixed(2)}
                                     </p>
                                   </div>
                                 </div>
@@ -665,15 +656,15 @@ export default function ReturnsPage() {
                         <div className="pt-2 sm:pt-3 space-y-2">
                           <div className="flex justify-between items-center flex-wrap gap-2">
                             <div className="text-right">
-                              <p className="text-xs sm:text-sm text-gray-500">إجمالي المسترد</p>
-                              <p className="text-base sm:text-xl font-bold text-[#23A6F0]">EGP {totalRefund.toFixed(2)}</p>
+                              <p className="text-xs sm:text-sm text-gray-500">{t('returns.totalRefund')}</p>
+                              <p className="text-base sm:text-xl font-bold text-[#23A6F0]">{t('returns.currency')} {totalRefund.toFixed(2)}</p>
                             </div>
                           </div>
                           
                           {returnItem.refund_method && statusKey === "refunded" && (
                             <div className="flex justify-end">
                               <p className="text-xs text-gray-500">
-                                تم الاسترداد عبر: {translateRefundMethod(returnItem.refund_method)}
+                                {t('returns.refundedVia')}: {translateRefundMethod(returnItem.refund_method, t)}
                               </p>
                             </div>
                           )}
@@ -681,7 +672,7 @@ export default function ReturnsPage() {
                           {returnItem.notes && (
                             <div className="mt-3 p-3 bg-gray-100 rounded-[8px]">
                               <p className="text-xs text-gray-600">
-                                <span className="font-bold">ملاحظات:</span> {returnItem.notes}
+                                <span className="font-bold">{t('returns.notes')}:</span> {returnItem.notes}
                               </p>
                             </div>
                           )}
@@ -692,7 +683,7 @@ export default function ReturnsPage() {
                               onClick={() => goToReturnDetails(returnItem.id)}
                               className="px-4 py-2 bg-[#23A6F0] text-white rounded-[8px] text-sm font-medium hover:bg-[#31a9ee] transition"
                             >
-                              عرض التفاصيل الكاملة
+                              {t('returns.viewDetails')}
                             </button>
                           </div>
                         </div>

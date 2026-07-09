@@ -10,6 +10,7 @@ import {
   FavoriteProduct,
 } from '@/services/favorites';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface FavoritesContextType {
   favorites: FavoriteProduct[];
@@ -27,6 +28,8 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
@@ -44,8 +47,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         const validFavorites = response.data.favorites.filter((item: FavoriteProduct) => item && item.id);
         
         if (isMountedRef.current) {
-         
-          setFavorites([...validFavorites]); // استخدام spread لإنشاء مصفوفة جديدة
+          setFavorites([...validFavorites]);
           setTotal(validFavorites.length);
           
           const newMap = new Map<string, boolean>();
@@ -83,7 +85,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       const response = await addToFavorites(productId);
       
       if (response.result === true && response.data) {
-        toast.success('تم إضافة المنتج إلى المفضلة');
+        toast.success(t('favorites.addSuccess'));
         
         // إعادة جلب البيانات بالكامل للتأكد من التزامن
         await fetchData(false);
@@ -91,15 +93,15 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         return true;
       } else {
         if (response.message === "هذا المنتج موجود بالفعل في مفضلتك.") {
-          toast.success('المنتج موجود بالفعل في المفضلة');
+          toast.success(t('favorites.alreadyExists'));
           favoritesMapRef.current.set(productIdStr, true);
           return true;
         }
-        toast.error(response.message || 'فشل في إضافة المنتج');
+        toast.error(response.message || t('favorites.addFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('يجب تسجيل الدخول لأضافه المنتج للمفضلة');
+      toast.error(t('favorites.loginRequired'));
       return false;
     } finally {
       setIsMutating(false);
@@ -114,18 +116,18 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       const response = await removeFromFavorites(productId);
       
       if (response.result === true) {
-        toast.success('تم إزالة المنتج من المفضلة');
+        toast.success(t('favorites.removeSuccess'));
         
         // إعادة جلب البيانات بالكامل للتأكد من التزامن
         await fetchData(false);
         
         return true;
       } else {
-        toast.error(response.message || 'فشل في إزالة المنتج');
+        toast.error(response.message || t('favorites.removeFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في إزالة المنتج');
+      toast.error(t('favorites.removeError'));
       return false;
     } finally {
       setIsMutating(false);
@@ -148,15 +150,15 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     try {
       const success = await clearAllFavorites();
       if (success) {
-        toast.success('تم حذف جميع المنتجات من المفضلة');
+        toast.success(t('favorites.clearAllSuccess'));
         await fetchData(false);
         return true;
       } else {
-        toast.error('فشل في حذف جميع المنتجات');
+        toast.error(t('favorites.clearAllFailed'));
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في حذف المنتجات');
+      toast.error(t('favorites.clearAllError'));
       return false;
     } finally {
       setIsMutating(false);

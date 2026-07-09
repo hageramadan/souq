@@ -9,6 +9,7 @@ import { useCartContext } from "@/contexts/CartContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Link from "next/link";
 import { ChevronRight, Info } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface Ibrand {
   id: number;
@@ -36,6 +37,7 @@ export interface CartItemDisplay {
 }
 
 export function CartPage() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const { cart, isLoading, updateQuantity, removeItem, refetchCart, isGuest } = useCartContext();
   const [cartItems, setCartItems] = useState<CartItemDisplay[]>([]);
 
@@ -64,7 +66,7 @@ export function CartPage() {
           } else {
             // ✅ إذا كانت القيمة "-" ولكن يوجد Hex، استخدم "لون" كاسم
             if (attr.meta?.color) {
-              color = "لون";
+              color = t('cartPage.colorLabel');
               colorHex = attr.meta.color;
             }
           }
@@ -109,7 +111,7 @@ export function CartPage() {
     }
     return {
       id: 0,
-      name: "ماركة"
+      name: t('cartPage.defaultBrand')
     };
   };
 
@@ -164,7 +166,7 @@ export function CartPage() {
     } else {
       setCartItems([]);
     }
-  }, [cart]);
+  }, [cart, t]); // ✅ إضافة t كـ dependency
 
   const subtotal = cart?.subtotal || 0;
   const totalDiscount = cart?.discount_amount || 0;
@@ -197,7 +199,7 @@ export function CartPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <LoadingSpinner size="lg" text="جاري تحميل السلة..." />
+        <LoadingSpinner size="lg" text={t('cartPage.loading')} />
       </div>
     );
   }
@@ -209,7 +211,11 @@ export function CartPage() {
   return (
     <div className="bg-gradient-to-l min-h-[80vh] from-[#bdcbf12a] to-[#feecea3b]">
       <div className="container page-with-padding">
-        <PageHeader title="سلة التسوق" itemCount={itemsCount} />
+        <PageHeader 
+          title={t('cartPage.title')} 
+          itemCount={itemsCount} 
+          t={t}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 md:gap-8 gap-4">
           <div className="lg:col-span-2 space-y-4 bg-white rounded-[16px] px-1 py-2 lg:p-4 mb-5">
@@ -242,14 +248,14 @@ export function CartPage() {
   );
 }
 
-const PageHeader = ({ title, itemCount }: { title: string; itemCount: number }) => (
+const PageHeader = ({ title, itemCount, t }: { title: string; itemCount: number; t: any }) => (
   <div className="mb-8">
     <h1 className="text-lg lg:text-xl font-bold text-gray-800">{title}</h1>
     <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-      <Link href="/" className="hover:text-[#23A6F0]">الرئيسية</Link>
+      <Link href="/" className="hover:text-[#23A6F0]">{t('cartPage.home')}</Link>
       <ChevronRight className="w-4 h-4" />
       <span className="text-[#23A6F0]">{title}</span>
-      <span className="text-gray-400">({itemCount} منتجات)</span>
+      <span className="text-gray-400">({itemCount} {t('cartPage.products')})</span>
     </div>
   </div>
 );

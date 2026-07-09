@@ -30,6 +30,7 @@ export interface CheckoutFormData {
   notes: string;
   deliveryMethod: "pickup" | "delivery" ;
   paymentMethod: "cash" | "card" | "mada" | "wallet";
+  isGuest?: boolean; 
 }
 
 // ✅ واجهة جديدة لملخص سلة التسوق

@@ -160,7 +160,7 @@ const transformProductForCard = (product: any): TransformedProduct => {
   }
 
   const cleanImageUrl = (url: string) => {
-    if (!url) return "/placeholder-image.jpg";
+    if (!url) return "/images/placeholder-product.jpg";
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }
