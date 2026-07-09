@@ -132,12 +132,37 @@ export default function ProductsContent() {
   const [sortBy, setSortBy] = useState<string>("all");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
+  // ✅ إضافة ref للمنيو الترتيب
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
   const perPage = 12;
 
   const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFilterChangeRef = useRef(false);
-const [loadingSliders, setLoadingSliders] = useState(false);
+  const [loadingSliders, setLoadingSliders] = useState(false);
+
+  // ✅ إغلاق المنيو عند النقر في أي مكان خارج العنصر
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+
+    // إضافة مستمع الحدث عند فتح المنيو فقط
+    if (isSortOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    // تنظيف المستمع
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortOpen]);
+
   // ✅ تحميل البراندات العامة
   useEffect(() => {
     const fetchBrands = async () => {
@@ -459,22 +484,21 @@ const [loadingSliders, setLoadingSliders] = useState(false);
     return count;
   };
 
-  // ✅ تحديد البراندات التي سيتم عرضها
   // ✅ تحديد البراندات التي سيتم عرضها - مع التأكد من مسح البراندات القديمة
-const displayBrands = useMemo(() => {
-  // إذا كانت الفئة محددة ولديها براندات خاصة
-  if (currentCategoryId !== null && isCategorySpecificBrands) {
-    return categoryBrands;
-  }
-  
-  // إذا كانت الفئة محددة ولكن ليس لديها براندات
-  if (currentCategoryId !== null && !isCategorySpecificBrands) {
-    return []; // ✅ عرض فارغ بدلاً من البراندات العامة
-  }
-  
-  // إذا لم توجد فئة محددة، استخدم البراندات العامة
-  return allBrands;
-}, [currentCategoryId, isCategorySpecificBrands, categoryBrands, allBrands]);
+  const displayBrands = useMemo(() => {
+    // إذا كانت الفئة محددة ولديها براندات خاصة
+    if (currentCategoryId !== null && isCategorySpecificBrands) {
+      return categoryBrands;
+    }
+    
+    // إذا كانت الفئة محددة ولكن ليس لديها براندات
+    if (currentCategoryId !== null && !isCategorySpecificBrands) {
+      return []; // ✅ عرض فارغ بدلاً من البراندات العامة
+    }
+    
+    // إذا لم توجد فئة محددة، استخدم البراندات العامة
+    return allBrands;
+  }, [currentCategoryId, isCategorySpecificBrands, categoryBrands, allBrands]);
 
   return (
     <div className="min-h-screen">
@@ -515,33 +539,33 @@ const displayBrands = useMemo(() => {
       <div className="container mx-auto px-4 pb-16 ">
         {/* ✅ Category Slider */}
      
-{categorySliders.length > 0 && (
-  <div className="mb-2" key={currentCategoryId}> {/* ✅ إضافة key */}
-    <CategorySlider
-      sliders={categorySliders}
-      categoryName={categoryName || undefined}
-      categoryId={currentCategoryId || undefined}
-      autoplay={true}
-      autoplayDelay={5000}
-    />
-  </div>
-)}
+        {categorySliders.length > 0 && (
+          <div className="mb-2" key={currentCategoryId}> {/* ✅ إضافة key */}
+            <CategorySlider
+              sliders={categorySliders}
+              categoryName={categoryName || undefined}
+              categoryId={currentCategoryId || undefined}
+              autoplay={true}
+              autoplayDelay={5000}
+            />
+          </div>
+        )}
 
         {/* ✅ BrandSlider - يعرض براندات الفئة المختارة */}
-       { categoryBrands.length > 0 &&(
-         <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4 ">
-          <BrandSlider
-            brands={displayBrands}
-            selectedBrands={selectedBrands}
-            onBrandToggle={handleBrandToggle}
-            showCategoryBrandsLabel={isCategorySpecificBrands}
-            categoryName={categoryName || undefined}
-          />
-        </div>
-       ) }
-       
+        {categoryBrands.length > 0 && (
+          <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4 ">
+            <BrandSlider
+              brands={displayBrands}
+              selectedBrands={selectedBrands}
+              onBrandToggle={handleBrandToggle}
+              showCategoryBrandsLabel={isCategorySpecificBrands}
+              categoryName={categoryName || undefined}
+            />
+          </div>
+        )}
+        
         {/* فلتر الترتيب - نسخة سطح المكتب (sort-section1) */}
-        <div className="sort-section1">
+        <div className="sort-section1" ref={sortMenuRef}>
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
             className="px-4 py-2 relative bg-white border border-gray-300 rounded-[8px] flex items-center gap-2 hover:bg-gray-100 transition-colors"
@@ -644,7 +668,7 @@ const displayBrands = useMemo(() => {
               </div>
               
               {/* فلتر الترتيب - نسخة الموبايل (sort-section2) */}
-              <div className="sort-section2">
+              <div className="sort-section2" ref={sortMenuRef}>
                 <button
                   onClick={() => setIsSortOpen(!isSortOpen)}
                   className="px-4 py-2 bg-white border border-gray-300 rounded-[8px] flex items-center gap-2 hover:bg-gray-100 transition-colors"
@@ -829,7 +853,7 @@ const displayBrands = useMemo(() => {
             <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-3xl">
+          <div className="sticky top-0  bg-white border-b border-gray-200 p-4 flex justify-between items-center z-50 rounded-t-3xl">
             <h2 className="text-lg font-bold">
               {t("products.filterProducts")}
             </h2>

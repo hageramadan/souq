@@ -580,6 +580,7 @@ export default function CheckoutPage() {
         method: "POST",
         headers: {
           "Accept": "application/json",
+          "content-type":"application/json"
         },
         body: JSON.stringify({
           name: accountData.name,

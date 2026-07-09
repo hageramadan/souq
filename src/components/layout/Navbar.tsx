@@ -1058,7 +1058,7 @@ export function Navbar() {
 
       {/* القائمة السفلية للموبايل (Bottom Navigation Bar) - ✅ استخدام الترجمات */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t shadow-lg"
         style={{ borderColor: "#e2e8f0" }}
       >
         <div className="flex items-center justify-around py-2">

@@ -58,7 +58,7 @@ export const getAcceptLanguageHeader = (lang?: string): string => {
 };
 
 // ✅ دالة مساعدة لإضافة الهيدرات تلقائياً
-const getHeaders = (includeAuth: boolean = true, lang?: string): HeadersInit => {
+export const getHeaders = (includeAuth: boolean = true, lang?: string): HeadersInit => {
   const headers: HeadersInit = {
     'Accept': 'application/json',
     'content-type': 'application/json',
@@ -1077,10 +1077,7 @@ export async function registerWithPhone(data: RegisterWithPhoneRequest): Promise
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
-       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
+       headers: getHeaders(false),
       body: JSON.stringify(data),
     });
 
@@ -1139,10 +1136,7 @@ export async function loginWithPhone(data: LoginWithPhoneRequest): Promise<AuthR
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: getHeaders(false),
       body: JSON.stringify(data),
     });
     const results: AuthResponse = await response.json();
@@ -1175,6 +1169,7 @@ export async function logout(token?: string): Promise<LogoutResponse> {
     
     const headers: HeadersInit = {
        'Content-Type': 'application/json',
+       'Accept':'appkication/json'
     };
     
     if (authToken) {

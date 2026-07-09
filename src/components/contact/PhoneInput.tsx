@@ -1,7 +1,7 @@
 // components/contact/PhoneInput.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactCountryFlag from "react-country-flag";
 import {
   Select,
@@ -19,7 +19,7 @@ interface PhoneInputProps {
 
 interface CountryCode {
   code: string;
-  countryKey: string; // ✅ مفتاح للترجمة بدلاً من النص الثابت
+  countryKey: string;
   countryCode: string;
   placeholder: string;
   example: string;
@@ -29,6 +29,7 @@ interface CountryCode {
   startsWith: string[];
   startsWithoutZero?: string[];
   allowLeadingZero?: boolean;
+  skipValidation?: boolean; // ✅ إضافة خاصية لتخطي الفالديشن
 }
 
 // ✅ بيانات الدول مع مفاتيح الترجمة
@@ -57,7 +58,8 @@ const countryCodes: CountryCode[] = [
     maxLength: 10,
     startsWith: ["05"],
     startsWithoutZero: ["5"],
-    allowLeadingZero: true
+    allowLeadingZero: true,
+    skipValidation: true // ✅ تخطي الفالديشن للرقم السعودي
   },
   { 
     code: "+964", 
@@ -121,6 +123,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
   const [error, setError] = useState("");
   const [localPhoneNumber, setLocalPhoneNumber] = useState("");
   const [isTouched, setIsTouched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // استخراج كود الدولة والرقم من القيمة الأولية
   useEffect(() => {
@@ -154,6 +157,12 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
 
   // التحقق من الرقم حسب الدولة
   const validatePhoneNumber = (phoneNumber: string, country: CountryCode): boolean => {
+    // ✅ إذا كانت الدولة تخطي الفالديشن، نرجع true مباشرة
+    if (country.skipValidation) {
+      setError("");
+      return true;
+    }
+
     if (!phoneNumber && required) {
       setError(t('contact.phoneRequired'));
       return false;
@@ -167,7 +176,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     // إزالة المسافات والشرطات
     const cleanNumber = phoneNumber.replace(/[\s\-]/g, "");
     
-    // التحقق من أن الإدخال أرقام فقط
+    // ✅ التحقق من أن الإدخال أرقام فقط (تأكيد إضافي)
     if (!/^\d+$/.test(cleanNumber)) {
       setError(t('contact.onlyDigits'));
       return false;
@@ -232,8 +241,15 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     
-    // إزالة أي أحرف غير رقمية
+    // ✅ منع أي شيء غير أرقام (بما في ذلك الحروف والرموز)
     const numbersOnly = rawValue.replace(/[^\d]/g, "");
+    
+    // ✅ منع粘贴 (paste) الذي يحتوي على حروف
+    if (rawValue !== numbersOnly) {
+      if (inputRef.current) {
+        inputRef.current.value = numbersOnly;
+      }
+    }
     
     // تحديث الحالة المحلية
     setLocalPhoneNumber(numbersOnly);
@@ -255,9 +271,56 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const numbersOnly = pastedText.replace(/[^\d]/g, '');
+    
+    if (numbersOnly) {
+      setLocalPhoneNumber(numbersOnly);
+      setIsTouched(true);
+      validatePhoneNumber(numbersOnly, selectedCountry);
+      onChange(numbersOnly, selectedCountry.code);
+      
+      if (inputRef.current) {
+        inputRef.current.value = numbersOnly;
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const controlKeys = [
+      'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 
+      'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter'
+    ];
+    
+    if (controlKeys.includes(e.key)) {
+      return;
+    }
+    
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   // تنسيق الرقم للعرض
   const formatDisplayNumber = (number: string, country: CountryCode): string => {
     return number;
+  };
+
+  // ✅ دالة للتحقق مما إذا كان يجب عرض رسائل النجاح/المساعدة
+  const shouldShowSuccess = () => {
+    if (selectedCountry.skipValidation) return false;
+    return !error && localPhoneNumber && 
+           (localPhoneNumber.length === selectedCountry.minLength || 
+            localPhoneNumber.length === selectedCountry.minLength - 1);
+  };
+
+  const shouldShowHelper = () => {
+    if (selectedCountry.skipValidation) return false;
+    return !error && localPhoneNumber && 
+           localPhoneNumber.length < selectedCountry.minLength - 1 && 
+           localPhoneNumber.length > 0;
   };
 
   return (
@@ -266,17 +329,24 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
         <div className="relative flex flex-row-reverse items-stretch" dir="ltr">
           <div className="flex-1 relative">
             <input
+              ref={inputRef}
               type="tel"
               value={formatDisplayNumber(localPhoneNumber, selectedCountry)}
               onChange={handleNumberChange}
               onBlur={handleBlur}
+              onPaste={handlePaste}
+              onKeyDown={handleKeyDown}
               required={required}
               placeholder={selectedCountry.placeholder}
               inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="tel"
               className={`w-full px-4 h-full border rounded-r-xl focus:ring-black focus:border-black rounded-l-none focus:outline-none foucs:ring-2 transition bg-white text-left font-mono text-base
-                ${error && isTouched && localPhoneNumber 
+                ${error && isTouched && localPhoneNumber && !selectedCountry.skipValidation
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500 foucs:ring-2" 
-                  : !error && localPhoneNumber && (localPhoneNumber.length === selectedCountry.minLength || localPhoneNumber.length === selectedCountry.minLength - 1)
+                  : !error && localPhoneNumber && !selectedCountry.skipValidation && 
+                    (localPhoneNumber.length === selectedCountry.minLength || 
+                     localPhoneNumber.length === selectedCountry.minLength - 1)
                   ? "border-green-500 focus:border-green-500 focus:ring-green-500 foucs:ring-2"
                   : "border-gray-200 focus:border-[#000000] focus:ring-[#000000] foucs:ring-2"
                 }`}
@@ -340,6 +410,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
                           <span>{country.code}</span>
                           <span>•</span>
                           <span>{country.minLength} {t('contact.digits')}</span>
+                         
                         </div>
                       </div>
                     </div>
@@ -350,26 +421,28 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
           </div>
         </div>
         
-        {/* رسالة الخطأ */}
-        {error && isTouched && (
+        {/* رسالة الخطأ - تظهر فقط إذا كانت الدولة لا تخطي الفالديشن */}
+        {error && isTouched && !selectedCountry.skipValidation && (
           <p className="text-red-500 text-sm mt-1">
             ⚠ {error}
           </p>
         )}
         
-        {/* رسالة النجاح */}
-        {!error && localPhoneNumber && (localPhoneNumber.length === selectedCountry.minLength || localPhoneNumber.length === selectedCountry.minLength - 1) && (
+        {/* رسالة النجاح - تظهر فقط إذا كانت الدولة لا تخطي الفالديشن */}
+        {shouldShowSuccess() && (
           <p className="text-green-600 text-sm mt-1">
             ✓ {t('contact.valid')} {getCountryName(selectedCountry)}
           </p>
         )}
         
-        {/* معلومات المساعدة - تظهر أثناء الكتابة */}
-        {!error && localPhoneNumber && localPhoneNumber.length < selectedCountry.minLength - 1 && localPhoneNumber.length > 0 && (
+        {/* معلومات المساعدة - تظهر فقط إذا كانت الدولة لا تخطي الفالديشن */}
+        {shouldShowHelper() && (
           <p className="text-blue-500 text-xs mt-1">
             📝 {t('contact.typed')} {localPhoneNumber.length} {t('contact.of')} {selectedCountry.minLength} {t('contact.digits')}
           </p>
         )}
+
+      
       </div>
     </div>
   );

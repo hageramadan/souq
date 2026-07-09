@@ -21,6 +21,7 @@ import {
   registerWithPhone,
   resendOTP,
   getUserProfile,
+  getHeaders,
 } from "../services/api";
 import { useCartContext } from "./CartContext";
 
@@ -288,10 +289,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           "https://admin.souqkaber.com/api/auth/verify-otp",
           {
             method: "POST",
-            headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
+            headers: getHeaders(false),
             body: JSON.stringify({ otp, email }),
           },
         );
@@ -344,10 +342,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           "https://admin.souqkaber.com/api/auth/verify-otp",
           {
             method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
+            headers: getHeaders(false),
             // ✅ أرسل phone و country_code بشكل منفصل في الـ body
             body: JSON.stringify({
               otp,
