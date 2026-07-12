@@ -183,11 +183,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           }
         }
         
-        toast.success(response.message || t('cart.addSuccess'));
+        toast.success(t('cart.addSuccess'));
         await fetchCartData(false);
         return true;
       } else {
-        toast.error(response.message || t('cart.addFailed'));
+        toast.error(t('cart.addFailed'));
         return false;
       }
     } catch (error) {

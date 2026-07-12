@@ -331,12 +331,12 @@ export function ProductCard({
                   {originalPrice.toLocaleString()} 
                 </span>
                 <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
-                  {price.toLocaleString()} EGP
+                  {price.toLocaleString()} 
                 </span>
               </>
             ) : (
               <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
-                {price.toLocaleString()} EGP
+                {price.toLocaleString()} 
               </span>
             )}
           </div>

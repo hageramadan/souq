@@ -36,7 +36,7 @@ export function CartSummary({
   
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 sticky top-24 mb-5">
-      <h1 className="text-lg lg:text-xl font-bold text-[#180100] pb-2">
+      <h1 className="text-sm lg:text-xl font-bold text-[#180100] pb-2">
         {t('cartSummary.title')}
       </h1>
 
@@ -115,13 +115,13 @@ const SummaryRow = ({
 
   const getValueClassName = () => {
     if (isDiscount) return "text-[#23A6F0] font-bold";
-    if (isTotal) return "text-[20px] font-bold ";
+    if (isTotal) return " text-sm lg:text-[20px] font-bold ";
     return "font-semibold text-gray-800";
   };
 
   const getLabelClassName = () => {
-    if (isTotal) return "text-lg font-bold text-gray-800";
-    return "text-gray-600";
+    if (isTotal) return "text-sm lg:text-lg font-bold text-gray-800";
+    return "text-gray-600 text-sm lg:text-lg";
   };
 
   return (
@@ -134,7 +134,7 @@ const SummaryRow = ({
 
 const CheckoutButton = ({ t }: { t: any }) => (
   
-  <Link href="/checkout" className="flex items-center justify-center gap-2 mt-4 w-full bg-[#2DA5F3] text-white py-2 rounded-[8px] font-bold text-lg transition-all duration-300 shadow-md hover:shadow-lg hover:bg-[#3fabf3]">
+  <Link href="/checkout" className="text-sm lg:text-lg flex items-center justify-center gap-2 mt-4 w-full bg-[#2DA5F3] text-white py-2 rounded-[8px] font-bold  transition-all duration-300 shadow-md hover:shadow-lg hover:bg-[#3fabf3]">
     <button className="">
       {t('cartSummary.checkout')}
     </button>

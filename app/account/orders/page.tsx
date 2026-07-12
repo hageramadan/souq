@@ -32,6 +32,12 @@ type OrderStatus =
   | "not_delivered"
   | "cancelled";
 
+interface Currency {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 interface OrderItem {
   id: number;
   title: string;
@@ -80,6 +86,7 @@ interface OrderAddress {
   user?: {
     id: number;
     name: string;
+    locale: string;
     email: string;
   };
 }
@@ -104,6 +111,8 @@ interface Order {
   address: OrderAddress | null;
   items: OrderItem[];
   created_at: string;
+  currency: Currency;
+  userLocale: string;
 }
 
 interface PaginationData {
@@ -137,36 +146,13 @@ const getHeaders = (): HeadersInit => {
 
 const PLACEHOLDER_IMAGE = "/images/placeholder-product.jpg";
 
-// ✅ متغيرات لمنع التكرار على مستوى الدالة
-let isFetching = false;
-let lastFetchTime = 0;
-
-// ========== دالة جلب الطلبات ==========
-const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ orders: Order[], pagination: PaginationData }> => {
-  const now = Date.now();
-  if (isFetching || (now - lastFetchTime < 300)) {
-    return {
-      orders: [],
-      pagination: {
-        current_page: 1,
-        last_page: 1,
-        per_page: 10,
-        total: 0,
-        from: 0,
-        to: 0,
-        next_page: null,
-        previous_page: null
-      }
-    };
-  }
-  
-  isFetching = true;
-  lastFetchTime = now;
-  
+// ========== دالة جلب الطلبات (بدون منع تكرار) ==========
+const fetchOrders = async (page: number = 1, perPage: number = 10, signal?: AbortSignal): Promise<{ orders: Order[], pagination: PaginationData }> => {
   try {
     const response = await fetch(`${API_URL}/orders?page=${page}&per_page=${perPage}`, {
       method: "GET",
       headers: getHeaders(),
+      signal: signal, // دعم AbortSignal
     });
 
     const data = await response.json();
@@ -203,6 +189,23 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
       }
     };
   } catch (error) {
+    // إذا كان الخطأ بسبب الإلغاء، لا نعرض رسالة خطأ
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log('🔄 Request was aborted');
+      return {
+        orders: [],
+        pagination: {
+          current_page: 1,
+          last_page: 1,
+          per_page: 10,
+          total: 0,
+          from: 0,
+          to: 0,
+          next_page: null,
+          previous_page: null
+        }
+      };
+    }
     console.error("❌ Error fetching orders:", error);
     return {
       orders: [],
@@ -217,8 +220,6 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
         previous_page: null
       }
     };
-  } finally {
-    isFetching = false;
   }
 };
 
@@ -236,16 +237,46 @@ const mapStatusToEnglish = (statusLabel: string): OrderStatus => {
   return statusMap[statusLabel] || "ordered";
 };
 
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string, locale: string = "ar"): string => {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-EG", {
+    
+    let localeString = '';
+    if (locale === 'ar') {
+      localeString = 'ar-EG';
+    } else if (locale === 'en') {
+      localeString = 'en-US';
+    } else {
+      localeString = 'ar-EG';
+    }
+    
+    return date.toLocaleDateString(localeString, {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   } catch {
     return dateString;
+  }
+};
+
+const formatNumber = (number: number, locale: string = "ar"): string => {
+  try {
+    let localeString = '';
+    if (locale === 'ar') {
+      localeString = 'ar-EG';
+    } else if (locale === 'en') {
+      localeString = 'en-US';
+    } else {
+      localeString = 'ar-EG';
+    }
+    
+    return number.toLocaleString(localeString, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  } catch {
+    return number.toFixed(2);
   }
 };
 
@@ -257,7 +288,6 @@ const cleanImageUrl = (url: string): string => {
   return url;
 };
 
-// ========== دوال جديدة لجلب خصائص المنتج (تدعم اللغتين) ==========
 const getAttributeValue = (
   item: OrderItem, 
   attributeNames: string[]
@@ -290,7 +320,12 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
   };
 };
 
-// ========== تحويل بيانات الطلب بشكل آمن ==========
+const formatCurrency = (amount: number, currency: Currency, locale: string = "ar"): string => {
+  const symbol = currency.symbol || "ج.م";
+  const formattedAmount = formatNumber(amount, locale);
+  return `${formattedAmount} ${symbol}`;
+};
+
 const transformOrder = (apiOrder: any): Order => {
   if (!apiOrder || !apiOrder.id) {
     return {
@@ -313,15 +348,29 @@ const transformOrder = (apiOrder: any): Order => {
       address: null,
       items: [],
       created_at: new Date().toISOString(),
+      currency: {
+        code: "",
+        symbol: "",
+        rate: 1
+      },
+      userLocale: "ar"
     };
   }
 
   const englishStatus = mapStatusToEnglish(apiOrder.status_label || "ordered");
 
+  const currency = apiOrder.currency || {
+    code: "",
+    symbol: "",
+    rate: 1
+  };
+
+  const userLocale = apiOrder.address?.user?.locale || "ar";
+
   return {
     id: apiOrder.id,
     orderNumber: apiOrder.order_number || `ORD-${apiOrder.id}`,
-    date: formatDate(apiOrder.created_at),
+    date: apiOrder.created_at ? apiOrder.created_at : "N/A",
     status: englishStatus,
     status_label: apiOrder.status_label || "ordered",
     payment_method: apiOrder.payment_method || "N/A",
@@ -338,6 +387,8 @@ const transformOrder = (apiOrder: any): Order => {
     address: apiOrder.address || null,
     items: apiOrder.items || [],
     created_at: apiOrder.created_at || new Date().toISOString(),
+    currency: currency,
+    userLocale: userLocale
   };
 };
 
@@ -387,7 +438,7 @@ type FilterStatus = "all" | OrderStatus;
 export default function OrdersPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const pathname = usePathname(); // ✅ الحصول على المسار الحالي
+  const pathname = usePathname();
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -404,35 +455,43 @@ export default function OrdersPage() {
     previous_page: null
   });
   
+  // ✅ استخدام AbortController لإلغاء الطلبات القديمة
   const abortControllerRef = useRef<AbortController | null>(null);
   const itemsPerPage = 10;
 
   const statusConfig = useMemo(() => getStatusConfig(t), [t]);
 
-  // ========== جلب الطلبات ==========
+  // ========== جلب الطلبات مع دعم AbortController ==========
   const loadOrders = useCallback(async (page: number = 1) => {
+    // إلغاء الطلب السابق إذا كان موجوداً
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     
-    abortControllerRef.current = new AbortController();
+    // إنشاء AbortController جديد
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     
     setLoading(true);
+    
     try {
-      const result = await fetchOrders(page, itemsPerPage);
+      // جلب البيانات مع إرسال signal
+      const result = await fetchOrders(page, itemsPerPage, controller.signal);
       
-      if (!abortControllerRef.current?.signal.aborted) {
+      // التحقق من عدم إلغاء الطلب قبل تحديث الحالة
+      if (!controller.signal.aborted) {
         setOrders(result.orders);
         setPagination(result.pagination);
+        setLoading(false);
       }
     } catch (error) {
-      if (!abortControllerRef.current?.signal.aborted) {
+      // تجاهل أخطاء الإلغاء
+      if (error instanceof Error && error.name !== 'AbortError') {
         console.error("❌ Error loading orders:", error);
         toast.error(t('orders.loadError'));
-      }
-    } finally {
-      if (!abortControllerRef.current?.signal.aborted) {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
   }, [itemsPerPage, t]);
@@ -441,12 +500,13 @@ export default function OrdersPage() {
   useEffect(() => {
     loadOrders(1);
     
+    // تنظيف: إلغاء أي طلب معلق عند إلغاء تحميل المكون
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [loadOrders, pathname]); // ✅ إضافة pathname كاعتماد
+  }, [loadOrders, pathname]);
 
   // ========== تغيير الصفحة ==========
   const handlePageChange = useCallback((newPage: number) => {
@@ -495,7 +555,6 @@ export default function OrdersPage() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
-              {/* <p className="text-gray-500 mt-4">{t('orders.loading')}</p> */}
             </div>
           </div>
         </div>
@@ -537,7 +596,9 @@ export default function OrdersPage() {
         <div className="space-y-3 sm:space-y-4">
           {filteredOrders.length === 0 ? (
             <div className="mt-8 md:mt-12 rounded-2xl p-8 sm:p-12 text-center">
-              <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Package className="w-12 h-12 text-gray-400" />
+              </div>
               <p className="text-gray-500 text-sm sm:text-base">
                 {orders.length === 0 ? t('orders.noOrders') : t('orders.noFilteredOrders')}
               </p>
@@ -548,6 +609,7 @@ export default function OrdersPage() {
               const StatusIcon = status.icon;
               const isExpanded = expandedOrderId === order.id;
               const itemsCount = order.items.length;
+              const currentLocale = order.userLocale || 'ar';
 
               return (
                 <div
@@ -603,7 +665,7 @@ export default function OrdersPage() {
                       </div>
 
                       <p className="text-sm sm:text-[18px] text-[#333333]">
-                        {order.date}
+                        {formatDate(order.created_at, currentLocale)}
                       </p>
 
                       <div className="flex gap-2 items-center text-sm sm:text-base">
@@ -700,13 +762,13 @@ export default function OrdersPage() {
                                     <div className="flex flex-wrap gap-2 sm:gap-3 mt-1 text-[10px] sm:text-xs text-gray-500">
                                       <span>{t('orders.quantity')}: x{item.quantity}</span>
                                       <span>
-                                        {t('orders.price')}: EGP {item.unit_price.toFixed(2)}
+                                        {t('orders.price')}: {formatCurrency(item.unit_price, order.currency, currentLocale)}
                                       </span>
                                     </div>
                                   </div>
                                   <div className="text-left sm:text-right">
                                     <p className="font-semibold text-[#000000] text-sm sm:text-base">
-                                      EGP {item.total_price.toFixed(2)}
+                                      {formatCurrency(item.total_price, order.currency, currentLocale)}
                                     </p>
                                   </div>
                                 </div>
@@ -727,10 +789,7 @@ export default function OrdersPage() {
                             {t('orders.orderTotal')}
                           </p>
                           <p className="text-base sm:text-xl font-bold text-[#23A6F0]">
-                            <span className="text-xs md:text-base font-bold text-[#23A6F0]">
-                              EGP
-                            </span>
-                            {order.total_amount.toFixed(2)}
+                            {formatCurrency(order.total_amount, order.currency, currentLocale)}
                           </p>
                         </div>
                       </div>

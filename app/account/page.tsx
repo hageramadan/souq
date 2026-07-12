@@ -32,7 +32,7 @@ export default function AccountPage() {
   }, []);
   // حالات الرصيد
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
-  const [walletCurrency, setWalletCurrency] = useState<string>("EGP");
+  const [walletCurrency, setWalletCurrency] = useState<string>("");
   const [loadingWallet, setLoadingWallet] = useState<boolean>(true);
 
   // دالة مساعدة لمعالجة رابط الصورة

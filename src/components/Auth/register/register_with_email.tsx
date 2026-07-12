@@ -109,7 +109,7 @@ export default function RegisterWithEmail() {
       {/* <Toaster position="top-center" /> */}
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
-          <div className="text-center mb-8">
+          <div className="text-center mb-3 md:mb-8">
             <h1 className="text-xl font-bold text-gray-800 mb-2">إنشاء حساب</h1>
             <p className="text-gray-500 text-sm">يرجى إدخال بياناتك للتسجيل</p>
           </div>

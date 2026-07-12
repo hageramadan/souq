@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <div className="container mx-auto px-4 py-6 md:py-8">
         
         {/* Breadcrumbs */}
-        <div className="mb-6 md:mb-8">
+        <div className="mb-3 md:mb-8">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Link href="/" className="hover:text-[#23A6F0] transition flex items-center gap-1">
               <Home className="w-4 h-4" />
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <div className="lg:col-span-3 order-1 lg:order-2">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
               {/* Header */}
-              <div className="text-center mb-8 pb-4 border-b border-gray-100">
+              <div className="text-center mb-3 md:mb-8 pb-4 border-b border-gray-100">
                 <h1 className="text-xl md:text-xl font-bold text-gray-800 mb-3">{t('privacy.title')}</h1>
                 <p className="text-gray-500 text-sm">
                   {t('privacy.intro')} <span className="font-semibold text-gray-700">{t('common.storeName')}</span> {t('privacy.introCont')}

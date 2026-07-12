@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
             <span className="text-sm">رجوع</span>
           </button>
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-3 md:mb-8">
             <h1 className="text-xl font-bold text-gray-800 mb-2">نسيت كلمة المرور</h1>
             <p className="text-gray-500 text-sm">
               أدخل بريدك الإلكتروني وسنرسل لك رمز التحقق لإعادة تعيين كلمة المرور
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
                   }}
                   placeholder="example@email.com"
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                  className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   } ${isLoading ? "opacity-50" : ""}`}
                 />

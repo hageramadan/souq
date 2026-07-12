@@ -498,7 +498,7 @@ export default function AddAddress({
                     clearFieldError("street");
                   }}
                   placeholder={t('address.streetPlaceholder')}
-                  className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                  className={`w-full px-4 py-2 border rounded-[8px]   outline-none ${
                     errors.street ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -625,7 +625,7 @@ export default function AddAddress({
                     clearFieldError("building");
                   }}
                   placeholder={t('address.buildingPlaceholder')}
-                  className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                  className={`w-full px-4 py-2 border rounded-[8px]   outline-none ${
                     errors.building ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -653,7 +653,7 @@ export default function AddAddress({
                       clearFieldError("apartment");
                     }}
                     placeholder={t('address.apartmentPlaceholder')}
-                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                    className={`w-full px-4 py-2 border rounded-[8px]   outline-none ${
                       errors.apartment ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -675,7 +675,7 @@ export default function AddAddress({
                       clearFieldError("floor");
                     }}
                     placeholder={t('address.floorPlaceholder')}
-                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                    className={`w-full px-4 py-2 border rounded-[8px]   outline-none ${
                       errors.floor ? "border-red-500" : "border-gray-300"
                     }`}
                   />

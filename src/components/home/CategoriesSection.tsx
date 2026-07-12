@@ -141,10 +141,10 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
           <button
             onClick={() => scroll('right')}
             dir="rtl"
-            className="absolute right-5 top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden lg:block"
+            className="absolute end-2 md:end-[-30px]  top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden lg:block"
             aria-label="التمرير لليسار"
           >
-            <FaArrowRightLong className="text-white" />
+            <FaArrowLeftLong className="text-white" />
           </button>
         )}
 
@@ -152,16 +152,16 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
           <button
             onClick={() => scroll('left')}
             dir="rtl"
-            className="absolute left-5 top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden lg:block"
+            className="absolute start-2 md:start-[-30px]  top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden lg:block"
             aria-label="التمرير لليمين"
           >
-            <FaArrowLeftLong className="text-white" />
+            <FaArrowRightLong className="text-white" />
           </button>
         )}
 
         <div 
           ref={sliderRef}
-          className="overflow-x-auto lg:px-5 md:h-[236px] h-[100px] pt-12 hide-scrollbar"
+          className="overflow-x-auto  md:h-[236px] h-[100px] pt-12 hide-scrollbar"
           style={{ 
             width: '100%',
             overflowY: 'hidden',

@@ -260,7 +260,7 @@ export default function WishlistPage() {
         <PageHeader title={t('wishlist.title')} />
 
         {/* ✅ شريط التحكم */}
-        <div className="flex flex-wrap justify-between items-center gap-4 mt-6 mb-8">
+        <div className="flex flex-wrap justify-between items-center gap-4 mt-6 mb-3 md:mb-8">
           <div className="flex items-center gap-3">
             <Heart className="w-6 h-6 bg-red-700" />
             <span className="text-sm text-gray-600">

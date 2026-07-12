@@ -525,7 +525,7 @@ export default function ProductsContent() {
       `}</style>
 
       <div className="flex items-end gap-1 container page-with-padding ">
-        <Link href="/" className="text-[#726C6C] text-xl mb-2 lg:mb-5">
+        <Link href="/" className="text-[#726C6C] text-lg lg:text-xl mb-2 lg:mb-5">
           {t("products.home")}
         </Link>
         <span className="mb-2 lg:mb-5">/</span>

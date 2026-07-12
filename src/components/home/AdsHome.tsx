@@ -178,12 +178,8 @@ export function AdsHome() {
   // إذا لم توجد إعلانات
   if (ads.length === 0) {
     return (
-      <section className="py-6 md:py-12 bg-white">
-        <div className="container-custom">
-          <div className="bg-[#F2F8FD] rounded-2xl p-8 text-center">
-            <p className="text-gray-500">{t.noAds}</p>
-          </div>
-        </div>
+      <section >
+      
       </section>
     );
   }

@@ -109,7 +109,7 @@ export default function VerifyForgotPasswordClient() {
             <span className="text-sm">رجوع</span>
           </button>
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-3 md:mb-8">
             <h1 className="text-xl font-bold text-gray-800 mb-2">التحقق من البريد الإلكتروني</h1>
             <p className="text-gray-500 text-sm">
               أدخل الرقم المكون من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني
@@ -129,7 +129,7 @@ export default function VerifyForgotPasswordClient() {
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   disabled={isLoading}
-                  className="w-12 h-12 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-[8px] focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"
+                  className="w-12 h-12 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-[8px] focus:border-[#ff3c27]  focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"
                   maxLength={1}
                 />
               ))}

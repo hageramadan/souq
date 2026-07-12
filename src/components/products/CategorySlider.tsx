@@ -216,7 +216,7 @@ export function CategorySlider({
           {/* زر عرض المنتجات - نفس تصميم AdsHome */}
           <Link
             href={categoryId ? `/products?categories=[${categoryId}]` : '/products'}
-            className="w-fit md:w-[180px] md:h-[60px] animate-in text-[12px] md:text-[14px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl flex items-center justify-center gap-2 text-white px-6 py-2 md:px-8 md:py-3"
+            className="w-fit md:w-[180px] md:h-[60px] animate-in text-[12px] line-clamp-1 md:text-[14px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl flex items-center justify-center gap-2 text-white px-6 py-2 md:px-8 md:py-3"
             style={{ backgroundColor: '#23A6F0' }}
           >
             {t.shopNow}

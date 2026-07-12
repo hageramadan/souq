@@ -239,7 +239,7 @@ export function Hero() {
                 </h1>
                 
                 {slides[currentSlide].description && (
-                  <p className="text-base md:text-lg mb-8 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
+                  <p className="text-base md:text-lg mb-3 md:mb-8 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
                     {slides[currentSlide].description}
                   </p>
                 )}

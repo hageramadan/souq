@@ -70,7 +70,7 @@ export default function LoginWithEmail() {
       {/* <Toaster position="top-center" /> */}
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
-          <div className="text-center mb-8">
+          <div className="text-center mb-3 md:mb-8">
             <h1 className="text-xl font-bold text-gray-800 mb-2">تسجيل الدخول</h1>
             <p className="text-gray-500 text-sm">مرحباً بعودتك! يرجى تسجيل الدخول</p>
           </div>
@@ -86,7 +86,7 @@ export default function LoginWithEmail() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="example@email.com"
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                  className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -104,7 +104,7 @@ export default function LoginWithEmail() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
                   disabled={isLoading}
-                  className={`w-full px-4 text-sm  py-2 pr-10 pl-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none ${
+                  className={`w-full px-4 text-sm  py-2 pr-10 pl-10 border rounded-[8px]   outline-none ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   }`}
                 />

@@ -13,7 +13,7 @@ export default function WalletPage() {
   const {language} = useLanguage()
   // حالات البيانات
   const [balance, setBalance] = useState<number | null>(null);
-  const [currency, setCurrency] = useState<string>("EGP");
+  const [currency, setCurrency] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 const [isClient, setIsClient] = useState(false);
@@ -35,25 +35,25 @@ const [isClient, setIsClient] = useState(false);
       // محاولة استخراج الأرقام فقط إذا كانت العملة غير موجودة
       const numericMatch = value.match(/[\d.]+/);
       if (numericMatch) {
-        return { currency: "EGP", amount: parseFloat(numericMatch[0]) };
+        return { currency: "", amount: parseFloat(numericMatch[0]) };
       }
-      return { currency: "EGP", amount: 0 };
+      return { currency: "", amount: 0 };
     }
     
     // الحالة 2: قيمة رقمية
     if (typeof value === 'number') {
-      return { currency: "EGP", amount: value };
+      return { currency: "", amount: value };
     }
     
     // الحالة 3: كائن يحتوي على balance و currency
     if (value && typeof value === 'object') {
-      const currency = value.currency || "EGP";
+      const currency = value.currency || "";
       const amount = parseFloat(value.balance || value.amount || 0);
       return { currency, amount: isNaN(amount) ? 0 : amount };
     }
     
     // الحالة الافتراضية
-    return { currency: "EGP", amount: 0 };
+    return { currency: "", amount: 0 };
   };
 
   // دالة لجلب الرصيد من الـ API

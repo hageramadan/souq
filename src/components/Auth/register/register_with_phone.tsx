@@ -112,13 +112,13 @@ export default function RegisterWithPhone() {
   const isLoading = loading || isSubmitting;
 
   return (
-    <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
+    <div className=" bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
       <div className="container mx-auto px-4 py-6 md:py-12">
         <div className="max-w-md mx-auto">
           {/* بطاقة تسجيل حساب جديد */}
           <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
             {/* العنوان */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-3 md:mb-8">
               <h1 className="text-xl font-bold text-gray-800 mb-2">
                 {t('auth.registerTitle')}
               </h1>
@@ -134,7 +134,7 @@ export default function RegisterWithPhone() {
                   {t('auth.nameLabel')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <FaUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FaUser className="absolute start-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={formData.name}
@@ -144,10 +144,10 @@ export default function RegisterWithPhone() {
                     }}
                     placeholder={t('auth.namePlaceholder')}
                     disabled={isLoading}
-                    className={`w-full px-4 py-2 ps-10 border text-base rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                    className={`w-full px-4 py-2 ps-10 border text-base focus:border-[#5aafff] focus:ring-[#5aafff] rounded-[8px]   outline-none transition-colors ${
                       errors.name ? "border-red-500" : "border-gray-300"
                     } ${isLoading ? "opacity-50" : ""}`}
-                    dir="rtl"
+                    
                   />
                 </div>
                 {errors.name && (

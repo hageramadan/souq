@@ -9,7 +9,13 @@
     @apply container mx-auto px-4 md:px-6 lg:px-8;
   }
 }
-
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 .bg-wallet {
   background-color: #0A05000A; /* لون خلفية المحفظة */
 }

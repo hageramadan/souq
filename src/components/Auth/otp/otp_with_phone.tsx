@@ -202,9 +202,9 @@ export default function OTPWithPhone() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
+      <div className=" bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
         <div className="lg:max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
-          <div className="text-center mb-8">
+          <div className="text-center mb-3 md:mb-8">
             <h1 className="text-xl font-bold text-gray-800 mb-2">
               {getTitle()}
             </h1>
@@ -217,7 +217,7 @@ export default function OTPWithPhone() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="flex justify-between lg:gap-2 mb-6 flex-row-reverse" dir="rtl">
+            <div className="flex justify-between gap-0 lg:gap-2 mb-6 flex-row-reverse" dir="rtl">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -230,7 +230,7 @@ export default function OTPWithPhone() {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
                   disabled={isLoading}
-                  className="w-10 h-10 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-[8px] focus:border-[#23A6F0] focus:ring-2 focus:ring-[#23A6F0]/20 outline-none transition-all disabled:opacity-50"
+                  className="w-10 h-10 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-[8px] focus:border-[#23A6F0]  focus:ring-[#23A6F0]/20 outline-none transition-all disabled:opacity-50"
                   maxLength={1}
                   dir="ltr"
                 />

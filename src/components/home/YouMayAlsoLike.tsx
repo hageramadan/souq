@@ -556,13 +556,7 @@ export function YouMayAlsoLike() {
 
   if (error && products.length === 0) {
     return (
-      <section className="py-6 md:py-12 bg-gray-50">
-        <div className="container-custom">
-          <div className="text-center py-12">
-            <p className="text-gray-500">{error}</p>
-          </div>
-        </div>
-      </section>
+      <></>
     );
   }
 

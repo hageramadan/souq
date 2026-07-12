@@ -219,11 +219,7 @@ export function CustomerReviews({ productId }: CustomerReviewsProps) {
     return (count / totalReviews) * 100;
   };
 
-  const fiveStarPercentage = getRatingPercentage(5);
-  const fourStarPercentage = getRatingPercentage(4);
-  const threeStarPercentage = getRatingPercentage(3);
-  const twoStarPercentage = getRatingPercentage(2);
-  const oneStarPercentage = getRatingPercentage(1);
+ 
 
   if (isLoading && reviews.length === 0) {
     return (

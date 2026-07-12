@@ -97,11 +97,8 @@ export default function ServicesSection() {
   // عرض الرسالة في حال عدم وجود بيانات
   if (services.length === 0) {
     return (
-      <div className="bg-[#102637] rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm mb-5">
-        <div className="text-center py-8 text-gray-400">
-          <p>لا توجد خدمات متاحة حالياً</p>
-        </div>
-      </div>
+      < >
+      </>
     );
   }
 

@@ -100,7 +100,7 @@ export default function ForgotWithPhone() {
             {/* بطاقة التحقق */}
             <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
               {/* العنوان */}
-              <div className="text-center mb-8">
+              <div className="text-center mb-3 md:mb-8">
                 <h1 className="text-xl font-bold text-gray-800 mb-2">
                   التحقق من الهاتف
                 </h1>
@@ -125,7 +125,7 @@ export default function ForgotWithPhone() {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(index, e)}
-                      className="w-12 h-12 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all"
+                      className="w-12 h-12 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27]  focus:ring-[#ff3c27]/20 outline-none transition-all"
                       maxLength={1}
                       
                     />

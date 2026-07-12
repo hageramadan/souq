@@ -532,7 +532,7 @@ export default function EditProfilePage() {
                       }}
                       placeholder={t('editProfile.fullNamePlaceholder')}
                       disabled={isSubmitting}
-                      className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                      className={`w-full px-4 py-2 border rounded-[8px] focus:border-[#5aafff] focus:ring-[#5aafff]   outline-none transition-colors ${
                         errors.name ? "border-red-500" : "border-gray-300"
                       } ${isSubmitting ? "opacity-50" : ""}`}
                     />
@@ -566,7 +566,7 @@ export default function EditProfilePage() {
                     }}
                     placeholder={t('editProfile.emailPlaceholder')}
                     disabled={isSubmitting}
-                    className={`w-full px-4 py-2 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                    className={`w-full px-4 py-2 border rounded-[8px] focus:border-[#5aafff] focus:ring-[#5aafff]   outline-none transition-colors ${
                       errors.email ? "border-red-500" : "border-gray-300"
                     } ${isSubmitting ? "opacity-50" : ""}`}
                   />
@@ -597,7 +597,7 @@ export default function EditProfilePage() {
                         }}
                         placeholder={t('editProfile.currentPasswordPlaceholder')}
                         disabled={isSubmitting}
-                        className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                        className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none transition-colors ${
                           errors.currentPassword ? "border-red-500" : "border-gray-300"
                         } ${isSubmitting ? "opacity-50" : ""}`}
                       />
@@ -628,7 +628,7 @@ export default function EditProfilePage() {
                         }}
                         placeholder={t('editProfile.newPasswordPlaceholder')}
                         disabled={isSubmitting}
-                        className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                        className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none transition-colors ${
                           errors.newPassword ? "border-red-500" : "border-gray-300"
                         } ${isSubmitting ? "opacity-50" : ""}`}
                       />
@@ -659,7 +659,7 @@ export default function EditProfilePage() {
                         }}
                         placeholder={t('editProfile.confirmPasswordPlaceholder')}
                         disabled={isSubmitting}
-                        className={`w-full px-4 py-2 pr-10 border rounded-[8px] focus:ring-2 focus:ring-black focus:border-black outline-none transition-colors ${
+                        className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none transition-colors ${
                           errors.confirmPassword ? "border-red-500" : "border-gray-300"
                         } ${isSubmitting ? "opacity-50" : ""}`}
                       />

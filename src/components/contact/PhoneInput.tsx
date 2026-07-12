@@ -341,14 +341,14 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
               inputMode="numeric"
               pattern="[0-9]*"
               autoComplete="tel"
-              className={`w-full px-4 h-full border rounded-r-xl focus:ring-black focus:border-black rounded-l-none focus:outline-none foucs:ring-2 transition bg-white text-left font-mono text-base
+              className={`w-full px-4 h-full border rounded-r-xl  rounded-l-none focus:outline-none foucs:ring-2 transition bg-white text-left font-mono text-base
                 ${error && isTouched && localPhoneNumber && !selectedCountry.skipValidation
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500 foucs:ring-2" 
                   : !error && localPhoneNumber && !selectedCountry.skipValidation && 
                     (localPhoneNumber.length === selectedCountry.minLength || 
                      localPhoneNumber.length === selectedCountry.minLength - 1)
                   ? "border-green-500 focus:border-green-500 focus:ring-green-500 foucs:ring-2"
-                  : "border-gray-200 focus:border-[#000000] focus:ring-[#000000] foucs:ring-2"
+                  : "border-gray-200 focus:border-[#5aafff] focus:ring-[#5aafff] foucs:ring-2"
                 }`}
               style={{
                 borderTopLeftRadius: 0,

@@ -114,13 +114,13 @@ export default function LoginWithPhone() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
+      <div className="bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
         <div className="container mx-auto px-4 py-6 md:py-12">
           <div className="max-w-md mx-auto">
             {/* بطاقة تسجيل الدخول */}
             <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
               {/* العنوان */}
-              <div className="text-center mb-8">
+              <div className="text-center mb-3 md:mb-8">
                 <h1 className="text-xl font-bold text-gray-800 mb-2">
                   {t("auth.loginTitle")}
                 </h1>

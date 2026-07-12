@@ -540,7 +540,7 @@ export function Navbar() {
                           ref={searchInputRef}
                           type="search"
                           placeholder={t.search}
-                          className="w-64 h-10 ps-9 pe-9 border border-gray-300 rounded-full bg-white focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
+                          className="w-64 h-10 ps-9 pe-9 border border-gray-300 rounded-full bg-white  focus:ring-[#23A6F0] focus:border-transparent"
                           style={{ color: "#195073" }}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
@@ -832,7 +832,7 @@ export function Navbar() {
                   ref={mobileSearchInputRef}
                   type="search"
                   placeholder={t.search}
-                  className="w-full h-10 ps-9 pe-9 bg-gray-100 border-0 rounded-full focus:ring-2 focus:ring-[#23A6F0]"
+                  className="w-full h-10 ps-9 pe-9 bg-gray-100 border-0 rounded-full  focus:ring-[#23A6F0]"
                   style={{ color: "#195073" }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

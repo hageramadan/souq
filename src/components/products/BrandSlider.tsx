@@ -235,7 +235,7 @@ export function BrandSlider({
                 }
               `}
             >
-              <span className={`text-base font-semibold ${isAllSelected ? 'text-white' : 'text-[#1E75AB]'}`}>
+              <span className={`text-xs lg:text-base font-semibold ${isAllSelected ? 'text-white' : 'text-[#1E75AB]'}`}>
                 {t('brandSlider.all')}
               </span>
             </button>
@@ -266,7 +266,7 @@ export function BrandSlider({
                   `}
                 >
                   {/* اسم البراند */}
-                  <span className={`text-base font-semibold text-center line-clamp-1 ${isSelected ? 'text-white' : 'text-[#1E75AB]'}`}>
+                  <span className={`text-xs lg:text-base font-semibold text-center line-clamp-1 ${isSelected ? 'text-white' : 'text-[#1E75AB]'}`}>
                     {brand.name}
                   </span>
                 </button>

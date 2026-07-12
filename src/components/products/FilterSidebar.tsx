@@ -706,7 +706,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                 type="number"
                 value={tempMaxPrice}
                 onChange={handleMaxPriceInputChange}
-                className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none  focus:ring-blue-500"
               />
             </div>
             <div className="flex-1">
@@ -715,7 +715,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                 type="number"
                 value={tempMinPrice}
                 onChange={handleMinPriceInputChange}
-                className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none  focus:ring-blue-500"
               />
             </div>
             {!isMobile && (

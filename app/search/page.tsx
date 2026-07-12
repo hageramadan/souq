@@ -389,7 +389,7 @@ function SearchContent() {
     <div className="min-h-screen page-with-padding">
       <div className="container mx-auto px-4 pb-16 lg:px-9">
         {/* عنوان الصفحة وشريط البحث */}
-        <div className="mb-8">
+        <div className="mb-3 md:mb-8">
           <h1 className="text-xl md:text-xl font-bold text-gray-800 mb-4">
             {t('search.title')}
           </h1>
@@ -400,7 +400,7 @@ function SearchContent() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('search.placeholder')}
-              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#23A6F0] focus:border-transparent"
+              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent"
             />
             <button
               type="submit"
@@ -429,7 +429,7 @@ function SearchContent() {
             <select
               value={sortBy}
               onChange={handleSortChange}
-              className="px-4 py-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#23A6F0]"
+              className="px-4 py-2 border border-gray-200 rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]"
             >
               <option value="newest">{t('search.sortNewest')}</option>
               <option value="popular">{t('search.sortPopular')}</option>

@@ -92,7 +92,7 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
       
       if (adsData.length === 0) {
         // استخدام بيانات افتراضية
-        setAds(getDefaultAds());
+        // setAds(getDefaultAds());
       } else {
         setAds(adsData);
       }
