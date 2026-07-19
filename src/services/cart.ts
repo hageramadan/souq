@@ -1,5 +1,7 @@
 // src/services/cart.ts
 
+import { Currency } from "@/types/product";
+
 export interface ProductPricing {
   price: number;
   has_discount: boolean;
@@ -66,6 +68,7 @@ export interface CartData {
   subtotal_after_coupon_discounts: number;
   total_amount: number;
   applied_coupon_code: string | null;
+  currency?:Currency
 }
 
 export interface CartResponse {

@@ -14,14 +14,36 @@ export default function WalletPage() {
   // حالات البيانات
   const [balance, setBalance] = useState<number | null>(null);
   const [currency, setCurrency] = useState<string>("");
+  const [currencySymbol, setCurrencySymbol] = useState<string>("ج.م"); // ✅ إضافة رمز العملة
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 const [isClient, setIsClient] = useState(false);
-  // ✅ دالة مساعدة لاستخراج الرصيد والعملة من البيانات
-    useEffect(() => {
+  
+  useEffect(() => {
     setIsClient(true);
   }, []);
-  const parseBalance = (value: any): { currency: string; amount: number } => {
+  
+  // ✅ دالة مساعدة للحصول على رمز العملة
+  const getCurrencySymbol = (currencyCode: string): string => {
+    const symbolMap: Record<string, string> = {
+      "EGP": "ج.م",
+      "USD": "$",
+      "EUR": "€",
+      "SAR": "ر.س",
+      "AED": "د.إ",
+      "KWD": "د.ك",
+      "BHD": "د.ب",
+      "QAR": "ر.ق",
+      "OMR": "ر.ع",
+      "JOD": "د.أ",
+      "LBP": "ل.ل",
+      "SYP": "ل.س",
+    };
+    return symbolMap[currencyCode] || currencyCode;
+  };
+
+  // ✅ دالة مساعدة لاستخراج الرصيد والعملة من البيانات
+  const parseBalance = (value: any): { currency: string; amount: number; symbol: string } => {
     // الحالة 1: قيمة نصية مثل "EGP 100.50"
     if (typeof value === 'string') {
       const parts = value.trim().split(/\s+/);
@@ -29,31 +51,32 @@ const [isClient, setIsClient] = useState(false);
         const currency = parts[0];
         const amount = parseFloat(parts[1]);
         if (!isNaN(amount)) {
-          return { currency, amount };
+          return { currency, amount, symbol: getCurrencySymbol(currency) };
         }
       }
       // محاولة استخراج الأرقام فقط إذا كانت العملة غير موجودة
       const numericMatch = value.match(/[\d.]+/);
       if (numericMatch) {
-        return { currency: "", amount: parseFloat(numericMatch[0]) };
+        return { currency: "EGP", amount: parseFloat(numericMatch[0]), symbol: "ج.م" };
       }
-      return { currency: "", amount: 0 };
+      return { currency: "EGP", amount: 0, symbol: "ج.م" };
     }
     
     // الحالة 2: قيمة رقمية
     if (typeof value === 'number') {
-      return { currency: "", amount: value };
+      return { currency: "EGP", amount: value, symbol: "ج.م" };
     }
     
     // الحالة 3: كائن يحتوي على balance و currency
     if (value && typeof value === 'object') {
-      const currency = value.currency || "";
+      const currency = value.currency?.code || value.currency || "EGP";
+      const symbol = value.currency?.symbol || getCurrencySymbol(currency);
       const amount = parseFloat(value.balance || value.amount || 0);
-      return { currency, amount: isNaN(amount) ? 0 : amount };
+      return { currency, amount: isNaN(amount) ? 0 : amount, symbol };
     }
     
     // الحالة الافتراضية
-    return { currency: "", amount: 0 };
+    return { currency: "EGP", amount: 0, symbol: "ج.م" };
   };
 
   // دالة لجلب الرصيد من الـ API
@@ -82,14 +105,14 @@ const [isClient, setIsClient] = useState(false);
 
       if (data.result === true && data.errNum === 200) {
         // ✅ استخدام الدالة المساعدة لتحليل البيانات بأمان
-        const balanceData = data.data.balance;
+        const balanceData = data.data;
         
         // طباعة في الكونسول للتحقق من شكل البيانات (يمكنك إزالة هذا السطر)
-        console.log("Balance data type:", typeof balanceData);
         console.log("Balance data:", balanceData);
         
         const parsed = parseBalance(balanceData);
         setCurrency(parsed.currency);
+        setCurrencySymbol(parsed.symbol);
         setBalance(parsed.amount);
       } else {
         throw new Error(data.message || t('wallet.fetchError'));
@@ -186,10 +209,10 @@ const [isClient, setIsClient] = useState(false);
                   {t('wallet.currentBalance')}
                 </span>
 
-                {/* المبلغ - يعرض الرصيد من الـ API */}
+                {/* المبلغ - يعرض الرصيد من الـ API مع رمز العملة */}
                 <div className="mb-6">
                   <span className="text-white text-xl md:text-xl font-black tracking-tight">
-                    {currency} {balance !== null ? balance.toFixed(2) : "0.00"}
+                     {balance !== null ? balance.toFixed(2) : "0.00"} {currencySymbol}
                   </span>
                 </div>
               </div>

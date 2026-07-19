@@ -28,6 +28,12 @@ const getHeaders = (): HeadersInit => {
 };
 
 // ========== أنواع البيانات ==========
+interface Currency {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 interface OrderItem {
   id: number;
   title: string;
@@ -77,6 +83,7 @@ interface OrderDetails {
   status_label?: string;
   total_amount: number;
   items: OrderItem[];
+  currency?: Currency; // ✅ إضافة العملة
 }
 
 // ========== خيارات طريقة استرداد المبلغ (معدلة للترجمة) ==========
@@ -94,7 +101,7 @@ const getRefundMethods = (t: any) => [
 const getMemory = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const memoryAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM"
+    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM" || attr.attribute_type.name === "ram"
   );
   return memoryAttr?.value || null;
 };
@@ -104,7 +111,8 @@ const getStorage = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const storageAttr = item.variant.attributes.find(
     (attr) => attr.attribute_type.name === "هارد ديسك" || 
-      attr.attribute_type.name === "Hard disk"
+      attr.attribute_type.name === "Hard disk" ||
+      attr.attribute_type.name === "hard disk"
   );
   return storageAttr?.value || null;
 };
@@ -114,7 +122,7 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
     (attr) => attr.attribute_type.name === "اللون" || attr.attribute_type.name === "لون" || 
-      attr.attribute_type.name === "color"
+      attr.attribute_type.name === "color" || attr.attribute_type.name === "Color"
   );
   if (!colorAttr) return null;
   
@@ -161,6 +169,11 @@ const fetchOrderDetails = async (orderId: string, t: any): Promise<OrderDetails 
           image: item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.jpg",
           variant: item.variant || null,
         })),
+        currency: order.currency || { // ✅ إضافة العملة
+          code: "EGP",
+          symbol: "ج.م",
+          rate: 1
+        }
       };
     }
     return null;
@@ -247,6 +260,11 @@ export default function ReturnRequestPage() {
 
   // ✅ الحصول على خيارات الاسترداد مع الترجمة
   const refundMethods = getRefundMethods(t);
+
+  // ✅ الحصول على رمز العملة
+  const getCurrencySymbol = (): string => {
+    return order?.currency?.symbol || "ج.م";
+  };
 
   // جلب تفاصيل الطلب عند تحميل الصفحة
   useEffect(() => {
@@ -344,6 +362,8 @@ export default function ReturnRequestPage() {
       </div>
     );
   }
+
+  const currencySymbol = getCurrencySymbol();
 
   return (
     <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
@@ -450,7 +470,7 @@ export default function ReturnRequestPage() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-800 md:text-base text-xs flex gap-1">
-                            {(item.unit_price || item.price || 0).toFixed(2)} {t('return.currency')}
+                             {(item.unit_price || item.price || 0).toFixed(2)} {currencySymbol}
                           </p>
                         </div>
                       </div>
@@ -514,7 +534,7 @@ export default function ReturnRequestPage() {
             className={`w-full py-3 rounded-xl font-medium transition mt-4 ${
               isSubmitting || !refundMethod
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-[#000000] text-white hover:bg-gray-800"
+                : "bg-[#23A6F0] text-white hover:bg-[#233A6F0]"
             }`}
           >
             {isSubmitting ? (

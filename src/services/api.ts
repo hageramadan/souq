@@ -1,3 +1,5 @@
+import { Currency } from "@/types/product";
+
 // services/api.ts
 const API_URL = "https://admin.souqkaber.com/api";
 
@@ -247,6 +249,7 @@ export interface ProductData {
   quantity: number;
   images: string[];
   video?: string; 
+  currency:Currency
 }
 
 export interface SectionWithProducts {

@@ -84,6 +84,12 @@ interface AdditionalData {
   email?: string;
 }
 
+interface Currency {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 interface OrderDetails {
   id: number;
   orderNumber: string;
@@ -106,6 +112,7 @@ interface OrderDetails {
   additional_data?: AdditionalData | null;
   items: OrderItem[];
   created_at: string;
+  currency?: Currency; // ✅ إضافة العملة
 }
 
 // ========== إعدادات API ==========
@@ -297,7 +304,7 @@ const getUserName = (order: any, t: any): string => {
 const getMemory = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const memoryAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM"
+    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM" || attr.attribute_type.name === "ram"
   );
   return memoryAttr?.value || null;
 };
@@ -307,7 +314,8 @@ const getStorage = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const storageAttr = item.variant.attributes.find(
     (attr) => attr.attribute_type.name === "هارد ديسك" || 
-      attr.attribute_type.name === "Hard disk"
+      attr.attribute_type.name === "Hard disk" ||
+      attr.attribute_type.name === "hard disk"
   );
   return storageAttr?.value || null;
 };
@@ -317,7 +325,8 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
     (attr) => attr.attribute_type.name === "لون" || 
-      attr.attribute_type.name === "color"
+      attr.attribute_type.name === "color" ||
+      attr.attribute_type.name === "Color"
   );
   if (!colorAttr) return null;
   
@@ -353,6 +362,11 @@ const transformOrderDetails = (apiOrder: any, t: any): OrderDetails => {
     additional_data: apiOrder.additional_data,
     items: apiOrder.items || [],
     created_at: apiOrder.created_at,
+    currency: apiOrder.currency || { // ✅ إضافة العملة
+      code: "EGP",
+      symbol: "ج.م",
+      rate: 1
+    }
   };
 };
 
@@ -384,6 +398,11 @@ export default function OrderDetailsPage() {
 
   // ✅ الحصول على إعدادات الحالة مع الترجمة
   const statusConfig = getStatusConfig(t);
+
+  // ✅ الحصول على رمز العملة
+  const getCurrencySymbol = (): string => {
+    return order?.currency?.symbol || "ج.م";
+  };
 
   useEffect(() => {
     const token = getToken();
@@ -505,6 +524,7 @@ export default function OrderDetailsPage() {
 
   const StatusIcon = displayStatus.icon;
   const userName = getUserName(order, t);
+  const currencySymbol = getCurrencySymbol();
 
   return (
     <>
@@ -628,13 +648,13 @@ export default function OrderDetailsPage() {
                               
                               <div className="flex gap-1 md:gap-3 mt-2 text-xs text-black font-bold">
                                 <span>{t('orders.quantity')}: <span className="text-gray-500">x{item.quantity}</span></span>
-                                <span>{t('orders.price')}: <span className="text-gray-500">{t('orders.currency')} {item.unit_price.toFixed(2)}</span></span>
+                                <span>{t('orders.price')}: <span className="text-gray-500"> {item.unit_price.toFixed(2)} {currencySymbol}</span></span>
                               </div>
                             </div>
                             <div className="text-left">
-                              <p className="font-bold text-[#23A6F0]">{t('orders.currency')} {item.total_price.toFixed(2)}</p>
+                              <p className="font-bold text-[#23A6F0]"> {item.total_price.toFixed(2)} {currencySymbol}</p>
                               {item.discount_amount > 0 && (
-                                <p className="text-xs text-gray-400">{t('orders.discount')}: {item.discount_amount.toFixed(2)}</p>
+                                <p className="text-xs text-gray-400">{t('orders.discount')}: {item.discount_amount.toFixed(2)} {currencySymbol}</p>
                               )}
                             </div>
                           </div>
@@ -659,37 +679,37 @@ export default function OrderDetailsPage() {
               
               {/* ملخص الطلب */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">{t('orders.orderSummary')}</h2>
+                <h2 className="text-base lg:text-xl font-bold text-gray-800 mb-4">{t('orders.orderSummary')}</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t('orders.subtotal')}</span>
-                    <span className="font-bold text-gray-800">{t('orders.currency')} {order.subtotal.toFixed(2)}</span>
+                    <span className="font-bold text-gray-800"> {order.subtotal.toFixed(2)} {currencySymbol}</span>
                   </div>
                   {order.coupon_discount_amount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">{t('orders.couponDiscount')}</span>
-                      <span className="font-bold text-[#23A6F0]">-{t('orders.currency')} {order.coupon_discount_amount.toFixed(2)}</span>
+                      <span className="font-bold text-[#23A6F0]">-{order.coupon_discount_amount.toFixed(2)} {currencySymbol}</span>
                     </div>
                   )}
                   {order.total_discount_amount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">{t('orders.totalDiscount')}</span>
-                      <span className="font-bold text-[#23A6F0]">-{t('orders.currency')} {order.total_discount_amount.toFixed(2)}</span>
+                      <span className="font-bold text-[#23A6F0]">- {order.total_discount_amount.toFixed(2)} {currencySymbol}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t('orders.deliveryFee')}</span>
-                    <span className="font-bold text-gray-800">{t('orders.currency')} {order.shipping_amount.toFixed(2)}</span>
+                    <span className="font-bold text-gray-800"> {order.shipping_amount.toFixed(2)} {currencySymbol}</span>
                   </div>
                   {order.tax_amount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">{t('orders.tax')}</span>
-                      <span className="font-bold text-gray-800">{t('orders.currency')} {order.tax_amount.toFixed(2)}</span>
+                      <span className="font-bold text-gray-800">{order.tax_amount.toFixed(2)} {currencySymbol}</span>
                     </div>
                   )}
                   <div className="flex justify-between py-3 border-t border-gray-200 mt-2">
                     <span className="text-lg font-bold text-gray-800">{t('orders.total')}</span>
-                    <span className="text-xl font-bold text-[#23A6F0]">{t('orders.currency')} {order.total_amount.toFixed(2)}</span>
+                    <span className="text-xl font-bold text-[#23A6F0]">{order.total_amount.toFixed(2)} {currencySymbol}</span>
                   </div>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Link from "next/link";
 import { ChevronRight, Info } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Currency } from "@/types/product";
 
 export interface Ibrand {
   id: number;
@@ -34,6 +35,7 @@ export interface CartItemDisplay {
   quantity: number;
   discount?: number;
   totalPrice: number;
+  currency?:Currency
 }
 
 export function CartPage() {

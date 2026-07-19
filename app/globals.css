@@ -1,14 +1,70 @@
+/* ========================================
+   @imports
+   ======================================== */
 @import "leaflet/dist/leaflet.css";
 
+/* ========================================
+   Tailwind
+   ======================================== */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  .container-custom {
-    @apply container mx-auto px-4 md:px-6 lg:px-8;
-  }
+/* ========================================
+   :root Variables
+   ======================================== */
+:root {
+  --ring: 0 0% 0%; /* تغيير لون الـ ring للأسود */
 }
+
+/* ========================================
+   Base Styles
+   ======================================== */
+label {
+  font-size: 14px;
+}
+
+/* تحسين التركيز */
+*:focus {
+  outline: none;
+}
+
+/* تحسين الأزرار */
+button {
+  cursor: pointer;
+}
+
+/* تحسين الصور */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ========================================
+   Scrollbar Styles (معلق)
+   ======================================== */
+/* ::-webkit-scrollbar {
+  width: 7px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #23A6F0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1a8fd0;
+} */
+
+/* ========================================
+   Hide Scrollbar Utilities
+   ======================================== */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -16,96 +72,91 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ========================================
+   Tailwind Components Layer
+   ======================================== */
+@layer components {
+  .container-custom {
+    @apply container mx-auto px-4 md:px-6 lg:px-8;
+  }
+}
+
+/* ========================================
+   Background Utilities
+   ======================================== */
 .bg-wallet {
   background-color: #0A05000A; /* لون خلفية المحفظة */
 }
+
 .bg-card-wallet {
   /* background: linear-gradient(#0a05009f, #0A05000A); */
   /* background:linear-gradient(to left) */
   background: linear-gradient(270deg, #0A05008F, #0A0500);
 }
 
-label{
-  font-size: 14px;
+/* ========================================
+   Page Padding
+   ======================================== */
+.page-with-padding {
+  padding-top: 1rem; /* 16px */
 }
-          
-/* app/search/page.module.css */
-.search-grid {
+
+/* ========================================
+   Grid Systems
+   ======================================== */
+.search-grid,
+.wishlist-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
 
-/* للشاشات المتوسطة (تابلت) */
-@media (max-width: 1024px) {
-  .search-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-  }
-}
-
-/* للشاشات الصغيرة (موبايل) */
-@media (max-width: 768px) {
-  .search-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-}
-
-/* للشاشات الصغيرة جداً */
-@media (max-width: 480px) {
-  .search-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-}
-:root {
-  --ring: 0 0% 0%; /* تغيير لون الـ ring للأسود */
-}
-
-/* أو إضافة هذا الكود */
-[data-radix-select-content] [data-state="checked"] {
-  background-color: #e5e7eb !important;
-  color: black !important;
-}
-
-/* status colors */
+/* ========================================
+   Order Status Colors
+   ======================================== */
 .status-pending {
-  /* background-color: #A0AEC03D;
-  color: #A0AEC0; */
-  background-color: #f181173D; color: #f18117; 
+  background-color: #f181173D;
+  color: #f18117;
 }
+
 .status-processing {
   background-color: #ED89363D;
   color: #ED8936;
 }
+
 .status-ready {
   background-color: #A0AEC03D;
   color: #A0AEC0;
 }
+
 .status-delivering {
   background-color: #F6AD553D;
   color: #F6AD55;
 }
+
 .status-delivered {
   background-color: #48BB783D;
   color: #48BB78;
 }
+
 .status-cancelled {
   background-color: #F565653D;
   color: #F56565;
 }
 
-
-
-@media (min-width: 1024px) {
-  .page-with-padding {
-    padding-top: 3rem; /* 96px */
-  }
+/* ========================================
+   Radix UI Select Overrides
+   ======================================== */
+[data-radix-select-content] [data-state="checked"] {
+  background-color: #e5e7eb !important;
+  color: black !important;
 }
 
-
+/* ========================================
+   Animations
+   ======================================== */
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -132,103 +183,6 @@ label{
   animation: slideOut 0.3s ease-out forwards;
 }
 
-
-
-/* app/globals.css */
-
- @media (maxWidth: 640px){
-.custom-width-192{
-  width: 150px;
-  height: 150px;
-}
- }
-
-
- 
-:root {
-  --ring: 0 0% 0%; /* تغيير لون الـ ring للأسود */
-}
-
-/* أو إضافة هذا الكود */
-[data-radix-select-content] [data-state="checked"] {
-  background-color: #e5e7eb !important;
-  color: black !important;
-}
-
-/* status colors */
-.status-pending {
-  background-color: #A0AEC03D;
-  color: #A0AEC0;
-}
-.status-processing {
-  background-color: #ED89363D;
-  color: #ED8936;
-}
-.status-ready {
-  background-color: #9F7AEA3D;
-  color: #9F7AEA;
-}
-.status-delivering {
-  background-color: #F6AD553D;
-  color: #F6AD55;
-}
-.status-delivered {
-  background-color: #48BB783D;
-  color: #48BB78;
-}
-.status-cancelled {
-  background-color: #F565653D;
-  color: #F56565;
-}
-
-.page-with-padding {
-  padding-top: 1rem; /* 80px */
-}
-
-@media (min-width: 1024px) {
-  .page-with-padding {
-    padding-top: 2rem; /* 96px */
-  }
-}
-
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-.animate-slide-out {
-  animation: slideOut 0.3s ease-out forwards;
-}
-
-
-
-/* app/globals.css */
-
- @media (maxWidth: 640px){
-.custom-width-192{
-  width: 150px;
-  height: 150px;
-}
- }
-/* app/globals.css */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -259,64 +213,85 @@ label{
   animation: slide-down 0.3s ease-out;
 }
 
-/* تحسين التمرير */
-/* ::-webkit-scrollbar {
-  width: 7px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #23A6F0;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #1a8fd0;
-} */
-
-/* تحسين التركيز */
-*:focus {
-  outline: none;
-}
-
-/* تحسين الأزرار */
-button {
-  cursor: pointer;
-}
-
-/* تحسين الصور */
-img {
-  max-width: 100%;
-  height: auto;
-}
-
- @media (maxWidth: 640px){
-.custom-width-192{
+/* ========================================
+   Custom Width Utilities
+   ======================================== */
+.custom-width-192 {
   width: 150px;
   height: 150px;
 }
- }
-.bg-wallet {
-  background-color: #0A05000A; /* لون خلفية المحفظة */
+
+/* ========================================
+   ======================================== */
+/* ========== MEDIA QUERIES ========== */
+/* ========== (تصاعدياً من الأصغر للأكبر) ========== */
+/* ======================================== */
+/* ======================================== */
+
+/* ========================================
+   Breakpoint: 480px (Extra Small Screens - Mobile)
+   ======================================== */
+@media (max-width: 480px) {
+  .search-grid,
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
 }
-.bg-card-wallet {
-  /* background: linear-gradient(#0a05009f, #0A05000A); */
-  /* background:linear-gradient(to left) */
-  background: linear-gradient(270deg, #0A05008F, #0A0500);
+
+/* ========================================
+   Breakpoint: 640px (Small Screens - Mobile)
+   ======================================== */
+@media (max-width: 640px) {
+  .custom-width-192 {
+    width: 150px;
+    height: 150px;
+  }
 }
 
-/* app/globals.css */
+/* ========================================
+   Breakpoint: 768px (Medium Screens - Tablets)
+   ======================================== */
+@media (max-width: 768px) {
+  .search-grid,
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
 
+/* ========================================
+   Breakpoint: 1024px (Large Screens - Laptops)
+   ======================================== */
+@media (max-width: 1024px) {
+  .search-grid,
+  .wishlist-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
 
-/* app/globals.css */
+/* ========================================
+   Breakpoint: 1024px (Large Screens - Laptops) - MIN-WIDTH
+   ======================================== */
+@media (min-width: 1024px) {
+  .page-with-padding {
+    padding-top: 2rem; /* 32px */
+  }
+}
+
+/* ========================================
+   Breakpoint: 1280px (XL Screens - Large Desktops)
+   ======================================== */
+@media (min-width: 1280px) {
+  /* يمكن إضافة تنسيقات إضافية هنا عند الحاجة */
+}
+
+/* ========================================
+   Commented Styles (للرجوع إليها لاحقاً)
+   ======================================== */
 /* main {
   padding-top: 5rem; 
-  
 }
 
 @media (min-width: 1024px) {
@@ -324,81 +299,3 @@ img {
     padding-top: 6rem; 
   }
 } */
-
-/* في globals.css */
-:root {
-  --ring: 0 0% 0%; /* تغيير لون الـ ring للأسود */
-}
-
-/* أو إضافة هذا الكود */
-[data-radix-select-content] [data-state="checked"] {
-  background-color: #e5e7eb !important;
-  color: black !important;
-}
-
-/* status colors */
-.status-pending {
-  background-color: #A0AEC03D;
-  color: #A0AEC0;
-}
-.status-processing {
-  background-color: #ED89363D;
-  color: #ED8936;
-}
-.status-ready {
-  background-color: #9F7AEA3D;
-  color: #9F7AEA;
-}
-.status-delivering {
-  background-color: #F6AD553D;
-  color: #F6AD55;
-}
-.status-delivered {
-  background-color: #48BB783D;
-  color: #48BB78;
-}
-.status-cancelled {
-  background-color: #F565653D;
-  color: #F56565;
-}
-
-
-
-
-
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-.animate-slide-out {
-  animation: slideOut 0.3s ease-out forwards;
-}
-
-
-
-
- @media (maxWidth: 640px){
-.custom-width-192{
-  width: 150px;
-  height: 150px;
-}
- }

@@ -1,87 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
 import { getLeastPriceProducts, ProductData } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HiArrowNarrowLeft, HiOutlineArrowNarrowRight } from "react-icons/hi";
-
-// ✅ تعريف واجهات الفاريانتات
-interface VariantAttribute {
-  id: number;
-  attribute_type: {
-    id: number;
-    name: string;
-  };
-  value: string;
-  meta: {
-    color?: string;
-  } | null;
-}
-
-interface ProductVariant {
-  id: number;
-  sku: string | null;
-  price: number;
-  has_discount: boolean;
-  discount_type: string | null;
-  discount_value: number | null;
-  price_after_discount: number;
-  quantity: number | null;
-  is_active: boolean;
-  variant_image: string | null;
-  attributes: VariantAttribute[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  hoverImage?: string;
-  href: string;
-  originalPrice?: number;
-  discount?: number;
-  colors?: Array<{ color: string; name: string }>;
-  rating?: number;
-  reviewsCount?: number;
-  isBestSeller?: boolean;
-  hasVariants?: boolean;
-  variants?: ProductVariant[];
-  variantId?: number | null;
-}
-
-// ✅ دالة استخراج الألوان من جميع الـ variants
-const extractColorsFromVariants = (
-  variants: ProductVariant[],
-): Array<{ color: string; name: string }> => {
-  const colorMap = new Map<string, string>();
-
-  if (!variants || variants.length === 0) return [];
-
-  variants.forEach((variant) => {
-    if (variant.attributes && Array.isArray(variant.attributes)) {
-      variant.attributes.forEach((attr: VariantAttribute) => {
-        if (
-          attr.attribute_type?.name === "اللون" &&
-          attr.value &&
-          attr.meta?.color
-        ) {
-          if (!colorMap.has(attr.value)) {
-            colorMap.set(attr.value, attr.meta.color);
-          }
-        }
-      });
-    }
-  });
-
-  return Array.from(colorMap.entries()).map(([name, color]) => ({
-    name: name,
-    color: color,
-  }));
-};
+// ✅ استيراد الأنواع والدوال من الملف المشترك
+import { 
+  Product, 
+  ProductVariant,
+  extractColorsFromVariants,
+  cleanImageUrl
+} from "@/types/product";
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
 const getTranslations = (lang: string) => {
@@ -105,14 +35,6 @@ const getTranslations = (lang: string) => {
 
 // تحويل البيانات من API إلى شكل المنتج المطلوب
 const transformProduct = (product: ProductData): Product => {
-  const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
-    if (url.startsWith("/storage")) {
-      return `https://admin.souqkaber.com${url}`;
-    }
-    return `https://admin.souqkaber.com${url}`;
-  };
-
   const mainImage =
     product.images && product.images.length > 0
       ? cleanImageUrl(product.images[0])
@@ -163,6 +85,12 @@ const transformProduct = (product: ProductData): Product => {
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
+    currency: product.currency || {
+      code: "EGP",
+      symbol: "ج.م",
+      name: "Egyptian Pound",
+      rate: 1
+    }
   };
 };
 
@@ -539,12 +467,6 @@ export function LeastPriceProducts() {
             >
               {t.latestProducts}
             </h2>
-            {/* <Link 
-              href="/products" 
-              className="text-[#2D93CA] text-[14px] font-bold hover:underline transition-all duration-300"
-            >
-              {t.viewMore}
-            </Link> */}
           </div>
 
           {/* Slider Container */}
@@ -645,6 +567,7 @@ export function LeastPriceProducts() {
                         hasVariants={product.hasVariants || false}
                         variants={product.variants || []}
                         variantId={product.variantId || null}
+                        currency={product.currency}
                       />
                     </div>
                   </div>

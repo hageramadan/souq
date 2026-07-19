@@ -1,119 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
 import { getMostSellingProducts, ProductData } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HiArrowNarrowLeft } from "react-icons/hi";
 import { HiOutlineArrowNarrowRight } from "react-icons/hi";
+// ✅ استيراد الأنواع والدوال من الملف المشترك
+import { 
+  Product, 
+  ProductVariant,
+  extractColorsFromVariants,
+  cleanImageUrl,
+  transformProduct as transformProductBase
+} from "@/types/product";
 
-// ✅ تعريف واجهات الفاريانتات
-interface VariantAttribute {
-  id: number;
-  attribute_type: {
-    id: number;
-    name: string;
-  };
-  value: string;
-  meta: {
-    color?: string;
-  } | null;
-}
-
-interface ProductVariant {
-  id: number;
-  sku: string | null;
-  price: number;
-  has_discount: boolean;
-  discount_type: string | null;
-  discount_value: number | null;
-  price_after_discount: number;
-  quantity: number | null;
-  is_active: boolean;
-  variant_image: string | null;
-  attributes: VariantAttribute[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  hoverImage?: string;
-  href: string;
-  originalPrice?: number;
-  discount?: number;
-  colors?: Array<{ color: string; name: string }>;
-  rating?: number;
-  reviewsCount?: number;
-  isBestSeller?: boolean;
-  hasVariants?: boolean;
-  variants?: ProductVariant[];
-  variantId?: number | null;
-}
-
-// ✅ دالة استخراج الألوان من جميع الـ variants
-const extractColorsFromVariants = (
-  variants: ProductVariant[],
-): Array<{ color: string; name: string }> => {
-  const colorMap = new Map<string, string>();
-
-  if (!variants || variants.length === 0) return [];
-
-  variants.forEach((variant) => {
-    if (variant.attributes && Array.isArray(variant.attributes)) {
-      variant.attributes.forEach((attr: VariantAttribute) => {
-        if (
-          attr.attribute_type?.name === "اللون" &&
-          attr.value &&
-          attr.meta?.color
-        ) {
-          if (!colorMap.has(attr.value)) {
-            colorMap.set(attr.value, attr.meta.color);
-          }
-        }
-      });
-    }
-  });
-
-  return Array.from(colorMap.entries()).map(([name, color]) => ({
-    name: name,
-    color: color,
-  }));
-};
-
-// ✅ دالة للحصول على الترجمات حسب اللغة
-const getTranslations = (lang: string) => {
-  if (lang === "en") {
-    return {
-      bestSelling: "Best Selling",
-      viewMore: "View More",
-      loading: "Loading...",
-      failedToLoad: "Failed to load products",
-      noProducts: "No products available",
-    };
-  }
-  return {
-    bestSelling: "الاكثر طلبا",
-    viewMore: "عرض المزيد",
-    loading: "جاري التحميل...",
-    failedToLoad: "فشل في تحميل المنتجات",
-    noProducts: "لا توجد منتجات حالياً",
-  };
-};
-
-// تحويل البيانات من API إلى شكل المنتج المطلوب
+// ✅ إعادة تعريف transformProduct لاستخدام الدوال من الملف المشترك
 const transformProduct = (product: ProductData): Product => {
-  const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
-    if (url.startsWith("/storage")) {
-      return `https://admin.souqkaber.com${url}`;
-    }
-    return `https://admin.souqkaber.com${url}`;
-  };
-
   const mainImage =
     product.images && product.images.length > 0
       ? cleanImageUrl(product.images[0])
@@ -164,6 +67,32 @@ const transformProduct = (product: ProductData): Product => {
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
+    currency: product.currency || {
+      code: "EGP",
+      symbol: "ج.م",
+      name: "Egyptian Pound",
+      rate: 1
+    }
+  };
+};
+
+// ✅ دالة للحصول على الترجمات حسب اللغة
+const getTranslations = (lang: string) => {
+  if (lang === "en") {
+    return {
+      bestSelling: "Best Selling",
+      viewMore: "View More",
+      loading: "Loading...",
+      failedToLoad: "Failed to load products",
+      noProducts: "No products available",
+    };
+  }
+  return {
+    bestSelling: "الاكثر طلبا",
+    viewMore: "عرض المزيد",
+    loading: "جاري التحميل...",
+    failedToLoad: "فشل في تحميل المنتجات",
+    noProducts: "لا توجد منتجات حالياً",
   };
 };
 
@@ -637,6 +566,7 @@ export function BestProducts() {
                         hasVariants={product.hasVariants || false}
                         variants={product.variants || []}
                         variantId={product.variantId || null}
+                        currency={product.currency} 
                       />
                     </div>
                   </div>

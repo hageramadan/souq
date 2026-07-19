@@ -27,6 +27,14 @@ import { FaRegStar } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+// ✅ إضافة واجهة العملة
+interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+  rate: number;
+}
+
 interface VariantAttribute {
   id: number;
   attribute_type: {
@@ -74,6 +82,7 @@ interface ProductDetailsProps {
     variants?: ProductVariant[];
     has_variants?: boolean;
     video?: string;
+    currency?: Currency; // ✅ إضافة العملة
   };
 }
 
@@ -541,6 +550,11 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const isProductFavorite = isFavorite(product.id.toString());
   const itemInCartQuantity = getItemQuantity(product.id);
 
+  // ✅ الحصول على رمز العملة
+  const getCurrencySymbol = (): string => {
+    return product.currency?.symbol || "ج.م";
+  };
+
   // ✅ Add to cart
   const handleAddToCart = async () => {
     if (isAddingToCart) return;
@@ -756,12 +770,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             <div className="flex flex-col items-end">
               <span className="text-lg lg:text-xl font-bold text-[#23A6F0] flex items-center gap-0.5">
                 {currentPrice.toLocaleString()}
-                <span className="text-sm">{t.EGP}</span>
+                <span className="text-sm">{getCurrencySymbol()}</span>
               </span>
               {originalPrice && originalPrice !== currentPrice && (
                 <span className="text-xs lg:text-base text-[#00000080] line-through flex items-center gap-0.5">
                   {originalPrice.toLocaleString()}
-                  <span className="text-[10px]">{t.EGP}</span>
+                  <span className="text-[10px]">{getCurrencySymbol()}</span>
                 </span>
               )}
             </div>

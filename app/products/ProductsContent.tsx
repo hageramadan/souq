@@ -16,36 +16,17 @@ import Link from "next/link";
 import { VscSettings } from "react-icons/vsc";
 import { useTranslation } from "@/hooks/useTranslation";
 import { BsArrowDownUp } from "react-icons/bs";
+// ✅ استيراد الأنواع من الملف المشترك
+import { 
+  ProductVariant, 
+  extractColorsFromVariants,
+  cleanImageUrl,
+  Currency
+} from "@/types/product";
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface VariantAttribute {
-  id: number;
-  attribute_type: {
-    id: number;
-    name: string;
-  };
-  value: string;
-  meta: {
-    color?: string;
-  } | null;
-}
-
-interface ProductVariant {
-  id: number;
-  sku: string | null;
-  price: number;
-  has_discount: boolean;
-  discount_type: string | null;
-  discount_value: number | null;
-  price_after_discount: number;
-  quantity: number | null;
-  is_active: boolean;
-  variant_image: string | null;
-  attributes: VariantAttribute[];
-}
 
 interface FiltersState {
   categoryIds?: number[];
@@ -63,39 +44,6 @@ interface SliderImage {
   description: string;
   image: string;
 }
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-const extractColorsFromVariants = (
-  variants: ProductVariant[],
-): Array<{ color: string; name: string }> => {
-  const colorMap = new Map<string, string>();
-
-  if (!variants || variants.length === 0) return [];
-
-  variants.forEach((variant) => {
-    if (variant.attributes && Array.isArray(variant.attributes)) {
-      variant.attributes.forEach((attr: VariantAttribute) => {
-        if (
-          attr.attribute_type?.name === "اللون" &&
-          attr.value &&
-          attr.meta?.color
-        ) {
-          if (!colorMap.has(attr.value)) {
-            colorMap.set(attr.value, attr.meta.color);
-          }
-        }
-      });
-    }
-  });
-
-  return Array.from(colorMap.entries()).map(([name, color]) => ({
-    name: name,
-    color: color,
-  }));
-};
 
 // ============================================================================
 // Main Component
@@ -421,6 +369,7 @@ export default function ProductsContent() {
     };
   }, [isMobileFilterOpen]);
 
+  // ✅ تحويل المنتج للـ Card باستخدام الدوال المشتركة
   const transformProductForCard = (product: ProductData) => {
     let colors: Array<{ color: string; name: string }> = [];
 
@@ -431,14 +380,6 @@ export default function ProductsContent() {
     ) {
       colors = extractColorsFromVariants(product.variants as ProductVariant[]);
     }
-
-    const cleanImageUrl = (url: string) => {
-      if (!url) return "/images/placeholder-product.jpg";
-      if (url.startsWith("/storage")) {
-        return `https://admin.souqkaber.com${url}`;
-      }
-      return `https://admin.souqkaber.com/storage${url}`;
-    };
 
     return {
       id: product.id.toString(),
@@ -466,6 +407,13 @@ export default function ProductsContent() {
       isBestSeller: product.is_active,
       hasVariants: product.has_variants || false,
       variants: product.variants || [],
+      // ✅ إضافة العملة
+      currency: product.currency || {
+        code: "EGP",
+        symbol: "ج.م",
+        name: "Egyptian Pound",
+        rate: 1
+      }
     };
   };
 
@@ -788,6 +736,7 @@ export default function ProductsContent() {
                               ? cardData.variants[0].id
                               : null
                           }
+                          currency={cardData.currency}
                         />
                       </div>
                     );

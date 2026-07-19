@@ -1,3 +1,5 @@
+import { Currency } from "./product";
+
 // types/index.ts
 export interface ProductData {
   id: number;
@@ -26,6 +28,7 @@ export interface ProductData {
   variants: any;
   quantity: number;
   images: string[];
+  currency:Currency
 }
 
 export interface Filters {

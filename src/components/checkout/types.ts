@@ -69,6 +69,7 @@ export interface OrderSummaryProps {
   cartItems: CartItem[]; // يمكن الاحتفاظ بالمنتجات لعرضها
   cartSummary: CartSummary;
    deliveryMethod: "pickup" | "delivery" ; 
+   currencySymbol?: string;
 }
 
 export interface DeliveryAddressFormProps {

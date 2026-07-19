@@ -17,6 +17,14 @@ interface ColorOption {
   name: string;
 }
 
+// ✅ إضافة واجهة العملة
+interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+  rate: number;
+}
+
 interface ProductCardProps {
   id: string;
   name: string;
@@ -33,6 +41,7 @@ interface ProductCardProps {
   variantId?: number | null;
   hasVariants?: boolean;
   variants?: Array<{ id: number }>;
+  currency?: Currency; // ✅ إضافة العملة
 }
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
@@ -76,6 +85,7 @@ export function ProductCard({
   variantId = null,
   hasVariants = false,
   variants = [],
+  currency, // ✅ استقبال العملة
 }: ProductCardProps) {
   const { language } = useLanguage();
   const t = getTranslations(language);
@@ -324,22 +334,25 @@ export function ProductCard({
           </h3>
 
           {/* Price */}
-          <div className="flex items-center gap-1 text-sm">
+          {price>0 && (
+             <div className="flex items-center gap-1 text-sm">
             {originalPrice && originalPrice > price ? (
               <>
                 <span className="text-xs md:text-sm line-through text-gray-400 relative">
-                  {originalPrice.toLocaleString()} 
+                  {originalPrice.toLocaleString()} {currency?.symbol || ''}
                 </span>
                 <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
-                  {price.toLocaleString()} 
+                  {price.toLocaleString()} {currency?.symbol || ''}
                 </span>
               </>
             ) : (
               <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
-                {price.toLocaleString()} 
+                {price.toLocaleString()} {currency?.symbol || ''}
               </span>
             )}
           </div>
+          )}
+         
         </div>
       </Link>
     </div>

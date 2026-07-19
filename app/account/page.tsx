@@ -19,6 +19,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/contexts/LanguageContext";
+
 export default function AccountPage() {
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const router = useRouter();
@@ -26,13 +27,15 @@ export default function AccountPage() {
   const { user, isAuthenticated, loading, logoutUser } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  // ✅ دالة مساعدة لاستخراج الرصيد والعملة من البيانات
-    useEffect(() => {
+  
+  useEffect(() => {
     setIsClient(true);
   }, []);
+  
   // حالات الرصيد
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>("");
+  const [walletCurrencySymbol, setWalletCurrencySymbol] = useState<string>("ج.م"); // ✅ إضافة رمز العملة
   const [loadingWallet, setLoadingWallet] = useState<boolean>(true);
 
   // دالة مساعدة لمعالجة رابط الصورة
@@ -49,7 +52,7 @@ export default function AccountPage() {
   };
 
   // دالة مساعدة لاستخراج الرصيد والعملة من البيانات القادمة من الـ API
-  const parseBalance = (value: any): { currency: string; amount: number } => {
+  const parseBalance = (value: any): { currency: string; amount: number; symbol: string } => {
     // الحالة 1: قيمة نصية مثل "EGP 100.50"
     if (typeof value === 'string') {
       const parts = value.trim().split(/\s+/);
@@ -57,31 +60,51 @@ export default function AccountPage() {
         const currency = parts[0];
         const amount = parseFloat(parts[1]);
         if (!isNaN(amount)) {
-          return { currency, amount };
+          return { currency, amount, symbol: getCurrencySymbol(currency) };
         }
       }
       // محاولة استخراج الأرقام فقط إذا كانت العملة غير موجودة
       const numericMatch = value.match(/[\d.]+/);
       if (numericMatch) {
-        return { currency: "EGP", amount: parseFloat(numericMatch[0]) };
+        return { currency: "EGP", amount: parseFloat(numericMatch[0]), symbol: "ج.م" };
       }
-      return { currency: "EGP", amount: 0 };
+      return { currency: "EGP", amount: 0, symbol: "ج.م" };
     }
     
     // الحالة 2: قيمة رقمية
     if (typeof value === 'number') {
-      return { currency: "EGP", amount: value };
+      return { currency: "EGP", amount: value, symbol: "ج.م" };
     }
     
     // الحالة 3: كائن يحتوي على balance و currency
     if (value && typeof value === 'object') {
-      const currency = value.currency || "EGP";
+      const currency = value.currency?.code || "EGP";
+      const symbol = value.currency?.symbol || "ج.م";
       const amount = parseFloat(value.balance || value.amount || 0);
-      return { currency, amount: isNaN(amount) ? 0 : amount };
+      return { currency, amount: isNaN(amount) ? 0 : amount, symbol };
     }
     
     // الحالة الافتراضية
-    return { currency: "EGP", amount: 0 };
+    return { currency: "EGP", amount: 0, symbol: "ج.م" };
+  };
+
+  // ✅ دالة مساعدة للحصول على رمز العملة
+  const getCurrencySymbol = (currencyCode: string): string => {
+    const symbolMap: Record<string, string> = {
+      "EGP": "ج.م",
+      "USD": "$",
+      "EUR": "€",
+      "SAR": "ر.س",
+      "AED": "د.إ",
+      "KWD": "د.ك",
+      "BHD": "د.ب",
+      "QAR": "ر.ق",
+      "OMR": "ر.ع",
+      "JOD": "د.أ",
+      "LBP": "ل.ل",
+      "SYP": "ل.س",
+    };
+    return symbolMap[currencyCode] || currencyCode;
   };
 
   // دالة لجلب رصيد المحفظة من الـ API
@@ -109,11 +132,12 @@ export default function AccountPage() {
       const data = await response.json();
 
       if (data.result === true && data.errNum === 200) {
-        const balanceData = data.data.balance;
+        const balanceData = data.data;
         
         // استخدام الدالة المساعدة لتحليل البيانات بأمان
         const parsed = parseBalance(balanceData);
         setWalletCurrency(parsed.currency);
+        setWalletCurrencySymbol(parsed.symbol);
         setWalletBalance(parsed.amount);
         
         // طباعة البيانات في الكونسول للتحقق (يمكنك إزالة هذا السطر في الإنتاج)
@@ -257,7 +281,7 @@ export default function AccountPage() {
   // الحصول على رابط الصورة
   const userImage = getImageUrl(user.image);
 
-  // تنسيق عرض الرصيد
+  // ✅ تنسيق عرض الرصيد مع رمز العملة
   const displayBalance = () => {
     if (loadingWallet) {
       return <span className="text-[#0A0500] text-base md:text-xl font-extrabold">{t('account.loadingBalance')}</span>;
@@ -265,11 +289,11 @@ export default function AccountPage() {
     if (walletBalance !== null) {
       return (
         <span className="text-[#0A0500] text-base md:text-xl font-extrabold">
-          {walletCurrency} {walletBalance.toFixed(2)}
+           {walletBalance.toFixed(2)} {walletCurrencySymbol}
         </span>
       );
     }
-    return <span className="text-[#0A0500] text-base md:text-xl font-extrabold">{walletCurrency} 0.00</span>;
+    return <span className="text-[#0A0500] text-base md:text-xl font-extrabold"></span>;
   };
 
   return (
@@ -364,7 +388,7 @@ export default function AccountPage() {
                 </div>
                 <span className="text-gray-700 text-sm md:text-xl font-bold">{t('account.currentBalance')}</span>
               </div>
-              {/* عرض الرصيد من الـ API */}
+              {/* عرض الرصيد من الـ API مع رمز العملة */}
               {displayBalance()}
             </Link>
           </div>

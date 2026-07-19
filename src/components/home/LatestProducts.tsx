@@ -1,87 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
 import { getNewProducts, ProductData } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HiArrowNarrowLeft, HiOutlineArrowNarrowRight } from "react-icons/hi";
-
-// ✅ تعريف واجهات الفاريانتات
-interface VariantAttribute {
-  id: number;
-  attribute_type: {
-    id: number;
-    name: string;
-  };
-  value: string;
-  meta: {
-    color?: string;
-  } | null;
-}
-
-interface ProductVariant {
-  id: number;
-  sku: string | null;
-  price: number;
-  has_discount: boolean;
-  discount_type: string | null;
-  discount_value: number | null;
-  price_after_discount: number;
-  quantity: number | null;
-  is_active: boolean;
-  variant_image: string | null;
-  attributes: VariantAttribute[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  hoverImage?: string;
-  href: string;
-  originalPrice?: number;
-  discount?: number;
-  colors?: Array<{ color: string; name: string }>;
-  rating?: number;
-  reviewsCount?: number;
-  isBestSeller?: boolean;
-  hasVariants?: boolean;
-  variants?: ProductVariant[];
-  variantId?: number | null;
-}
-
-// ✅ دالة استخراج الألوان من جميع الـ variants
-const extractColorsFromVariants = (
-  variants: ProductVariant[],
-): Array<{ color: string; name: string }> => {
-  const colorMap = new Map<string, string>();
-
-  if (!variants || variants.length === 0) return [];
-
-  variants.forEach((variant) => {
-    if (variant.attributes && Array.isArray(variant.attributes)) {
-      variant.attributes.forEach((attr: VariantAttribute) => {
-        if (
-          attr.attribute_type?.name === "اللون" &&
-          attr.value &&
-          attr.meta?.color
-        ) {
-          if (!colorMap.has(attr.value)) {
-            colorMap.set(attr.value, attr.meta.color);
-          }
-        }
-      });
-    }
-  });
-
-  return Array.from(colorMap.entries()).map(([name, color]) => ({
-    name: name,
-    color: color,
-  }));
-};
+// ✅ استيراد الأنواع والدوال من الملف المشترك
+import { 
+  Product, 
+  ProductVariant,
+  extractColorsFromVariants,
+  cleanImageUrl
+} from "@/types/product";
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
 const getTranslations = (lang: string) => {
@@ -105,14 +35,6 @@ const getTranslations = (lang: string) => {
 
 // تحويل البيانات من API إلى شكل المنتج المطلوب
 const transformProduct = (product: ProductData): Product => {
-  const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
-    if (url.startsWith("/storage")) {
-      return `https://admin.souqkaber.com${url}`;
-    }
-    return `https://admin.souqkaber.com${url}`;
-  };
-
   const mainImage =
     product.images && product.images.length > 0
       ? cleanImageUrl(product.images[0])
@@ -163,6 +85,12 @@ const transformProduct = (product: ProductData): Product => {
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
+    currency: product.currency || {
+      code: "EGP",
+      symbol: "ج.م",
+      name: "Egyptian Pound",
+      rate: 1
+    }
   };
 };
 
@@ -290,10 +218,9 @@ export function LatestProducts() {
       const max = calculateMaxIndex();
       const targetIndex = Math.max(0, Math.min(index, max));
       setCurrentIndex(targetIndex);
-      // في RTL نستخدم نفس المنطق ولكن مع عكس الاتجاه
       const translate = isRTL
-        ? targetIndex * getCardWidthWithGap() // RTL: موجب
-        : -targetIndex * getCardWidthWithGap(); // LTR: سالب
+        ? targetIndex * getCardWidthWithGap()
+        : -targetIndex * getCardWidthWithGap();
       setCurrentTranslate(translate);
       if (animate) {
         setIsAnimating(true);
@@ -303,14 +230,13 @@ export function LatestProducts() {
     [calculateMaxIndex, getCardWidthWithGap, isRTL],
   );
 
-  // التنقل بالسهمين - معكوسين في RTL
+  // التنقل بالسهمين
   const scrollByAmount = useCallback(
     (direction: "left" | "right") => {
       if (isDraggingRef.current) return;
       const max = calculateMaxIndex();
       let newIndex;
 
-      // نفس اتجاه السحب في كلتا اللغتين
       if (direction === "right") {
         newIndex = Math.min(currentIndex + 1, max);
       } else {
@@ -321,7 +247,7 @@ export function LatestProducts() {
     [currentIndex, calculateMaxIndex, goToSlide],
   );
 
-  // سحب بالماوس - نفس الاتجاه في كلتا اللغتين
+  // سحب بالماوس
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     isDraggingRef.current = true;
@@ -350,14 +276,12 @@ export function LatestProducts() {
       velocityRef.current = (deltaX / deltaTime) * 8;
     }
 
-    // نفس اتجاه السحب في كلتا اللغتين
     const diff = e.pageX - startX;
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
     const maxTranslate = isRTL ? max * cardWidth : -max * cardWidth;
 
     let newTranslate = startTranslateRef.current + diff;
-    // منع التجاوز مع مرونة
     if (isRTL) {
       if (newTranslate < -20) newTranslate = -20;
       if (newTranslate > maxTranslate + 20) newTranslate = maxTranslate + 20;
@@ -380,7 +304,6 @@ export function LatestProducts() {
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
 
-    // حساب أقرب شريحة حسب الاتجاه
     let currentIndexValue;
     if (isRTL) {
       currentIndexValue = Math.round(currentTranslate / cardWidth);
@@ -412,7 +335,7 @@ export function LatestProducts() {
     velocityRef.current = 0;
   };
 
-  // سحب باللمس - نفس الاتجاه في كلتا اللغتين
+  // سحب باللمس
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     isDraggingRef.current = true;
@@ -431,7 +354,6 @@ export function LatestProducts() {
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDraggingRef.current || !e.touches.length) return;
-    // e.preventDefault();
 
     const touch = e.touches[0];
     const now = Date.now();
@@ -442,7 +364,6 @@ export function LatestProducts() {
       velocityRef.current = (deltaX / deltaTime) * 8;
     }
 
-    // نفس اتجاه السحب في كلتا اللغتين
     const diff = touch.pageX - startX;
     const cardWidth = getCardWidthWithGap();
     const max = calculateMaxIndex();
@@ -537,12 +458,6 @@ export function LatestProducts() {
             >
               {t.latestProducts}
             </h2>
-            {/* <Link 
-              href="/products" 
-              className="text-[#2D93CA] text-[14px] font-bold hover:underline transition-all duration-300"
-            >
-              {t.viewAll}
-            </Link> */}
           </div>
 
           {/* Slider Container */}
@@ -643,6 +558,7 @@ export function LatestProducts() {
                         hasVariants={product.hasVariants || false}
                         variants={product.variants || []}
                         variantId={product.variantId || null}
+                        currency={product.currency}
                       />
                     </div>
                   </div>
