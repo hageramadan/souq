@@ -526,7 +526,7 @@
     "saveAddressError": "Error saving address",
     "serverError": "Server connection error",
     "cannotSaveUsedAddress": "Cannot save an already used address",
-    "selectCityFirst": "Please select governorate and city first",
+    "selectCityFirst": "Please select governorate first",
     "cityNotFound": "City not found in system",
     "useSavedAddress": "Use saved address",
     "selectFromSaved": "Select from saved addresses",

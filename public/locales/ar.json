@@ -435,7 +435,7 @@
     "saveAddressError": "حدث خطأ في حفظ العنوان",
     "serverError": "حدث خطأ في الاتصال بالخادم",
     "cannotSaveUsedAddress": "لا يمكن حفظ عنوان مستخدم بالفعل",
-    "selectCityFirst": "الرجاء اختيار المحافظة والمدينة أولاً",
+    "selectCityFirst": "الرجاء اختيار المحافظة  أولاً",
     "cityNotFound": "لم يتم العثور على المدينة في النظام",
     "useSavedAddress": "اختر من العناوين المحفوظة",
     "selectFromSaved": "اختر من العناوين المحفوظة",
