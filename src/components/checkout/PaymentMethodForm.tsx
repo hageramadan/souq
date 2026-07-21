@@ -103,7 +103,7 @@ export default function PaymentMethodForm({
           </div>
         </label>
           {/* بطاقة ائتمان */}
-        <label
+        {/* <label
           className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition ${
             paymentMethod === "card"
               ? "border-[#EC221F] bg-red-50"
@@ -122,7 +122,7 @@ export default function PaymentMethodForm({
           <div>
             <p className="font-medium text-gray-800">بطاقة ائتمان</p>
           </div>
-        </label>
+        </label> */}
       </div>
     </div>
   );
