@@ -669,7 +669,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                 />
                 <button
                   onClick={hideVideoPlayer}
-                  className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-all duration-200 border border-white/20 hover:border-white/40"
+                  className="absolute top-3 start-3 z-20 w-8 h-8 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-all duration-200 border border-white/20 hover:border-white/40"
                   aria-label={t.closeVideo}
                 >
                   <X className="w-4 h-4" />
@@ -695,7 +695,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                 />
 
                 {discountPercentage > 0 && (
-                  <span className="absolute top-2 right-2 bg-[#23A6F0] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
+                  <span className="absolute top-2 start-2 bg-[#23A6F0] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
                     {discountPercentage}% {t.discount}
                   </span>
                 )}
@@ -811,7 +811,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                       key={color.name}
                       onClick={() => setSelectedColor(color.name)}
                       className={`
-                        group relative w-7 h-7 rounded-full transition-all duration-200
+                        group relative w-8 h-8 rounded-full border border-gray-400 shadow-md transition-all duration-200
                         ${selectedColor === color.name ? "ring-2 ring-offset-1 scale-105" : "hover:scale-105"}
                       `}
                       style={{ backgroundColor: color.code }}

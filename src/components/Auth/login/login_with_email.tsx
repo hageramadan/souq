@@ -79,14 +79,14 @@ export default function LoginWithEmail() {
             <div className="mb-5">
               <label className="block text-gray-700 font-medium mb-2">البريد الإلكتروني *</label>
               <div className="relative">
-                <FaEnvelope className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaEnvelope className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="example@email.com"
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none ${
+                  className={`w-full px-4 py-2 ps-10 border rounded-[8px]   outline-none ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -97,21 +97,21 @@ export default function LoginWithEmail() {
             <div className="mb-5">
               <label className="block text-gray-700 font-medium mb-2">كلمة المرور *</label>
               <div className="relative">
-                <FaLock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
                   disabled={isLoading}
-                  className={`w-full px-4 text-sm  py-2 pr-10 pl-10 border rounded-[8px]   outline-none ${
+                  className={`w-full px-4 text-sm  py-2 ps-10 pe-10 border rounded-[8px]   outline-none ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -135,7 +135,7 @@ export default function LoginWithEmail() {
               disabled={isLoading}
               className="w-full py-3 bg-black text-white rounded-[8px] hover:bg-gray-800 transition disabled:opacity-50"
             >
-              {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+              {isLoading ? "  تسجيل الدخول..." : "تسجيل الدخول"}
             </button>
 
             <div className="text-center mt-6 pt-4 border-t">

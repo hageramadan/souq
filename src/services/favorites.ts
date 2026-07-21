@@ -1,5 +1,7 @@
 // src/services/favorites.ts
 
+import { getHeaders } from "./api";
+
 export interface FavoriteProduct {
   id: number;
   type: string;
@@ -180,14 +182,7 @@ const getToken = (): string | null => {
   return null;
 };
 
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  return {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-};
+
 
 export const fetchFavorites = async (
   page: number = 1,

@@ -187,7 +187,7 @@ export function BrandSlider({
         {/* {showLeftArrow && (
           <button
             onClick={scrollLeftHandler}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110 hidden md:flex items-center justify-center"
+            className="absolute end-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110 hidden md:flex items-center justify-center"
             style={{ 
               transform: isRTL ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%)',
               left: isRTL ? 'auto' : '-12px',
@@ -279,7 +279,7 @@ export function BrandSlider({
         {/* {showRightArrow && (
           <button
             onClick={scrollRightHandler}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110 hidden md:flex items-center justify-center"
+            className="absolute start-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110 hidden md:flex items-center justify-center"
             style={{ 
               transform: isRTL ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%)',
               right: isRTL ? 'auto' : '-12px',

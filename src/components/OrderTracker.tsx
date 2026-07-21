@@ -128,7 +128,7 @@ export default function OrderTracker({
     <div className="w-full">
       <div className="relative">
         {/* الخط الخلفي (الرمادي) */}
-        <div className="absolute top-5 right-9 left-9 h-[2px] bg-gray-200 rounded-full" />
+        <div className="absolute top-5 start-9 end-9 h-[2px] bg-gray-200 rounded-full" />
 
         {/* الخط الأمامي (المتحرك) */}
         <motion.div

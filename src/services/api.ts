@@ -58,7 +58,23 @@ export const getAcceptLanguageHeader = (lang?: string): string => {
   }
   return 'ar';
 };
+export function getGuestToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('guest_cart_token');
+  }
+  return null;
+}
+export function saveGuestToken(token: string): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('guest_cart_token', token);
+  }
+}
 
+export function removeGuestToken(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('guest_cart_token');
+  }
+}
 // ✅ دالة مساعدة لإضافة الهيدرات تلقائياً
 export const getHeaders = (includeAuth: boolean = true, lang?: string): HeadersInit => {
   const headers: HeadersInit = {
@@ -71,8 +87,15 @@ export const getHeaders = (includeAuth: boolean = true, lang?: string): HeadersI
   
   if (includeAuth) {
     const token = getToken();
+    const guestToken = getGuestToken(); // ✅ جلب Guest Token
+    
+    // ✅ أولوية: Token العادي أولاً
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    } 
+    // ✅ إذا لم يوجد Token، استخدم Guest Token
+    else if (guestToken) {
+      headers['X-Guest-Token'] = guestToken;
     }
   }
   

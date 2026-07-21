@@ -1,5 +1,7 @@
 // services/settingsApi.ts
 
+import { getHeaders } from "./api";
+
 interface SettingsData {
   setting: {
     name: string;
@@ -29,10 +31,7 @@ export async function getSettings(): Promise<SettingsData> {
   try {
     const response = await fetch(`https://admin.souqkaber.com/api/settings`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'content-type':'application/json',
-      },
+      headers: getHeaders(),
     });
 
     if (!response.ok) {

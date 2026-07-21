@@ -19,6 +19,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getHeaders } from "@/services/api";
 
 export default function AccountPage() {
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
@@ -123,10 +124,7 @@ export default function AccountPage() {
       const apiUrl = "https://admin.souqkaber.com/api";
       const response = await fetch(`${apiUrl}/wallet`, {
         method: "GET",
-        headers: {
-          "Accept": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getHeaders(),
       });
 
       const data = await response.json();
@@ -332,7 +330,7 @@ export default function AccountPage() {
                 )}
                 <button 
                   onClick={() => router.push("/account/edit-profile")}
-                  className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-50 transition"
+                  className="absolute bottom-0 start-0 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-50 transition"
                 >
                   <FaRegEdit className="w-3.5 h-3.5 text-gray-600" />
                 </button>

@@ -9,6 +9,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Pagination from "@/components/products/Pagination";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import {  getHeaders } from "@/services/api";
 
 const API_URL = "https://admin.souqkaber.com/api";
 
@@ -107,11 +108,7 @@ const searchProducts = async (
     const response = await fetch(
       `${API_URL}/products?page=${page}&per_page=${perPage}&search=${encodeURIComponent(query)}`,
       {
-        headers: {
-          "Accept": "application/json",
-          "content-type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
       },
     );
 
@@ -400,11 +397,11 @@ function SearchContent() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('search.placeholder')}
-              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent"
+              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] "
             />
             <button
               type="submit"
-              className={`absolute ${language === 'en' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#23A6F0] transition`}
+              className={`absolute ${language === 'en' ? 'end-3' : 'end-3'} top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#23A6F0] transition`}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -455,7 +452,7 @@ function SearchContent() {
               {getPaginationInfo()}
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-4">
+            <div className="search-grid mb-4">
               {products.map((product) => {
                 const cardData = transformProductForCard(product);
                 return (

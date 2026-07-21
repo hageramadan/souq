@@ -417,7 +417,7 @@ export default function EditProfilePage() {
         <div className="text-center">
           <div className="relative">
             <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-gray-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-8 h-8 md:w-12 md:h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute top-0 end-0 w-8 h-8 md:w-12 md:h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
           </div>
         </div>
       </div>
@@ -486,7 +486,7 @@ export default function EditProfilePage() {
                       </span>
                     </div>
                   )}
-                  <label className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-gray-50 transition">
+                  <label className="absolute bottom-0 start-0 bg-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-gray-50 transition">
                     <FaCamera className="w-3.5 h-3.5 text-gray-600" />
                     <input
                       type="file"
@@ -597,14 +597,14 @@ export default function EditProfilePage() {
                         }}
                         placeholder={t('editProfile.currentPasswordPlaceholder')}
                         disabled={isSubmitting}
-                        className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none transition-colors ${
+                        className={`w-full px-4 py-2 ps-10 border rounded-[8px]   outline-none transition-colors ${
                           errors.currentPassword ? "border-red-500" : "border-gray-300"
                         } ${isSubmitting ? "opacity-50" : ""}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
                       >
                         {showCurrentPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
                       </button>
@@ -628,14 +628,14 @@ export default function EditProfilePage() {
                         }}
                         placeholder={t('editProfile.newPasswordPlaceholder')}
                         disabled={isSubmitting}
-                        className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none transition-colors ${
+                        className={`w-full px-4 py-2 ps-10 border rounded-[8px]   outline-none transition-colors ${
                           errors.newPassword ? "border-red-500" : "border-gray-300"
                         } ${isSubmitting ? "opacity-50" : ""}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
                       >
                         {showNewPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
                       </button>
@@ -659,14 +659,14 @@ export default function EditProfilePage() {
                         }}
                         placeholder={t('editProfile.confirmPasswordPlaceholder')}
                         disabled={isSubmitting}
-                        className={`w-full px-4 py-2 pr-10 border rounded-[8px]   outline-none transition-colors ${
+                        className={`w-full px-4 py-2 ps-10 border rounded-[8px]   outline-none transition-colors ${
                           errors.confirmPassword ? "border-red-500" : "border-gray-300"
                         } ${isSubmitting ? "opacity-50" : ""}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
                       >
                         {showConfirmPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
                       </button>

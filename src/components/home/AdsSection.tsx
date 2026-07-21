@@ -166,7 +166,7 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         <div className="flex justify-center items-center min-h-[200px] md:min-h-[300px]">
           <div className="relative">
             <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-gray-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-8 h-8 md:w-12 md:h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute top-0 end-0 w-8 h-8 md:w-12 md:h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
           </div>
         </div>
       </section>

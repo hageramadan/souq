@@ -5,6 +5,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 interface PromoCodeInputProps {
   onApply: (code: string, discount: number) => void;
@@ -26,14 +27,7 @@ const getToken = (): string | null => {
 };
 
 // دالة جلب الهيدرز
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  return {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-};
+
 
 // دالة تطبيق كود الخصم من الـ API
 const applyCouponAPI = async (code: string): Promise<{ success: boolean; discount: number; message: string }> => {
@@ -169,13 +163,13 @@ export function PromoCodeInput({ onApply, onRemove, appliedCode }: PromoCodeInpu
             <span className="text-green-600 text-sm">✓ {t('promoCode.applied')}</span>
             <span className="text-green-800 font-semibold text-sm">{appliedCode}</span>
           </div>
-          <button
+          {/* <button
             onClick={handleRemove}
             disabled={isLoading}
             className="text-gray-400 hover:text-red-500 transition disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-          </button>
+          </button> */}
         </div>
         {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       </div>
@@ -199,7 +193,7 @@ export function PromoCodeInput({ onApply, onRemove, appliedCode }: PromoCodeInpu
           }}
           placeholder={t('promoCode.placeholder')}
           disabled={isLoading}
-          className={`px-2 md:px-4 py-2.5 w-[90%] lg:w-full border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent text-sm disabled:bg-gray-100 ${
+          className={`px-2 md:px-4 py-2.5 w-[90%] lg:w-full border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]  text-sm disabled:bg-gray-100 ${
             error ? 'border-red-500' : 'border-gray-200'
           }`}
         />

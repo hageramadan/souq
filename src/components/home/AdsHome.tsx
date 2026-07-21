@@ -4,7 +4,7 @@ import { Button } from '../ui/button'
 import Link from 'next/link'
 import { FaArrowLeft } from 'react-icons/fa'
 import Image from 'next/image'
-import { getAcceptLanguageHeader } from '@/services/api'
+import { getAcceptLanguageHeader, getHeaders } from '@/services/api'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Ad {
@@ -72,13 +72,7 @@ export function AdsHome() {
       
       const response = await fetch(`${API_BASE_URL}/api/ads`, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'content-type':'application/json',
-          'Accept-Language': getAcceptLanguageHeader(),
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
+        headers: getHeaders(),
         cache: 'no-store',
         credentials: 'omit',
       });
@@ -197,14 +191,14 @@ export function AdsHome() {
             <>
               <button
                 onClick={prevAd}
-                className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-1 md:p-2 shadow-lg transition-all"
+                className="absolute end-2 md:end-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-1 md:p-2 shadow-lg transition-all"
                 aria-label={t.previous}
               >
                 <FaArrowLeft className="h-4 w-4 md:h-6 md:w-6 text-[#23A6F0] rotate-180" />
               </button>
               <button
                 onClick={nextAd}
-                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-1 md:p-2 shadow-lg transition-all"
+                className="absolute start-2 md:start-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-1 md:p-2 shadow-lg transition-all"
                 aria-label={t.next}
               >
                 <FaArrowLeft className="h-4 w-4 md:h-6 md:w-6 text-[#23A6F0]" />

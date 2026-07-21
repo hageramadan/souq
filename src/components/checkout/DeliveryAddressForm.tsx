@@ -13,6 +13,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Address } from "@/types/address";
+import { getHeaders } from "@/services/api";
 
 interface SavedAddress {
   id: number;
@@ -111,11 +112,7 @@ export default function DeliveryAddressForm({
       if (!token) return;
       
       const response = await fetch(`${API_URL}/addresses`, {
-        headers: {
-          'Accept': 'application/json',
-          'content-type':'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
       });
       const result = await response.json();
       
@@ -149,11 +146,7 @@ export default function DeliveryAddressForm({
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_URL}/governates`, {
-        headers: {
-          'Accept': 'application/json',
-          'content-type':'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
       });
       const result = await response.json();
       
@@ -188,11 +181,7 @@ export default function DeliveryAddressForm({
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_URL}/governates/${governorateId}/cities`, {
-        headers: {
-          'Accept': 'application/json',
-          'content-type':'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
       });
       const result = await response.json();
       
@@ -299,11 +288,7 @@ export default function DeliveryAddressForm({
       
       const response = await fetch(`${API_URL}/addresses`, {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'content-type':'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
         body: JSON.stringify(addressToSave),
       });
       
@@ -490,7 +475,7 @@ export default function DeliveryAddressForm({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{t('checkout.streetName')}</label>
               <div className="relative">
-                <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <MapPin className="absolute start-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   value={addressData.street}
@@ -506,7 +491,7 @@ export default function DeliveryAddressForm({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{t('checkout.apartment')}</label>
               <div className="relative">
-                <Building className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Building className="absolute start-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   value={addressData.apartmentNo}
@@ -519,7 +504,7 @@ export default function DeliveryAddressForm({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{t('checkout.floor')}</label>
               <div className="relative">
-                <Home className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Home className="absolute start-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   value={addressData.floorNo}
@@ -587,7 +572,7 @@ export default function DeliveryAddressForm({
       {!isGuest && savedAddresses.length > 0 && (
         <>
           <div className="border-t border-gray-200 my-4 relative">
-            <span className="absolute bottom-[-10px] left-[50%] bg-white px-2">{orText}</span>
+            <span className="absolute bottom-[-10px] end-[50%] bg-white px-2">{orText}</span>
           </div>
           
           <div className="mb-5 p-4 bg-gray-50 rounded-[8px]">
@@ -622,7 +607,7 @@ export default function DeliveryAddressForm({
                       <div className="p-4 bg-white rounded-[8px] border-2 border-[#23A6F0] relative">
                         <button
                           onClick={clearSelectedAddress}
-                          className="absolute top-2 left-2 p-1 hover:bg-gray-100 rounded-full transition"
+                          className="absolute top-2 end-2 p-1 hover:bg-gray-100 rounded-full transition"
                           title={t('checkout.clearSelection')}
                         >
                           <X className="w-5 h-5 text-gray-600" />

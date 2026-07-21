@@ -19,6 +19,7 @@ import { IoCopyOutline } from "react-icons/io5";
 import { FaLocationDot } from "react-icons/fa6";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 // ========== تعريف الأنواع ==========
 interface OrderItem {
@@ -125,14 +126,7 @@ const getToken = (): string | null => {
   return null;
 };
 
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  return {
-    'Accept': 'application/json',
-    'content-type':'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-};
+
 
 // صورة ثابتة للمنتجات التي لا تحتوي على صورة
 const PLACEHOLDER_IMAGE = "/images/placeholder-product.jpg";

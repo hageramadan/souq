@@ -540,7 +540,7 @@ export default function ProductsContent() {
           {isSortOpen && (
             <div
               className={`absolute mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-30 ${
-                t("common.dir") === "rtl" ? "left-3" : "right-3"
+                t("common.dir") === "rtl" ? "end-3" : "start-3"
               }`}
             >
               <button
@@ -643,7 +643,7 @@ export default function ProductsContent() {
                 {isSortOpen && (
                   <div
                     className={`absolute mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-30 ${
-                      t("common.dir") === "rtl" ? "left-3" : "right-3"
+                      t("common.dir") === "rtl" ? "end-3" : "start-3"
                     }`}
                   >
                     <button
@@ -788,7 +788,7 @@ export default function ProductsContent() {
 
         <div
           className={`
-            absolute bottom-0 left-3 right-3 
+            absolute bottom-0 end-3 start-3 
             bg-white rounded-t-3xl shadow-2xl
             transition-transform duration-300 ease-out
             ${isMobileFilterOpen ? "translate-y-0" : "translate-y-full"}

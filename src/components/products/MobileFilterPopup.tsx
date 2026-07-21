@@ -43,7 +43,7 @@ export default function MobileFilterPopup({
       />
       
       {/* محتوى البوب أب */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
+      <div className="fixed inset-y-0 start-0 w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
         {/* الرأس */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center">
           <h2 className="text-lg font-medium text-gray-900">
@@ -76,7 +76,7 @@ export default function MobileFilterPopup({
         </div>
 
         {/* زر إغلاق في الأسفل (اختياري) */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+        <div className="fixed bottom-0 end-0 start-0 p-4 bg-white border-t border-gray-200">
           <button
             onClick={onClose}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-[8px]  hover:bg-blue-700 transition-colors"

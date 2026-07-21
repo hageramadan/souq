@@ -35,7 +35,7 @@ export default function SuccessPopup({
           <div className="relative p-6 text-center border-b border-gray-100">
             <button
               onClick={onClose}
-              className="absolute left-4 top-4 text-gray-400 hover:text-gray-600 transition"
+              className="absolute end-4 top-4 text-gray-400 hover:text-gray-600 transition"
             >
               <X className="w-5 h-5" />
             </button>

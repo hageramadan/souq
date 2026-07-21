@@ -1044,6 +1044,7 @@ import DeliveryAddressForm from "@/components/checkout/DeliveryAddressForm";
 import PaymentMethodForm from "@/components/checkout/PaymentMethodForm";
 import NotesForm from "@/components/checkout/NotesForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
+import { getHeaders } from "@/services/api";
 
 const API_URL = "https://admin.souqkaber.com/api";
 
@@ -1064,25 +1065,7 @@ const getGuestToken = (): string | null => {
 };
 
 // دالة جلب الهيدرز مع التوكن و X-Guest-Token
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  const guestToken = getGuestToken();
-  
-  const headers: HeadersInit = {
-    "Accept": "application/json",
-    'content-type': 'application/json',
-  };
-  
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  
-  if (guestToken) {
-    headers["X-Guest-Token"] = guestToken;
-  }
-  
-  return headers;
-};
+
 
 // ✅ دالة جلب السلة مع البارامترات (delivery_method و city_id)
 const fetchCartWithParams = async (
@@ -1612,10 +1595,7 @@ export default function CheckoutPage() {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "content-type":"application/json"
-        },
+        headers: getHeaders(),
         body: JSON.stringify({
           name: accountData.name,
           email: accountData.email,

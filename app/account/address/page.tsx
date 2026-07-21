@@ -8,6 +8,7 @@ import { BsFillPlusCircleFill } from "react-icons/bs";
 import toast, { Toaster } from "react-hot-toast";
 import { Address } from "@/types/address";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 export default function AddressPage() {
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
@@ -26,11 +27,7 @@ export default function AddressPage() {
       const token = localStorage.getItem('auth_token');
       
       const response = await fetch(`${API_URL}/addresses`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept':'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
       });
       const result = await response.json();
       
@@ -75,11 +72,7 @@ export default function AddressPage() {
       
       const response = await fetch(`${API_URL}/addresses/${id}/delete`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept':'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
       });
       
       const result = await response.json();

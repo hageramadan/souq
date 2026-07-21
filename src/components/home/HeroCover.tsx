@@ -183,7 +183,7 @@ export function Hero() {
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
               <div className="w-12 h-12 border-4 border-gray-300 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute top-0 end-0 w-12 h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
             </div>
           
           </div>
@@ -315,7 +315,7 @@ export function Hero() {
         <>
           <button
             onClick={goToPrevSlide}
-            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-30 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 transition-all duration-300 hover:scale-110"
+            className="hidden md:flex absolute end-4 top-1/2 -translate-y-1/2 z-30 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 transition-all duration-300 hover:scale-110"
             aria-label="Previous slide"
           >
             <ChevronLeft className="h-8 w-8 text-white" />
@@ -323,7 +323,7 @@ export function Hero() {
 
           <button
             onClick={goToNextSlide}
-            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-30 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 transition-all duration-300 hover:scale-110"
+            className="hidden md:flex absolute start-4 top-1/2 -translate-y-1/2 z-30 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 transition-all duration-300 hover:scale-110"
             aria-label="Next slide"
           >
             <ChevronRight className="h-8 w-8 text-white" />
@@ -332,7 +332,7 @@ export function Hero() {
       )}
 
       {slides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-4 end-1/2 -translate-x-1/2 z-30 flex gap-2">
           {slides.map((_, index) => (
             <button
               key={index}

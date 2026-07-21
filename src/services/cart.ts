@@ -1,6 +1,7 @@
 // src/services/cart.ts
 
 import { Currency } from "@/types/product";
+import { getHeaders } from "./api";
 
 export interface ProductPricing {
   price: number;
@@ -129,27 +130,7 @@ export const clearGuestToken = (): void => {
 };
 
 // ✅ دالة للحصول على الـ Headers مع إضافة X-Guest-Token
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  const guestToken = getGuestToken();
-  
-  const headers: HeadersInit = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  };
-  
-  // ✅ إضافة الـ auth token إذا كان موجوداً
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  // ✅ إضافة X-Guest-Token إذا كان موجوداً
-  if (guestToken) {
-    headers['X-Guest-Token'] = guestToken;
-  }
-  
-  return headers;
-};
+
 
 // 1. إضافة منتج إلى السلة (مع دعم guest_token في الـ Headers)
 export const addToCart = async (payload: AddToCartPayload): Promise<CartResponse> => {

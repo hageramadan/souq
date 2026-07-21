@@ -106,7 +106,7 @@
 //             onChange={handleNameChange}
 //             onBlur={handleNameBlur}
 //             placeholder={t('checkout.fullNamePlaceholder')}
-//             className={`w-full px-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent transition ${
+//             className={`w-full px-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]  transition ${
 //               nameError && isNameTouched
 //                 ? "border-red-500 focus:ring-red-500"
 //                 : "border-gray-200"
@@ -135,14 +135,14 @@
 //             {t('checkout.email')} <span className="text-red-500">*</span>
 //           </label>
 //           <div className="relative">
-//             <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+//             <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 //             <input
 //               type="email"
 //               value={formData.email || ""}
 //               onChange={handleEmailChange}
 //               onBlur={handleEmailBlur}
 //               placeholder={t('checkout.emailPlaceholder')}
-//               className={`w-full ps-12 pe-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent transition ${
+//               className={`w-full ps-12 pe-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]  transition ${
 //                 emailError && isEmailTouched
 //                   ? "border-red-500 focus:ring-red-500"
 //                   : "border-gray-200"
@@ -265,7 +265,7 @@ export default function ContactInfoForm({
             onChange={handleNameChange}
             onBlur={handleNameBlur}
             placeholder={t('checkout.fullNamePlaceholder')}
-            className={`w-full px-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent transition ${
+            className={`w-full px-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]  transition ${
               nameError && isNameTouched
                 ? "border-red-500 focus:ring-red-500"
                 : "border-gray-200"
@@ -294,14 +294,14 @@ export default function ContactInfoForm({
             {t('checkout.email')} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="email"
               value={formData.email || ""}
               onChange={handleEmailChange}
               onBlur={handleEmailBlur}
               placeholder={t('checkout.emailPlaceholder')}
-              className={`w-full ps-12 pe-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] focus:border-transparent transition ${
+              className={`w-full ps-12 pe-4 py-3 border rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]  foucs:ring-2  transition ${
                 emailError && isEmailTouched
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-200"

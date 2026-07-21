@@ -463,7 +463,7 @@ export function Navbar() {
                 {/* Categories Dropdown - Desktop */}
                 {showCategoriesDropdown && (
                   <div
-                    className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
+                    className="absolute top-full start-0 mt-2 w-64 bg-white rounded-lg border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
                     style={{ borderColor: "#e2e8f0" }}
                     onMouseLeave={() => setShowCategoriesDropdown(false)}
                   >
@@ -540,14 +540,14 @@ export function Navbar() {
                           ref={searchInputRef}
                           type="search"
                           placeholder={t.search}
-                          className="w-64 h-10 ps-9 pe-9 border border-gray-300 rounded-full bg-white  focus:ring-[#23A6F0] focus:border-transparent"
+                          className="w-64 h-10 ps-9 pe-9 border border-gray-300 rounded-full bg-white  focus:ring-[#23A6F0] "
                           style={{ color: "#195073" }}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
                         <button
                           type="submit"
-                          className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black hover:text-white transition-colors"
+                          className="absolute end-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black hover:text-white transition-colors"
                           aria-label="بحث"
                         >
                           <Search className="h-4 w-4 text-gray-500 hover:text-white" />
@@ -579,7 +579,7 @@ export function Navbar() {
               >
                 <Link href="/account/wishlist">
                   {favoritesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    <span className="absolute -top-1 -start-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                       {favoritesCount > 99 ? "99+" : favoritesCount}
                     </span>
                   )}
@@ -597,13 +597,13 @@ export function Navbar() {
               >
                 <Link href="/cart">
                   {itemsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA] text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    <span className="absolute -top-1 -start-1 text-[10px] font-bold  bg-[#2D93CA] text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                       {itemsCount > 99 ? "99+" : itemsCount}
                     </span>
                   )}
                   <ShoppingCart className="h-5 w-5" />
                   {isGuest && itemsCount > 0 && (
-                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] bg-gray-800 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    <span className="absolute -bottom-8 end-1/2 -translate-x-1/2 text-[10px] bg-gray-800 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                       {t.guestCart}
                     </span>
                   )}
@@ -627,7 +627,7 @@ export function Navbar() {
                 </Button>
 
                 {showLanguageDropdown && (
-                  <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg border shadow-xl z-50">
+                  <div className="absolute top-full end-0 mt-2 w-40 bg-white rounded-lg border shadow-xl z-50">
                     <div className="py-2">
                       <button
                         onClick={() => handleLanguageChange("ar")}
@@ -670,7 +670,7 @@ export function Navbar() {
                   </button>
 
                   {showUserDropdown && (
-                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg border shadow-xl z-50">
+                    <div className="absolute top-full end-0 mt-2 w-56 bg-white rounded-lg border shadow-xl z-50">
                       <div className="py-2">
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="text-sm font-semibold text-gray-800">
@@ -794,7 +794,7 @@ export function Navbar() {
 
                 {showMobileLanguageDropdown && (
                   <div
-                    className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === "en" ? "right-0" : "left-0"}`}
+                    className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === "en" ? "start-0" : "end-0"}`}
                   >
                     <div className="py-2">
                       <button
@@ -839,7 +839,7 @@ export function Navbar() {
                 />
                 <button
                   type="submit"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black hover:text-white transition-colors"
+                  className="absolute end-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black hover:text-white transition-colors"
                   aria-label="بحث"
                 >
                   <Search className="h-4 w-4 text-gray-500 hover:text-white" />
@@ -847,7 +847,7 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={closeMobileSearch}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
+                  className="absolute start-1 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
                   aria-label="إغلاق البحث"
                 >
                   <X className="h-4 w-4 text-gray-500" />
@@ -865,7 +865,7 @@ export function Navbar() {
           >
             <form onSubmit={handleSearch} className="relative px-3">
               <Search
-                className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4"
+                className="absolute start-5 top-1/2 -translate-y-1/2 h-4 w-4"
                 style={{ color: "#94a3b8" }}
               />
               <Input
@@ -888,7 +888,7 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {favoritesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -start-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
                     {favoritesCount > 99 ? "99+" : favoritesCount}
                   </span>
                 )}
@@ -904,7 +904,7 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {itemsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -start-1 text-[10px] font-bold  bg-[#2D93CA]  text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
                     {itemsCount > 99 ? "99+" : itemsCount}
                   </span>
                 )}
@@ -1058,7 +1058,7 @@ export function Navbar() {
 
       {/* القائمة السفلية للموبايل (Bottom Navigation Bar) - ✅ استخدام الترجمات */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t shadow-lg"
+        className="md:hidden fixed bottom-0 end-0 start-0 z-30 bg-white border-t shadow-lg"
         style={{ borderColor: "#e2e8f0" }}
       >
         <div className="flex items-center justify-around py-2">
@@ -1124,7 +1124,7 @@ export function Navbar() {
                 }}
               />
               {favoritesCount > 0 && (
-                <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                <span className="absolute -top-2 -start-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
                   {favoritesCount > 99 ? "99+" : favoritesCount}
                 </span>
               )}
@@ -1154,7 +1154,7 @@ export function Navbar() {
                 style={{ color: pathname === "/cart" ? "#23A6F0" : "#666" }}
               />
               {itemsCount > 0 && (
-                <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
+                <span className="absolute -top-2 -start-2 text-[9px] font-bold bg-[#2D93CA] text-white rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
                   {itemsCount > 99 ? "99+" : itemsCount}
                 </span>
               )}
@@ -1212,7 +1212,7 @@ export function Navbar() {
             className="md:hidden fixed inset-0 bg-black/50 z-50 transition-opacity"
             onClick={() => setShowMobileCategoriesSheet(false)}
           />
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl animate-in slide-in-from-bottom duration-300 max-h-[70vh] overflow-y-auto">
+          <div className="md:hidden fixed bottom-0 end-0 start-0 z-50 bg-white rounded-t-2xl shadow-xl animate-in slide-in-from-bottom duration-300 max-h-[70vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
               <h3 className="text-lg font-bold" style={{ color: "#112B40" }}>
                 {t.allCategories}

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getHeaders } from "@/services/api";
 
 export default function WalletPage() {
   const { t } = useTranslation();
@@ -94,11 +95,7 @@ const [isClient, setIsClient] = useState(false);
       const apiUrl = "https://admin.souqkaber.com/api";
       const response = await fetch(`${apiUrl}/wallet`, {
         method: "GET",
-        headers: {
-          "Accept": "application/json",
-          'content-type': "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getHeaders(),
       });
 
       const data = await response.json();

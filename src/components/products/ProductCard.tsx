@@ -229,7 +229,7 @@ export function ProductCard({
           <button
             onClick={handleFavoriteClick}
             disabled={isLocalMutating || isLoading}
-            className="block md:hidden absolute top-[-5px] left-1 z-10 bg-white rounded-full p-1.5 shadow-md hover:bg-blue-50 transition-all duration-200 hover:scale-110 disabled:opacity-50"
+            className="block md:hidden absolute top-[-5px] end-1 z-10 bg-white rounded-full p-1.5 shadow-md hover:bg-blue-50 transition-all duration-200 hover:scale-110 disabled:opacity-50"
             style={{ color: localFavorite ? '#ef4444' : '#112B40' }}
             aria-label={localFavorite ? t.removeFromFavorites : t.addToFavorites}
             aria-pressed={localFavorite}
@@ -243,7 +243,7 @@ export function ProductCard({
 
           {/* Best Seller Badge */}
           {isBestSeller && (
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 start-2 z-10">
               <p className="text-[9px] sm:text-xs font-bold text-white bg-[#FF7700] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
                 {t.bestSeller}
               </p>
@@ -251,7 +251,7 @@ export function ProductCard({
           )}
           
           {discount && discount > 0 && (
-            <div className="absolute top-10 right-2 z-10">
+            <div className="absolute top-10 start-2 z-10">
               <p className="text-[9px] sm:text-xs font-bold text-[#195073] bg-[#FFDB00] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
                 {discount}% OFF
               </p>
@@ -282,7 +282,7 @@ export function ProductCard({
 
           {/* Icons Overlay - appears at bottom center on hover */}
           {isHovered && (
-            <div className="absolute bottom-3 left-0 right-0 justify-center -translate-y-1/2 flex gap-2 animate-in fade-in zoom-in-95 pointer-events-auto">
+            <div className="absolute bottom-3 end-0 start-0 justify-center -translate-y-1/2 flex gap-2 animate-in fade-in zoom-in-95 pointer-events-auto">
               {/* Eye Icon - Quick View */}
               <button
                 onClick={handleQuickView}

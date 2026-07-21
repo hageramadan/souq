@@ -15,6 +15,7 @@ import {
 import LocationMap from "./LocationMap";
 import { Address } from "@/types/address";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 // تعريف نوع العنوان باللغة الإنجليزية
 type AddressTypeValue = "home" | "work" | "other";
@@ -139,10 +140,7 @@ export default function AddAddress({
         const token = localStorage.getItem("auth_token");
 
         const response = await fetch(`${API_URL}/governates`, {
-          headers: {
-            "Accept": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
+          headers: getHeaders(),
         });
 
         if (!response.ok) {
@@ -184,10 +182,7 @@ export default function AddAddress({
         const token = localStorage.getItem("auth_token");
 
         const response = await fetch(`${API_URL}/governates/${formData.governorateId}/cities`, {
-          headers: {
-            "Accept": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
+          headers: getHeaders(),
         });
 
         if (!response.ok) {
@@ -423,11 +418,7 @@ export default function AddAddress({
 
       const response = await fetch(url, {
         method: method,
-        headers: {
-          "Accept": "application/json",
-          'content-type':'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: getHeaders(),
         body: JSON.stringify(addressData),
       });
 

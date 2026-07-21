@@ -8,11 +8,14 @@ import { useTranslation } from "@/hooks/useTranslation";
 interface PaymentMethodFormProps {
   paymentMethod: string;
   onPaymentMethodChange: (method: string) => void;
+  onPaymentGatewayChange?: (gateway: string | null) => void; // ✅ إضافة هذا السطر فقط
+
 }
 
 export default function PaymentMethodForm({
   paymentMethod,
   onPaymentMethodChange,
+  onPaymentGatewayChange,
 }: PaymentMethodFormProps) {
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const [isWalletAvailable, setIsWalletAvailable] = useState(true);
@@ -24,17 +27,28 @@ export default function PaymentMethodForm({
   }, [isWalletAvailable, paymentMethod, onPaymentMethodChange]);
 
   const getPaymentGateway = (method: string) => {
-    switch (method) {
-      case "wallet": return "wallet";
-      case "cash": return "cash";
-      case "card": return "card";
-      case "mada": return "mada";
-      default: return "";
+     switch (method) {
+      case "wallet":
+        return "wallet";
+      case "cash":
+        return null; // ✅ تعديل: الكاش مش محتاج gateway
+      case "card":
+        return "paymob"; // ✅ تعديل: كارد → paymob
+      case "mada":
+        return "mada";
+      default:
+        return null;
     }
   };
 
-  const handlePaymentChange = (method: string) => {
+   const handlePaymentChange = (method: string) => {
     onPaymentMethodChange(method);
+    
+    // ✅ إضافة: إرسال الـ gateway للـ parent
+    const gateway = getPaymentGateway(method);
+    if (onPaymentGatewayChange) {
+      onPaymentGatewayChange(gateway);
+    }
   };
 
   return (
@@ -86,6 +100,27 @@ export default function PaymentMethodForm({
           <DollarSign className="w-5 h-5 text-green-600" />
           <div>
             <p className="font-medium text-gray-800">{t('checkout.cashOnDelivery')}</p>
+          </div>
+        </label>
+          {/* بطاقة ائتمان */}
+        <label
+          className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition ${
+            paymentMethod === "card"
+              ? "border-[#EC221F] bg-red-50"
+              : "border-gray-200 hover:border-gray-300"
+          }`}
+        >
+          <input
+            type="radio"
+            name="paymentMethod"
+            value="card"
+            checked={paymentMethod === "card"}
+            onChange={() => handlePaymentChange("card")}
+            className="w-4 h-4 text-[#EC221F] focus:ring-[#EC221F]"
+          />
+          <CreditCard className="w-5 h-5 text-blue-600" />
+          <div>
+            <p className="font-medium text-gray-800">بطاقة ائتمان</p>
           </div>
         </label>
       </div>

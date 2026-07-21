@@ -6,6 +6,7 @@ import FormInput from "./FormInput";
 import PhoneInput from "./PhoneInput";
 import SubmitButton from "./SubmitButton";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 interface ContactFormData {
   name: string;
@@ -58,10 +59,7 @@ export default function ContactForm() {
 
       const response = await fetch("https://admin.souqkaber.com/api/contact-us", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
+        headers: getHeaders(),
         body: JSON.stringify(payload),
       });
 

@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 import { useRouter, usePathname } from 'next/navigation';
 import Pagination from '@/components/products/Pagination';
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 // ========== تعريف الأنواع ==========
 type OrderStatus = 
@@ -136,13 +137,7 @@ const getToken = (): string | null => {
   return null;
 };
 
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  return {
-    "Accept": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
+
 
 const PLACEHOLDER_IMAGE = "/images/placeholder-product.jpg";
 

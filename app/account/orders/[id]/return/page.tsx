@@ -8,6 +8,7 @@ import Link from "next/link";
 import { IoCopyOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getHeaders } from "@/services/api";
 
 // ========== إعدادات API ==========
 const API_URL = 'https://admin.souqkaber.com/api';
@@ -19,13 +20,7 @@ const getToken = (): string | null => {
   return null;
 };
 
-const getHeaders = (): HeadersInit => {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-};
+
 
 // ========== أنواع البيانات ==========
 interface Currency {

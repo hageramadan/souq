@@ -120,7 +120,7 @@ export default function RegisterWithEmail() {
                 الاسم <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <FaUser className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaUser className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={formData.name}
@@ -130,7 +130,7 @@ export default function RegisterWithEmail() {
                   }}
                   placeholder="أدخل اسمك"
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 pr-10 border rounded-[8px]  ${
+                  className={`w-full px-4 py-2 ps-10 border rounded-[8px]  ${
                     errors.name ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -143,7 +143,7 @@ export default function RegisterWithEmail() {
                 البريد الإلكتروني <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <FaEnvelope className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaEnvelope className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
                   value={formData.email}
@@ -153,7 +153,7 @@ export default function RegisterWithEmail() {
                   }}
                   placeholder="example@email.com"
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 pr-10 border rounded-[8px]  ${
+                  className={`w-full px-4 py-2 ps-10 border rounded-[8px]  ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -166,7 +166,7 @@ export default function RegisterWithEmail() {
                 كلمة المرور <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <FaLock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaLock className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
@@ -176,14 +176,14 @@ export default function RegisterWithEmail() {
                   }}
                   placeholder="••••••••"
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 pr-10 pl-10 border rounded-[8px]  ${
+                  className={`w-full px-4 py-2 ps-10 pe-10 border rounded-[8px]  ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  className="absolute end-3 top-1/2 -translate-y-1/2"
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
