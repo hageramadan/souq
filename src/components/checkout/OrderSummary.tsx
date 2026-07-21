@@ -135,7 +135,7 @@ export default function OrderSummary({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm sticky top-20 mb-4 md:mb-0">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm md:sticky top-20 mb-4 md:mb-0">
       <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
         {t('checkout.orderSummary')}
       </h2>
