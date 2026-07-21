@@ -420,7 +420,7 @@ export default function DeliveryAddressForm({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('checkout.governorate')} <span className="text-[#23A6F0]">*</span>
+                {t('checkout.governorate')} <span className="text-[#f02323]">*</span>
               </label>
               <Select
                 value={addressData.governorate}
@@ -440,7 +440,7 @@ export default function DeliveryAddressForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('checkout.city')} <span className="text-[#23A6F0]">*</span>
+                {t('checkout.city')} <span className="text-[#f02323]">*</span>
               </label>
               <Select
                 value={addressData.city}
