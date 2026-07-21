@@ -794,7 +794,7 @@ export function Navbar() {
 
                 {showMobileLanguageDropdown && (
                   <div
-                    className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === "en" ? "start-0" : "end-0"}`}
+                    className={`absolute top-full  mt-2 w-40 bg-white rounded-lg border shadow-xl z-50 ${language === "en" ? "end-0" : "end-0"}`}
                   >
                     <div className="py-2">
                       <button
