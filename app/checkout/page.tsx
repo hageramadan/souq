@@ -1320,6 +1320,7 @@ export default function CheckoutPage() {
     null,
   );
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+  const [paymentGateway, setPaymentGateway] = useState<string | null>(null);
 
   // ✅ حالة خيار إنشاء حساب (Checkbox)
   const [createAccount, setCreateAccount] = useState(false);
@@ -1472,6 +1473,9 @@ export default function CheckoutPage() {
 
   const handleFormChange = useCallback((data: Partial<CheckoutFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
+  }, []);
+    const handlePaymentGatewayChange = useCallback((gateway: string | null) => {
+    setPaymentGateway(gateway);
   }, []);
 
   // ✅ دالة لاستقبال address_id بعد حفظ العنوان
@@ -1661,7 +1665,7 @@ export default function CheckoutPage() {
   const prepareOrderData = useCallback(() => {
     const paymentMethodMap: Record<string, string> = {
       cash: "cash",
-      card: "online",
+      card: "card",
       mada: "online",
       wallet: "online",
     };
@@ -1677,7 +1681,18 @@ export default function CheckoutPage() {
       notes: formData.notes || "",
       create_account: createAccount,
     };
+  // ✅ إضافة payment_gateway حسب طريقة الدفع (مثل الكود الأول)
+    if (formData.paymentMethod === "wallet") {
+      orderData.payment_gateway = "wallet";
+    }
+    if (formData.paymentMethod === "card") {
+      orderData.payment_gateway = "paymob";
+    }
 
+    // ✅ إذا تم اختيار بوابة دفع معينة من الـ state (مثل الكود الأول)
+    if (paymentGateway) {
+      orderData.payment_gateway = paymentGateway;
+    }
     if (createAccount && isGuest) {
       orderData.account = {
         email: accountData.email,
@@ -1764,7 +1779,7 @@ export default function CheckoutPage() {
 
       if (response.result === true && response.data) {
         const completedOrder: CompletedOrderResult = {
-          orderNumber: response.data.order_number,
+          orderNumber: response.data.order.order_number,
           itemsCount: cartItems.length,
           total: response.data.total_amount,
         };
@@ -1877,6 +1892,8 @@ export default function CheckoutPage() {
               onPaymentMethodChange={(method) =>
                 handleFormChange({ paymentMethod: method as any })
               }
+              onPaymentGatewayChange={handlePaymentGatewayChange}
+
             />
 
             <NotesForm
