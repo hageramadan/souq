@@ -1,3 +1,5 @@
+// components/home/LeastPrice.tsx
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -12,6 +14,10 @@ import {
   extractColorsFromVariants,
   cleanImageUrl
 } from "@/types/product";
+
+interface LeastPriceProductsProps {
+  onLoad?: () => void;
+}
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
 const getTranslations = (lang: string) => {
@@ -68,7 +74,16 @@ const transformProduct = (product: ProductData): Product => {
     variantId = product.variants[0].id;
     colors = extractColorsFromVariants(product.variants as ProductVariant[]);
   }
+ let totalQuantity: number | null = 0;
+  
+  if (product.has_variants && product.variants && product.variants.length > 0) {
+    totalQuantity = product.variants.reduce((sum: number, variant: any) => {
+      return sum + (variant.quantity || 0);
+    }, 0);
+  } else {
 
+    totalQuantity = product.quantity || 0;
+  }
   return {
     id: product.id.toString(),
     name: product.name,
@@ -90,11 +105,12 @@ const transformProduct = (product: ProductData): Product => {
       symbol: "ج.م",
       name: "Egyptian Pound",
       rate: 1
-    }
+    },
+    quantity: totalQuantity, 
   };
 };
 
-export function LeastPriceProducts() {
+export function LeastPriceProducts({ onLoad }: LeastPriceProductsProps) {
   const { language } = useLanguage();
   const t = getTranslations(language);
   const isRTL = language === "ar";
@@ -109,6 +125,7 @@ export function LeastPriceProducts() {
   const [currentTranslate, setCurrentTranslate] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [maxIndex, setMaxIndex] = useState(0);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const isMounted = useRef(true);
   const fetchingRef = useRef(false);
@@ -120,6 +137,14 @@ export function LeastPriceProducts() {
   const lastMoveTimeRef = useRef(0);
   const isDraggingRef = useRef(false);
   const startTranslateRef = useRef(0);
+
+  // ✅ استدعاء onLoad بعد تحميل البيانات
+  useEffect(() => {
+    if (!isInitialLoading && !isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
+  }, [isInitialLoading, isDataLoaded, onLoad]);
 
   // جلب المنتجات من API
   const fetchProducts = useCallback(async () => {
@@ -441,6 +466,10 @@ export function LeastPriceProducts() {
   }
 
   if (error && products.length === 0) {
+    if (!isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
     return (
       <section className="py-6 md:py-12 bg-white">
         <div className="container-custom">
@@ -452,157 +481,164 @@ export function LeastPriceProducts() {
     );
   }
 
+  if (products.length === 0) {
+    if (!isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
+    return null;
+  }
+
   return (
-    products.length > 0 && (
-      <section
-        className="py-6 md:py-12 bg-white overflow-hidden"
-        id="least_price"
-      >
-        <div className="container-custom">
-          {/* Header */}
-          <div className="mb-2 md:mb-5 flex justify-between items-center px-1 relative">
-            <h2
-              className="text-lg md:text-xl font-bold"
-              style={{ color: "#112B40" }}
+    <section
+      className="py-6 md:py-12 bg-white overflow-hidden"
+      id="least_price"
+    >
+      <div className="container-custom">
+        {/* Header */}
+        <div className="mb-2 md:mb-5 flex justify-between items-center px-1 relative">
+          <h2
+            className="text-lg md:text-xl font-bold"
+            style={{ color: "#112B40" }}
+          >
+            {t.latestProducts}
+          </h2>
+        </div>
+
+        {/* Slider Container */}
+        <div className="relative">
+          {currentIndex >= 0 && (
+            <button
+              onClick={() => scrollByAmount("left")}
+              dir="rtl"
+              className={`${
+                language === "en"
+                  ? "end-2 md:end-[-30px]"
+                  : "end-2 md:end-[-30px]"
+              } absolute top-1/2 md:top-1/2 -translate-y-1/2 z-20 bg-[#23A6F0] hover:bg-[#23A6F0] shadow-sm hover:shadow-lg rounded-full p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
+              style={{ transform: "translate(-50%, -50%)" }}
+              aria-label="السابق"
             >
-              {t.latestProducts}
-            </h2>
-          </div>
+              <HiArrowNarrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </button>
+          )}
 
-          {/* Slider Container */}
-          <div className="relative">
-            {currentIndex >= 0 && (
-              <button
-                onClick={() => scrollByAmount("left")}
-                dir="rtl"
-                className={`${
-                  language === "en"
-                    ? "end-2 md:end-[-30px]"
-                    : "end-2 md:end-[-30px]"
-                } absolute top-1/2 md:top-1/2 -translate-y-1/2 z-20 bg-[#23A6F0] hover:bg-[#23A6F0] shadow-sm hover:shadow-lg rounded-full p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
-                style={{ transform: "translate(-50%, -50%)" }}
-                aria-label="السابق"
-              >
-                <HiArrowNarrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </button>
-            )}
-
-            {/* Right Navigation Button - مع مسافة أكبر */}
-            {currentIndex <= maxIndex && (
-              <button
-                onClick={() => scrollByAmount("right")}
-                dir="rtl"
-                className={`${
-                  language === "en"
-                    ? "start-2 md:start-[-30px]"
-                    : "start-2 md:start-[-30px]"
-                } absolute top-1/2 md:top-1/2 -translate-y-1/2 z-20 bg-[#23A6F0] hover:bg-[#23A6F0] shadow-sm hover:shadow-lg rounded-full p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
-                style={{ transform: "translate(50%, -50%)" }}
-                aria-label="التالي"
-              >
-                <HiOutlineArrowNarrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </button>
-            )}
-            {/* Slider Track */}
-            <div ref={containerRef} className="overflow-hidden">
-              <div
-                ref={sliderRef}
-                className="flex gap-3 md:gap-5 cursor-grab active:cursor-grabbing select-none"
-                style={{
-                  transform: `translateX(${currentTranslate}px)`,
-                  transition:
-                    isAnimating && !isDragging
-                      ? "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
-                      : "none",
-                  willChange: "transform",
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchEnd}
-              >
-                {products.map((product, index) => (
+          {/* Right Navigation Button - مع مسافة أكبر */}
+          {currentIndex <= maxIndex && (
+            <button
+              onClick={() => scrollByAmount("right")}
+              dir="rtl"
+              className={`${
+                language === "en"
+                  ? "start-2 md:start-[-30px]"
+                  : "start-2 md:start-[-30px]"
+              } absolute top-1/2 md:top-1/2 -translate-y-1/2 z-20 bg-[#23A6F0] hover:bg-[#23A6F0] shadow-sm hover:shadow-lg rounded-full p-2 transition-all duration-300 hover:scale-110 border border-gray-200`}
+              style={{ transform: "translate(50%, -50%)" }}
+              aria-label="التالي"
+            >
+              <HiOutlineArrowNarrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </button>
+          )}
+          {/* Slider Track */}
+          <div ref={containerRef} className="overflow-hidden">
+            <div
+              ref={sliderRef}
+              className="flex gap-3 md:gap-5 cursor-grab active:cursor-grabbing select-none"
+              style={{
+                transform: `translateX(${currentTranslate}px)`,
+                transition:
+                  isAnimating && !isDragging
+                    ? "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                    : "none",
+                willChange: "transform",
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
+            >
+              {products.map((product, index) => (
+                <div
+                  key={product.id}
+                  className="flex-shrink-0"
+                  style={{
+                    width:
+                      itemsPerView >= 4
+                        ? "calc((100% / 4.5) - 10px)"
+                        : itemsPerView >= 3
+                          ? "calc((100% / 3) - 10px)"
+                          : "calc((100% / 2) - 8px)",
+                    minWidth:
+                      itemsPerView >= 4
+                        ? "calc((100% / 4.5) - 10px)"
+                        : itemsPerView >= 3
+                          ? "calc((100% / 3) - 10px)"
+                          : "calc((100% / 2) - 8px)",
+                  }}
+                >
                   <div
-                    key={product.id}
-                    className="flex-shrink-0"
+                    className="animate-in fade-in zoom-in duration-500 flex justify-center w-full"
                     style={{
-                      width:
-                        itemsPerView >= 4
-                          ? "calc((100% / 4.5) - 10px)"
-                          : itemsPerView >= 3
-                            ? "calc((100% / 3) - 10px)"
-                            : "calc((100% / 2) - 8px)",
-                      minWidth:
-                        itemsPerView >= 4
-                          ? "calc((100% / 4.5) - 10px)"
-                          : itemsPerView >= 3
-                            ? "calc((100% / 3) - 10px)"
-                            : "calc((100% / 2) - 8px)",
+                      animationFillMode: "both",
+                      animationDelay: `${index * 50}ms`,
                     }}
                   >
-                    <div
-                      className="animate-in fade-in zoom-in duration-500 flex justify-center w-full"
-                      style={{
-                        animationFillMode: "both",
-                        animationDelay: `${index * 50}ms`,
-                      }}
-                    >
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        price={product.price}
-                        image={product.image}
-                        hoverImage={product.hoverImage}
-                        href={product.href}
-                        originalPrice={product.originalPrice}
-                        discount={product.discount}
-                        colors={product.colors}
-                        rating={product.rating}
-                        reviewsCount={product.reviewsCount}
-                        isBestSeller={product.isBestSeller}
-                        hasVariants={product.hasVariants || false}
-                        variants={product.variants || []}
-                        variantId={product.variantId || null}
-                        currency={product.currency}
-                      />
-                    </div>
+                    <ProductCard
+                      id={product.id}
+                      name={product.name}
+                      price={product.price}
+                      image={product.image}
+                      hoverImage={product.hoverImage}
+                      href={product.href}
+                      originalPrice={product.originalPrice}
+                      discount={product.discount}
+                      colors={product.colors}
+                      rating={product.rating}
+                      reviewsCount={product.reviewsCount}
+                      isBestSeller={product.isBestSeller}
+                      hasVariants={product.hasVariants || false}
+                      variants={product.variants || []}
+                      variantId={product.variantId || null}
+                      currency={product.currency}
+                      quantity={product.quantity}
+                    />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      </div>
 
-        <style jsx>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: scale(0.95);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1);
-            }
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
           }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
 
-          .animate-in {
-            animation: fadeIn 0.5s ease-out forwards;
-          }
+        .animate-in {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
 
-          .cursor-grabbing {
-            cursor: grabbing;
-          }
+        .cursor-grabbing {
+          cursor: grabbing;
+        }
 
-          .select-none {
-            user-select: none;
-            -webkit-user-select: none;
-          }
-        `}</style>
-      </section>
-    )
+        .select-none {
+          user-select: none;
+          -webkit-user-select: none;
+        }
+      `}</style>
+    </section>
   );
 }

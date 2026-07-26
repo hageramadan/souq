@@ -1,3 +1,5 @@
+// components/home/CategoriesSection.tsx
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -15,17 +17,27 @@ interface Category {
 }
 
 interface CategoriesSectionProps {
-  categories?: Category[]; // ✅ جعلها اختيارية
+  categories?: Category[];
+  onLoad?: () => void;
 }
 
-export function CategoriesSection({ categories: initialCategories }: CategoriesSectionProps) {
+export function CategoriesSection({ categories: initialCategories, onLoad }: CategoriesSectionProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [loading, setLoading] = useState(!initialCategories || initialCategories.length === 0);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollStart, setScrollStart] = useState(0);
+
+  // ✅ استدعاء onLoad بعد تحميل البيانات
+  useEffect(() => {
+    if (!loading && !isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
+  }, [loading, isDataLoaded, onLoad]);
 
   // ✅ جلب الفئات من العميل إذا لم تكن موجودة
   useEffect(() => {
@@ -51,6 +63,8 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
       };
       
       fetchCategories();
+    } else {
+      setLoading(false);
     }
   }, [initialCategories]);
 
@@ -99,8 +113,6 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
     sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
-
-
   // عرض حالة التحميل
   if (loading) {
     return (
@@ -108,11 +120,6 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
         <div className="container-custom px-2 lg:px-6">
           <div className="flex justify-center items-center min-h-[150px]">
             <div className="flex flex-col items-center gap-4">
-              {/* <div className="relative">
-                <div className="w-10 h-10 border-4 border-gray-200 rounded-full"></div>
-                <div className="absolute top-0 end-0 w-10 h-10 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
-              </div> */}
-              {/* <p className="text-gray-500 text-sm">جاري تحميل الفئات...</p> */}
             </div>
           </div>
         </div>
@@ -121,11 +128,14 @@ export function CategoriesSection({ categories: initialCategories }: CategoriesS
   }
 
   if (categories.length === 0) {
+    if (!isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
     return (
       <section className="py-2 md:py-12">
         <div className="container-custom px-4 sm:px-6">
           <div className="text-center text-gray-500">
-           
           </div>
         </div>
       </section>

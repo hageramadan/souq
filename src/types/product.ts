@@ -30,7 +30,7 @@ export interface ProductVariant {
   discount_type: string | null;
   discount_value: number | null;
   price_after_discount: number;
-  quantity: number | null;
+  quantity?: number | null;
   is_active: boolean;
   variant_image: string | null;
   attributes: VariantAttribute[];
@@ -60,6 +60,7 @@ export interface Product {
   variants?: ProductVariant[];
   variantId?: number | null;
   currency?: Currency;
+  quantity?: number | null;
 }
 
 // ✅ دالة استخراج الألوان من جميع الـ variants

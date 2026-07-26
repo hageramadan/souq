@@ -92,7 +92,7 @@ const transformProductData = (apiProduct: ProductData, language: string) => {
     rating: apiProduct.avg_rating || 4.5,
     reviewsCount: apiProduct.total_reviews || 0,
     sku: `SKU-${apiProduct.id}`,
-    availability: apiProduct.is_active && (apiProduct.quantity > 0 || apiProduct.has_variants),
+   availability: apiProduct.is_active && ((apiProduct.quantity ?? 0) > 0 || apiProduct.has_variants),
     variants: apiProduct.variants || [],
     has_variants: apiProduct.has_variants || false,
     video: apiProduct.video || null,

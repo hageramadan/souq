@@ -41,7 +41,8 @@ interface ProductCardProps {
   variantId?: number | null;
   hasVariants?: boolean;
   variants?: Array<{ id: number }>;
-  currency?: Currency; // ✅ إضافة العملة
+  currency?: Currency; 
+  quantity?: number | null; 
 }
 
 // ✅ دالة للحصول على الترجمات حسب اللغة
@@ -55,6 +56,7 @@ const getTranslations = (lang: string) => {
       addToCart: "Add to Cart",
       removeFromFavorites: "Remove from favorites",
       addToFavorites: "Add to favorites",
+      outOfStock: "Out of Stock",
     };
   }
   // Arabic (default)
@@ -66,6 +68,7 @@ const getTranslations = (lang: string) => {
     addToCart: "أضف إلى السلة",
     removeFromFavorites: "إزالة من المفضلة",
     addToFavorites: "إضافة إلى المفضلة",
+    outOfStock: "نفذ من المخزون",
   };
 };
 
@@ -86,6 +89,7 @@ export function ProductCard({
   hasVariants = false,
   variants = [],
   currency, // ✅ استقبال العملة
+  quantity, // ✅ استقبال الكمية
 }: ProductCardProps) {
   const { language } = useLanguage();
   const t = getTranslations(language);
@@ -102,6 +106,12 @@ export function ProductCard({
   
   const isProductFavorite = isFavorite(id);
   const [localFavorite, setLocalFavorite] = useState(isProductFavorite);
+
+  // ✅ التحقق من توفر المنتج
+  const isProductAvailable = (): boolean => {
+    // السعر أكبر من صفر والكمية أكبر من صفر وليست null
+    return price > 0 && quantity !== null && quantity !== undefined && quantity > 0;
+  };
 
   useEffect(() => {
     setLocalFavorite(isProductFavorite);
@@ -149,6 +159,15 @@ export function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     
+    // ✅ التحقق من توفر المنتج قبل الإضافة
+    if (!isProductAvailable()) {
+      toast.error(t.outOfStock, {
+        duration: 2000,
+        position: "bottom-right",
+      });
+      return;
+    }
+    
     if (isAddingToCart || cartLoading) return;
     
     const productId = parseInt(id);
@@ -183,7 +202,7 @@ export function ProductCard({
     } finally {
       setIsAddingToCart(false);
     }
-  }, [id, name, variantId, hasVariants, variants, isAddingToCart, cartLoading, addItem]);
+  }, [id, name, variantId, hasVariants, variants, isAddingToCart, cartLoading, addItem, t]);
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -203,6 +222,9 @@ export function ProductCard({
     setIsHovered(false);
     setCurrentImage(image);
   };
+
+  // ✅ تحديد ما إذا كان المنتج متوفراً
+  const available = isProductAvailable();
 
   return (
     <div
@@ -258,6 +280,15 @@ export function ProductCard({
             </div>
           )}
 
+          {/* ✅ Out of Stock Overlay */}
+          {/* {!available && (
+            <div className="absolute inset-0 bg-black/50 rounded-[8px] flex items-center justify-center z-20">
+              <span className="text-white font-bold text-sm md:text-base px-3 py-1.5 bg-red-600 rounded-lg">
+                {t.outOfStock}
+              </span>
+            </div>
+          )} */}
+
           <Image
             src={currentImage}
             alt={name}
@@ -281,7 +312,7 @@ export function ProductCard({
           )}
 
           {/* Icons Overlay - appears at bottom center on hover */}
-          {isHovered && (
+          {isHovered && available && (
             <div className="absolute bottom-3 end-0 start-0 justify-center -translate-y-1/2 flex gap-2 animate-in fade-in zoom-in-95 pointer-events-auto">
               {/* Eye Icon - Quick View */}
               <button
@@ -333,26 +364,29 @@ export function ProductCard({
             {name}
           </h3>
 
-          {/* Price */}
-          {price>0 && (
-             <div className="flex items-center gap-1 text-sm">
-            {originalPrice && originalPrice > price ? (
-              <>
-                <span className="text-xs md:text-sm line-through text-gray-400 relative">
-                  {originalPrice.toLocaleString()} {currency?.symbol || ''}
-                </span>
+          {/* ✅ Price - عرض السعر أو نفاذ الكمية */}
+          {available ? (
+            <div className="flex items-center gap-1 text-sm">
+              {originalPrice && originalPrice > price ? (
+                <>
+                  <span className="text-xs md:text-sm line-through text-gray-400 relative">
+                    {originalPrice.toLocaleString()} {currency?.symbol || ''}
+                  </span>
+                  <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
+                    {price.toLocaleString()} {currency?.symbol || ''}
+                  </span>
+                </>
+              ) : (
                 <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
                   {price.toLocaleString()} {currency?.symbol || ''}
                 </span>
-              </>
-            ) : (
-              <span className="text-xs md:text-sm font-semibold relative" style={{ color: '#23A6F0' }}>
-                {price.toLocaleString()} {currency?.symbol || ''}
-              </span>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs md:text-sm font-semibold text-red-600">
+              {t.outOfStock}
+            </p>
           )}
-         
         </div>
       </Link>
     </div>

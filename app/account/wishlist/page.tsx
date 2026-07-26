@@ -80,12 +80,12 @@ interface TransformedProduct {
   variants?: Array<{ id: number }>;
   variantId?: number | null;
   currency?: {
-    // ✅ إضافة العملة
     code: string;
     symbol: string;
     name: string;
     rate: number;
   };
+  quantity?: number | null; // ✅ أضف هذا
 }
 
 // ✅ إضافة واجهة Pagination
@@ -139,6 +139,19 @@ export default function WishlistPage() {
         // ✅ استخراج المنتج من الـ favorite
         const product = favorite.product || favorite;
 
+        // ✅ حساب الكمية الإجمالية
+        let totalQuantity: number | null = 0;
+        
+        if (product.has_variants && product.variants && product.variants.length > 0) {
+          // ✅ إذا كان المنتج له فاريانتات، نجمع الكميات من جميع الفاريانتات
+          totalQuantity = product.variants.reduce((sum: number, variant: any) => {
+            return sum + (variant.quantity || 0);
+          }, 0);
+        } else {
+          // ✅ إذا لم يكن له فاريانتات، نستخدم الكمية الأساسية
+          totalQuantity = product.quantity || 0;
+        }
+
         // ✅ تحويل المنتج إلى ProductCard
         const transformed = transformFavoriteToProductCard(favorite);
 
@@ -152,12 +165,12 @@ export default function WishlistPage() {
                 ? product.variants[0].id
                 : null,
             currency: product.currency || {
-              // ✅ إضافة العملة
               code: "EGP",
               symbol: "ج.م",
               name: "Egyptian Pound",
               rate: 1,
             },
+            quantity: totalQuantity, // ✅ أضف الكمية المحسوبة
           });
         }
       } catch (error) {
@@ -319,7 +332,8 @@ export default function WishlistPage() {
                 hasVariants={item.hasVariants || false}
                 variants={item.variants || []}
                 variantId={item.variantId || null}
-                currency={item.currency} // ✅ تمرير العملة
+                currency={item.currency}
+                quantity={item.quantity} // ✅ أضف هذه الخاصية
               />
             </div>
           ))}

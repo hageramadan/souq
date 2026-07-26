@@ -1,3 +1,5 @@
+// components/home/HeroCover.tsx
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -8,6 +10,10 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getSliders } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+interface HeroProps {
+  onLoad?: () => void;
+}
 
 interface Slide {
   id: number;
@@ -20,7 +26,6 @@ interface Slide {
 
 const API_BASE_URL = 'https://admin.souqkaber.com';
 
-// ✅ دالة للحصول على الترجمات حسب اللغة
 const getTranslations = (lang: string) => {
   if (lang === 'en') {
     return {
@@ -28,14 +33,13 @@ const getTranslations = (lang: string) => {
       shopNow: "Shop Now",
     };
   }
-  // Arabic (default)
   return {
     loadingSlides: "جاري تحميل العروض...",
     shopNow: "تسوق الآن",
   };
 };
 
-export function Hero() {
+export const Hero = ({ onLoad }: HeroProps) => {
   const { language } = useLanguage();
   const t = getTranslations(language);
   
@@ -43,6 +47,7 @@ export function Hero() {
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
@@ -50,6 +55,14 @@ export function Hero() {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isSwipingHorizontal, setIsSwipingHorizontal] = useState(false);
+
+  // ✅ استدعاء onLoad مرة واحدة فقط بعد تحميل الداتا
+  useEffect(() => {
+    if (!loading && !isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
+  }, [loading, isDataLoaded, onLoad]);
 
   // ✅ جلب السلايدرز من العميل
   useEffect(() => {
@@ -185,7 +198,6 @@ export function Hero() {
               <div className="w-12 h-12 border-4 border-gray-300 rounded-full"></div>
               <div className="absolute top-0 end-0 w-12 h-12 border-4 border-[#23A6F0] border-t-transparent rounded-full animate-spin"></div>
             </div>
-          
           </div>
         </div>
       </section>
@@ -193,13 +205,23 @@ export function Hero() {
   }
 
   if (slides.length === 0) {
-    return null;
+    if (!isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      onLoad();
+    }
+    return (
+      <section className="relative w-full h-[55vh] lg:h-[70vh] overflow-hidden bg-gray-100">
+        <div className="flex justify-center items-center w-full h-full">
+          <div className="text-center">
+            <p className="text-gray-500 text-lg">لا توجد عروض حالياً</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
-    <div>
-     { slides.length > 0 && (
-       <section className="relative w-full h-[55vh] lg:h-[70vh] overflow-hidden bg-gray-900">
+    <section className="relative w-full h-[55vh] lg:h-[70vh] overflow-hidden bg-gray-900">
       <div 
         ref={containerRef}
         className={`relative w-full h-full overflow-hidden ${
@@ -348,8 +370,5 @@ export function Hero() {
         </div>
       )}
     </section>
-     ) }
-    </div>
-   
   );
 }

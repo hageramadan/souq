@@ -56,6 +56,7 @@ interface TransformedProduct {
   hasVariants?: boolean;
   variants?: ProductVariant[];
   variantId?: number | null;
+  quantity?: number | null; // ✅ أضف هذا
 }
 
 // دالة جلب التوكن
@@ -156,6 +157,19 @@ const transformProductForCard = (product: any): TransformedProduct => {
     colors = extractColorsFromVariants(product.variants);
   }
 
+  // ✅ حساب الكمية الإجمالية
+  let totalQuantity: number | null = 0;
+  
+  if (product.has_variants && product.variants && product.variants.length > 0) {
+    // ✅ إذا كان المنتج له فاريانتات، نجمع الكميات من جميع الفاريانتات
+    totalQuantity = product.variants.reduce((sum: number, variant: any) => {
+      return sum + (variant.quantity || 0);
+    }, 0);
+  } else {
+    // ✅ إذا لم يكن له فاريانتات، نستخدم الكمية الأساسية
+    totalQuantity = product.quantity || 0;
+  }
+
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder-product.jpg";
     if (url.startsWith("/storage")) {
@@ -193,6 +207,7 @@ const transformProductForCard = (product: any): TransformedProduct => {
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
+    quantity: totalQuantity, // ✅ أضف الكمية المحسوبة
   };
 };
 
@@ -473,6 +488,7 @@ function SearchContent() {
                       hasVariants={cardData.hasVariants || false}
                       variants={cardData.variants || []}
                       variantId={cardData.variantId || null}
+                      quantity={cardData.quantity} // ✅ أضف هذه الخاصية
                     />
                   </div>
                 );

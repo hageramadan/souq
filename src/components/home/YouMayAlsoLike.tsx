@@ -73,7 +73,16 @@ const transformProduct = (product: ProductData): Product => {
     variantId = product.variants[0].id;
     colors = extractColorsFromVariants(product.variants as ProductVariant[]);
   }
+ let totalQuantity: number | null = 0;
+  
+  if (product.has_variants && product.variants && product.variants.length > 0) {
+    totalQuantity = product.variants.reduce((sum: number, variant: any) => {
+      return sum + (variant.quantity || 0);
+    }, 0);
+  } else {
 
+    totalQuantity = product.quantity || 0;
+  }
   return {
     id: product.id.toString(),
     name: product.name,
@@ -95,7 +104,8 @@ const transformProduct = (product: ProductData): Product => {
       symbol: "ج.م",
       name: "Egyptian Pound",
       rate: 1
-    }
+    },
+    quantity: totalQuantity, 
   };
 };
 
@@ -599,6 +609,7 @@ export function YouMayAlsoLike() {
                         variants={product.variants || []}
                         variantId={product.variantId || null}
                         currency={product.currency}
+                         quantity={product.quantity}
                       />
                     </div>
                   </div>

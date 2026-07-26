@@ -269,7 +269,7 @@ export interface ProductData {
   };
   has_variants: boolean;
   variants: any;
-  quantity: number;
+  quantity?: number | null;
   images: string[];
   video?: string; 
   currency:Currency

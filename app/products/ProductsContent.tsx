@@ -381,6 +381,19 @@ export default function ProductsContent() {
       colors = extractColorsFromVariants(product.variants as ProductVariant[]);
     }
 
+    // ✅ حساب الكمية الإجمالية
+    let totalQuantity: number | null = 0;
+    
+    if (product.has_variants && product.variants && product.variants.length > 0) {
+      // ✅ إذا كان المنتج له فاريانتات، نجمع الكميات من جميع الفاريانتات
+      totalQuantity = product.variants.reduce((sum: number, variant: any) => {
+        return sum + (variant.quantity || 0);
+      }, 0);
+    } else {
+      // ✅ إذا لم يكن له فاريانتات، نستخدم الكمية الأساسية
+      totalQuantity = product.quantity || 0;
+    }
+
     return {
       id: product.id.toString(),
       name: product.name,
@@ -407,6 +420,7 @@ export default function ProductsContent() {
       isBestSeller: product.is_active,
       hasVariants: product.has_variants || false,
       variants: product.variants || [],
+      quantity: totalQuantity, // ✅ أضف الكمية المحسوبة
       // ✅ إضافة العملة
       currency: product.currency || {
         code: "EGP",
@@ -737,6 +751,7 @@ export default function ProductsContent() {
                               : null
                           }
                           currency={cardData.currency}
+                          quantity={cardData.quantity} // ✅ أضف هذه الخاصية
                         />
                       </div>
                     );

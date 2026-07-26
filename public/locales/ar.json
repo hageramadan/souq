@@ -401,7 +401,7 @@
   "checkout": {
     "contactInfo": "معلومات الاتصال",
     "fullName": "الاسم الكامل",
-   
+   "redirectingAuto":"جاري توجيهك لبوابه الدفع",
     "fullNameMinLength": "الاسم الكامل يجب أن يكون على الأقل 3 أحرف",
     "fullNameMaxLength": "الاسم الكامل طويل جداً",
     "fullNamePlaceholder": "أدخل اسمك الكامل",
