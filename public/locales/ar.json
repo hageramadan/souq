@@ -503,7 +503,15 @@
   
   },
    "orders": {
+  
+    "paymentLinkError": "تعذر الحصول على رابط الدفع، يرجى المحاولة مرة أخرى",
+  "paymentPaid": "مدفوع",
+    "paymentPending": "قيد الانتظار",
+    "paymentUnpaid": "غير مدفوع",
     "title": "طلباتي",
+    "paymentStatus": "حالة الدفع",
+    "retryPayment": "محاولة الدفع مجدداً",
+    "preparingPayment": "جاري تجهيز بوابة الدفع...",
     "orderNumber": "رقم الطلب",
     "products": "المنتجات",
     "quantity": "الكمية",

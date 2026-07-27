@@ -1,4 +1,3 @@
-// components/cart/CartSummary.tsx
 "use client";
 
 import Link from "next/link";
@@ -17,6 +16,8 @@ interface CartSummaryProps {
   onApplyPromoCode: (code: string, discount: number) => void;
   onRemovePromoCode: () => void;
   isApplying?: boolean;
+  currencySymbol?: string; // ✅ إضافة العملة
+  currencyCode?: string; // ✅ إضافة كود العملة (اختياري)
 }
 
 export function CartSummary({
@@ -29,8 +30,10 @@ export function CartSummary({
   onApplyPromoCode,
   onRemovePromoCode,
   isApplying = false,
+  currencySymbol = "ج.م", // ✅ قيمة افتراضية
+  currencyCode = "EGP", // ✅ قيمة افتراضية
 }: CartSummaryProps) {
-  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  const { t } = useTranslation();
  
   const isDeliveryFree = deliveryFee === 0;
   
@@ -44,6 +47,7 @@ export function CartSummary({
         <SummaryRow 
           label={t('cartSummary.subtotal')} 
           value={subtotal} 
+          currencySymbol={currencySymbol}
           t={t}
         />
         
@@ -52,6 +56,7 @@ export function CartSummary({
             label={t('cartSummary.discount')} 
             value={-totalDiscount} 
             isDiscount 
+            currencySymbol={currencySymbol}
             t={t}
           />
         )}
@@ -61,13 +66,15 @@ export function CartSummary({
             label={t('cartSummary.promoDiscount')} 
             value={-promoDiscount} 
             isDiscount 
+            currencySymbol={currencySymbol}
             t={t}
           />
         )}
         
         <SummaryRow 
           label={t('cartSummary.deliveryFee')} 
-          value={t('cartSummary.free')} 
+          value={isDeliveryFree ? t('cartSummary.free') : deliveryFee} 
+          currencySymbol={currencySymbol}
           t={t}
         />
 
@@ -77,6 +84,7 @@ export function CartSummary({
           label={t('cartSummary.total')} 
           value={total} 
           isTotal 
+          currencySymbol={currencySymbol}
           t={t}
         />
       </div>
@@ -99,18 +107,20 @@ const SummaryRow = ({
   value, 
   isDiscount = false, 
   isTotal = false,
+  currencySymbol = "ج.م",
   t,
 }: { 
   label: string; 
   value: number | string; 
   isDiscount?: boolean; 
   isTotal?: boolean;
+  currencySymbol?: string;
   t: any;
 }) => {
   const formatValue = (val: number | string) => {
     if (typeof val === "string") return val;
-    if (isDiscount) return `-${t('cartSummary.currency')} ${Math.abs(val).toLocaleString()}`;
-    return `${t('cartSummary.currency')} ${val.toLocaleString()}`;
+    if (isDiscount) return `-${currencySymbol} ${Math.abs(val).toLocaleString()}`;
+    return `${currencySymbol} ${val.toLocaleString()}`;
   };
 
   const getValueClassName = () => {

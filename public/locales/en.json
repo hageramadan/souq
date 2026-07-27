@@ -593,7 +593,14 @@
     "createAccountDescription": "An account will be created using your data (email, phone number, name)"
   },
   "orders": {
+     "paymentPaid": "Paid",
+    "paymentPending": "Pending",
+    "paymentUnpaid": "Unpaid",
+   
     "title": "My Orders",
+     "paymentStatus": "Payment Status",
+    "retryPayment": "Retry Payment",
+    "preparingPayment": "Preparing payment gateway...",
     "orderNumber": "Order Number",
     "products": "Products",
     "quantity": "Quantity",

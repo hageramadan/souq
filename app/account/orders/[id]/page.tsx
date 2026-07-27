@@ -9,7 +9,8 @@ import {
   Clock,
   PackageCheck,
   XCircle,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { GrMoney } from "react-icons/gr";
 import Image from "next/image";
@@ -18,8 +19,8 @@ import OrderTracker, { type OrderStatus } from "@/components/OrderTracker";
 import { IoCopyOutline } from "react-icons/io5";
 import { FaLocationDot } from "react-icons/fa6";
 import toast from "react-hot-toast";
-import { useTranslation } from "@/hooks/useTranslation";
 import { getHeaders } from "@/services/api";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ========== تعريف الأنواع ==========
 interface OrderItem {
@@ -113,7 +114,7 @@ interface OrderDetails {
   additional_data?: AdditionalData | null;
   items: OrderItem[];
   created_at: string;
-  currency?: Currency; // ✅ إضافة العملة
+  currency?: Currency;
 }
 
 // ========== إعدادات API ==========
@@ -126,13 +127,11 @@ const getToken = (): string | null => {
   return null;
 };
 
-
-
 // صورة ثابتة للمنتجات التي لا تحتوي على صورة
-const PLACEHOLDER_IMAGE = "/images/placeholder-product.jpg";
+const PLACEHOLDER_IMAGE = "/images/placeholder-product.png";
 
 // ========== دالة جلب تفاصيل الطلب ==========
-const fetchOrderDetails = async (orderId: string, t: any): Promise<OrderDetails | null> => {
+const fetchOrderDetails = async (orderId: string, locale: string = "ar-EG"): Promise<OrderDetails | null> => {
   try {
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: 'GET',
@@ -149,15 +148,15 @@ const fetchOrderDetails = async (orderId: string, t: any): Promise<OrderDetails 
     
     const data = await response.json();
     
-    if (data.result === true && data.data.order) {
-      return transformOrderDetails(data.data.order, t);
+    if (data.result === true || data.data || data.data.order) {
+      return transformOrderDetails(data.data.order, locale);
     }
     return null;
   } catch (error) {
     console.error("❌ Error fetching order details:", error);
     
     if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-      toast.error(t('orders.invalidSession'), {
+      toast.error("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
         duration: 3000,
         position: "top-center",
       });
@@ -167,13 +166,13 @@ const fetchOrderDetails = async (orderId: string, t: any): Promise<OrderDetails 
       return null;
     }
     
-    toast.error(t('orders.fetchError'));
+    toast.error("حدث خطأ في جلب تفاصيل الطلب");
     return null;
   }
 };
 
 // ========== دالة إلغاء الطلب ==========
-const cancelOrder = async (orderId: number, t: any): Promise<boolean> => {
+const cancelOrder = async (orderId: number): Promise<boolean> => {
   try {
     const response = await fetch(`${API_URL}/orders/update/${orderId}`, {
       method: 'POST',
@@ -189,7 +188,7 @@ const cancelOrder = async (orderId: number, t: any): Promise<boolean> => {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
       }
-      toast.error(t('orders.invalidSession'), {
+      toast.error("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
         duration: 3000,
         position: "top-center",
       });
@@ -202,14 +201,14 @@ const cancelOrder = async (orderId: number, t: any): Promise<boolean> => {
     const data = await response.json();
     
     if (data.result === true && data.errNum === 200) {
-      toast.success(t('orders.orderCancelled'), {
+      toast.success("تم إلغاء الطلب بنجاح", {
         duration: 4000,
         position: "top-center",
         icon: "",
       });
       return true;
     } else {
-      toast.error(data.message || t('orders.cancelError'), {
+      toast.error(data.message || "حدث خطأ أثناء إلغاء الطلب", {
         duration: 4000,
         position: "top-center",
       });
@@ -217,7 +216,7 @@ const cancelOrder = async (orderId: number, t: any): Promise<boolean> => {
     }
   } catch (error) {
     console.error("❌ Error cancelling order:", error);
-    toast.error(t('orders.serverError'), {
+    toast.error("حدث خطأ في الاتصال بالخادم", {
       duration: 4000,
       position: "top-center",
     });
@@ -240,13 +239,14 @@ const mapStatusToEnglish = (statusLabel: string): OrderStatus => {
 };
 
 // ========== تحويل طريقة الدفع ==========
-const mapPaymentMethod = (method: string, t: any): string => {
+const mapPaymentMethod = (method: string): string => {
   const methodMap: Record<string, string> = {
-    "كاش": t('orders.cashOnDelivery'),
-    "أونلاين": t('orders.online'),
-    "card": t('orders.creditCard'),
-    "mada": t('orders.mada'),
-    "wallet": t('orders.wallet'),
+    "كاش": "الدفع عند الاستلام",
+    "أونلاين": "أونلاين",
+    "card": "بطاقة ائتمان",
+    "بطاقة": "بطاقة ائتمان",
+    "mada": "مدى",
+    "wallet": "محفظة",
   };
   return methodMap[method] || method;
 };
@@ -261,15 +261,17 @@ const mapDeliveryMethod = (method: string): "pickup" | "delivery" => {
   return methodMap[method] || "pickup";
 };
 
-// ========== تحويل تاريخ الطلب ==========
-const formatDate = (dateString: string, t: any): string => {
-  const date = new Date(dateString);
-  const locale = t('common.lang') === 'en' ? 'en-US' : 'ar-EG';
-  return date.toLocaleDateString(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+// ========== تنسيق التاريخ ==========
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch {
+    return dateString;
+  }
 };
 
 // ========== تنظيف رابط الصورة ==========
@@ -282,14 +284,14 @@ const cleanImageUrl = (url: string): string => {
 };
 
 // ========== الحصول على اسم المستخدم ==========
-const getUserName = (order: any, t: any): string => {
+const getUserName = (order: any): string => {
   if (order.address?.user?.name) {
     return order.address.user.name;
   }
   if (order.additional_data?.name) {
     return order.additional_data.name;
   }
-  return t('orders.unavailable');
+  return "غير متوفر";
 };
 
 // ========== دوال استخراج الخصائص ==========
@@ -298,7 +300,7 @@ const getUserName = (order: any, t: any): string => {
 const getMemory = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const memoryAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "الذاكرة" || attr.attribute_type.name === "RAM" || attr.attribute_type.name === "ram"
+    (attr) => attr.attribute_type.name === "الذاكرة"
   );
   return memoryAttr?.value || null;
 };
@@ -307,9 +309,7 @@ const getMemory = (item: OrderItem): string | null => {
 const getStorage = (item: OrderItem): string | null => {
   if (!item.variant?.attributes) return null;
   const storageAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "هارد ديسك" || 
-      attr.attribute_type.name === "Hard disk" ||
-      attr.attribute_type.name === "hard disk"
+    (attr) => attr.attribute_type.name === "هارد ديسك"
   );
   return storageAttr?.value || null;
 };
@@ -318,9 +318,7 @@ const getStorage = (item: OrderItem): string | null => {
 const getColor = (item: OrderItem): { name: string; hex: string | null } | null => {
   if (!item.variant?.attributes) return null;
   const colorAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "لون" || 
-      attr.attribute_type.name === "color" ||
-      attr.attribute_type.name === "Color"
+    (attr) => attr.attribute_type.name === "لون"
   );
   if (!colorAttr) return null;
   
@@ -331,17 +329,17 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
 };
 
 // ========== تحويل بيانات الطلب ==========
-const transformOrderDetails = (apiOrder: any, t: any): OrderDetails => {
+const transformOrderDetails = (apiOrder: any, locale: string = "ar-EG"): OrderDetails => {
   const englishStatus = mapStatusToEnglish(apiOrder.status_label);
   
   return {
     id: apiOrder.id,
     orderNumber: apiOrder.order_number || `#${apiOrder.id}`,
-    date: formatDate(apiOrder.created_at, t),
+    date: formatDate(apiOrder.created_at),
     status: englishStatus,
     status_label: apiOrder.status_label,
     return_status_label: apiOrder.return_status_label || null,
-    payment_method: mapPaymentMethod(apiOrder.payment_method, t),
+    payment_method: mapPaymentMethod(apiOrder.payment_method),
     payment_status: apiOrder.payment_status,
     delivery_method: mapDeliveryMethod(apiOrder.delivery_method),
     subtotal: apiOrder.subtotal,
@@ -356,7 +354,7 @@ const transformOrderDetails = (apiOrder: any, t: any): OrderDetails => {
     additional_data: apiOrder.additional_data,
     items: apiOrder.items || [],
     created_at: apiOrder.created_at,
-    currency: apiOrder.currency || { // ✅ إضافة العملة
+    currency: apiOrder.currency || {
       code: "EGP",
       symbol: "ج.م",
       rate: 1
@@ -375,8 +373,73 @@ const getStatusConfig = (t: any) => ({
   cancelled: { label: t('orders.statusCancelled'), color: "status-cancelled", icon: XCircle },
 });
 
+// ✅ دالة مساعدة للتحقق من حالة الدفع (تدعم العربية والإنجليزية)
+const isPaymentPaid = (paymentStatus: string): boolean => {
+  const paidStatuses = ["مدفوع", "Paid", "paid", "PAID"];
+  return paidStatuses.includes(paymentStatus);
+};
+
+const isPaymentPending = (paymentStatus: string): boolean => {
+  const pendingStatuses = ["قيد الانتظار", "Pending", "pending", "PENDING"];
+  return pendingStatuses.includes(paymentStatus);
+};
+
+const isPaymentUnpaid = (paymentStatus: string): boolean => {
+  const unpaidStatuses = ["غير مدفوع", "Unpaid", "unpaid", "UNPAID", "Not Paid", "not paid"];
+  return unpaidStatuses.includes(paymentStatus);
+};
+
+// ✅ دالة للحصول على نص الحالة المترجم
+const getPaymentStatusLabel = (paymentStatus: string, t: any): string => {
+  if (isPaymentPaid(paymentStatus)) {
+    return t('orders.paymentPaid') || "مدفوع";
+  }
+  if (isPaymentPending(paymentStatus)) {
+    return t('orders.paymentPending') || "قيد الانتظار";
+  }
+  if (isPaymentUnpaid(paymentStatus)) {
+    return t('orders.paymentUnpaid') || "غير مدفوع";
+  }
+  return paymentStatus;
+};
+
+// ✅ دالة للحصول على لون حالة الدفع
+const getPaymentStatusColor = (paymentStatus: string): string => {
+  if (isPaymentPaid(paymentStatus)) {
+    return "text-green-700";
+  }
+  if (isPaymentPending(paymentStatus)) {
+    return "text-yellow-700";
+  }
+  if (isPaymentUnpaid(paymentStatus)) {
+    return "text-red-700";
+  }
+  return "text-gray-700";
+};
+
+// ✅ دالة للحصول على لون خلفية حالة الدفع
+const getPaymentStatusBgColor = (paymentStatus: string): string => {
+  if (isPaymentPaid(paymentStatus)) {
+    return "bg-green-50";
+  }
+  if (isPaymentPending(paymentStatus)) {
+    return "bg-yellow-50";
+  }
+  if (isPaymentUnpaid(paymentStatus)) {
+    return "bg-red-50";
+  }
+  return "bg-gray-50";
+};
+
+// ✅ دالة للتحقق مما إذا كان يجب إظهار زر إعادة الدفع
+const shouldShowRetryButton = (paymentStatus: string, paymentMethod: string): boolean => {
+  const isUnpaid = isPaymentUnpaid(paymentStatus);
+  const isCardPayment = paymentMethod === "بطاقة ائتمان" || paymentMethod === "بطاقة" || paymentMethod === "card" || paymentMethod === "Card";
+  return isUnpaid && isCardPayment;
+};
+
 export default function OrderDetailsPage() {
-  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const orderId = params.id as string;
@@ -386,11 +449,12 @@ export default function OrderDetailsPage() {
   const [orderNotes, setOrderNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRetryingPayment, setIsRetryingPayment] = useState(false);
   
-  // ✅ State for Cancel Modal
+  // State for Cancel Modal
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // ✅ الحصول على إعدادات الحالة مع الترجمة
+  // تكوين الحالات مع الترجمة
   const statusConfig = getStatusConfig(t);
 
   // ✅ الحصول على رمز العملة
@@ -401,7 +465,7 @@ export default function OrderDetailsPage() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      toast.error(t('orders.loginRequired'), {
+      toast.error(t('orders.pleaseLogin'), {
         duration: 3000,
         position: "top-center",
       });
@@ -411,7 +475,8 @@ export default function OrderDetailsPage() {
     
     const loadOrderDetails = async () => {
       setLoading(true);
-      const data = await fetchOrderDetails(orderId, t);
+      const locale = t('locale') || 'ar-EG';
+      const data = await fetchOrderDetails(orderId, locale);
       setOrder(data);
       if (data?.notes) {
         setOrderNotes(data.notes);
@@ -428,7 +493,7 @@ export default function OrderDetailsPage() {
     if (order) {
       navigator.clipboard.writeText(order.orderNumber);
       setCopied(true);
-      toast.success(t('orders.copied'), {
+      toast.success(t('orders.copySuccess'), {
         duration: 2000,
         position: "top-center",
       });
@@ -440,7 +505,7 @@ export default function OrderDetailsPage() {
     router.push(`/account/orders/${orderId}/return`);
   };
 
-  // ✅ فتح وإغلاق مودال الإلغاء
+  // فتح وإغلاق مودال الإلغاء
   const openCancelModal = () => {
     setShowCancelModal(true);
   };
@@ -449,14 +514,14 @@ export default function OrderDetailsPage() {
     setShowCancelModal(false);
   };
 
-  // ✅ دالة تأكيد إلغاء الطلب
+  // دالة تأكيد إلغاء الطلب
   const confirmCancelOrder = async () => {
     if (!order) return;
     
     setIsCancelling(true);
     closeCancelModal();
     
-    const success = await cancelOrder(order.id, t);
+    const success = await cancelOrder(order.id);
     
     if (success) {
       setOrder({
@@ -473,12 +538,69 @@ export default function OrderDetailsPage() {
     setIsCancelling(false);
   };
 
+  // ✅ دالة إعادة محاولة الدفع - باستخدام الـ endpoint الجديد /repay
+  const handleRetryPayment = async () => {
+    if (!order) return;
+    
+    try {
+      setIsRetryingPayment(true);
+      
+      // إظهار رسالة تحميل
+      const toastId = toast.loading(t('orders.preparingPayment') || "جاري تجهيز بوابة الدفع...", {
+        position: "top-center",
+      });
+
+      // ✅ استخدام الـ endpoint الجديد: /repay
+      const response = await fetch(`${API_URL}/orders/${orderId}/repay`, {
+        method: "POST",
+        headers: getHeaders(),
+      });
+
+      // التحقق من صلاحية التوكن
+      if (response.status === 401) {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+        toast.error(t('orders.invalidSession') || "جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
+          duration: 3000,
+          position: "top-center",
+        });
+        router.push("/auth/login");
+        return;
+      }
+
+      const data = await response.json();
+
+      // إخفاء رسالة التحميل
+      toast.dismiss(toastId);
+
+      // ✅ التحقق من الـ response حسب الهيكل المحدد
+      if (data.data?.redirect_url) {
+        // ✅ توجيه المستخدم إلى بوابة الدفع
+        window.location.href = data.data.redirect_url;
+        
+        console.log("✅ Payment URL created at:", data.data.payment_url_created_at);
+      } else {
+        toast.error(t('orders.paymentLinkError') || "تعذر الحصول على رابط الدفع، يرجى المحاولة مرة أخرى", {
+          duration: 4000,
+          position: "top-center",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error retrying payment:", error);
+      toast.error(t('orders.serverError') || "حدث خطأ في الاتصال بالخادم", {
+        duration: 4000,
+        position: "top-center",
+      });
+    } finally {
+      setIsRetryingPayment(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto px-4 py-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
-          {/* <p className="text-gray-500 mt-4">{t('orders.loading')}</p> */}
         </div>
       </div>
     );
@@ -490,8 +612,8 @@ export default function OrderDetailsPage() {
         <div className="container mx-auto px-4 py-8 text-center">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">{t('orders.orderNotFound')}</h2>
-          <p className="text-gray-500 mb-4">{t('orders.orderNotFoundMessage')}</p>
-          <Link href="/account/orders" className="inline-block bg-[#23A6F0] text-white px-6 py-2 rounded-[8px] hover:bg-[#35acf1] transition">
+          <p className="text-gray-500 mb-4">{t('orders.orderNotFoundDesc')}</p>
+          <Link href="/account/orders" className="inline-block bg-[#23A6F0] text-white px-6 py-2 rounded-[8px] hover:bg-[#2ECC71] transition">
             {t('orders.backToOrders')}
           </Link>
         </div>
@@ -499,7 +621,7 @@ export default function OrderDetailsPage() {
     );
   }
 
-  // ✅ اختيار الحالة المناسبة للعرض
+  // اختيار الحالة المناسبة للعرض
   const isRefunded = order.return_status_label === "refunded";
   const isReturnPending = order.return_status_label === "pending";
   const isReturnRejected = order.return_status_label === "rejected";
@@ -507,32 +629,36 @@ export default function OrderDetailsPage() {
   // تحديد الحالة المعروضة
   let displayStatus;
   if (isRefunded) {
-    displayStatus = { label: t('orders.refunded'), color: "status-refunded", icon: GrMoney };
+    displayStatus = { label: t('orders.statusRefunded'), color: "status-refunded", icon: GrMoney };
   } else if (isReturnPending) {
-    displayStatus = { label: t('orders.returnPending'), color: "status-return-pending", icon: Clock };
+    displayStatus = { label: t('orders.statusReturnPending'), color: "status-return-pending", icon: Clock };
   } else if (isReturnRejected) {
-    displayStatus = { label: t('orders.returnRejected'), color: "status-return-rejected", icon: XCircle };
+    displayStatus = { label: t('orders.statusReturnRejected'), color: "status-return-rejected", icon: XCircle };
   } else {
     displayStatus = statusConfig[order.status];
   }
 
   const StatusIcon = displayStatus.icon;
-  const userName = getUserName(order, t);
+  const userName = getUserName(order);
   const currencySymbol = getCurrencySymbol();
+
+  // ✅ استخدام الدوال المساعدة للحصول على معلومات حالة الدفع
+  const paymentStatusText = getPaymentStatusLabel(order.payment_status, t);
+  const paymentStatusColor = getPaymentStatusColor(order.payment_status);
+  const paymentStatusBg = getPaymentStatusBgColor(order.payment_status);
+  const showRetryButton = shouldShowRetryButton(order.payment_status, order.payment_method);
 
   return (
     <>
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto mb-3 px-4 md:px-8">
-       
-          
           <h1 className="text-[18px] font-bold mb-2 md:text-xl text-[#180100]">{t('orders.orderDetails')}</h1>
           
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-4 md:mb-5">
-            <Link href="/account" className="hover:text-[#23A6F0] transition">{t('orders.myAccount')}</Link>
+            <Link href="/account" className="hover:text-[#23A6F0] transition">{t('account.myAccount')}</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href="/account/orders" className="hover:text-[#23A6F0] transition">{t('orders.myOrders')}</Link>
+            <Link href="/account/orders" className="hover:text-[#23A6F0] transition">{t('orders.title')}</Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-[#23A6F0] font-medium">{t('orders.orderDetails')}</span>
           </div>
@@ -560,7 +686,6 @@ export default function OrderDetailsPage() {
                         </div>
                       </div>
                     </div>
-                    {/* ✅ عرض الحالة */}
                     <div className={`px-2 sm:px-3 py-1 rounded-full sm:text-sm text-[10px] font-medium flex items-center gap-1 sm:gap-1.5 ${displayStatus.color}`}>
                       <StatusIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       {displayStatus.label}
@@ -610,7 +735,6 @@ export default function OrderDetailsPage() {
                             <div>
                               <p className="font-bold text-gray-800">{item.title}</p>
                               
-                              {/* عرض جميع الخصائص */}
                               <div className="flex flex-wrap gap-2 mt-1.5">
                                 {memory && (
                                   <span className="inline-flex items-center gap-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
@@ -642,11 +766,11 @@ export default function OrderDetailsPage() {
                               
                               <div className="flex gap-1 md:gap-3 mt-2 text-xs text-black font-bold">
                                 <span>{t('orders.quantity')}: <span className="text-gray-500">x{item.quantity}</span></span>
-                                <span>{t('orders.price')}: <span className="text-gray-500"> {item.unit_price.toFixed(2)} {currencySymbol}</span></span>
+                                <span>{t('orders.price')}: <span className="text-gray-500">{item.unit_price.toFixed(2)} {currencySymbol}</span></span>
                               </div>
                             </div>
                             <div className="text-left">
-                              <p className="font-bold text-[#23A6F0]"> {item.total_price.toFixed(2)} {currencySymbol}</p>
+                              <p className="font-bold text-[#23A6F0]">{item.total_price.toFixed(2)} {currencySymbol}</p>
                               {item.discount_amount > 0 && (
                                 <p className="text-xs text-gray-400">{t('orders.discount')}: {item.discount_amount.toFixed(2)} {currencySymbol}</p>
                               )}
@@ -658,7 +782,6 @@ export default function OrderDetailsPage() {
                   })}
                 </div>
                 
-                {/* عرض OrderTracker */}
                 {!isRefunded && !isReturnPending && !isReturnRejected && (
                   <div className="mt-6">
                     <OrderTracker 
@@ -673,11 +796,11 @@ export default function OrderDetailsPage() {
               
               {/* ملخص الطلب */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-base lg:text-xl font-bold text-gray-800 mb-4">{t('orders.orderSummary')}</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">{t('orders.orderSummary')}</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t('orders.subtotal')}</span>
-                    <span className="font-bold text-gray-800"> {order?.subtotal?.toFixed(2)} {currencySymbol}</span>
+                    <span className="font-bold text-gray-800">{order?.subtotal?.toFixed(2)} {currencySymbol}</span>
                   </div>
                   {order.coupon_discount_amount > 0 && (
                     <div className="flex justify-between">
@@ -688,12 +811,12 @@ export default function OrderDetailsPage() {
                   {order.total_discount_amount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">{t('orders.totalDiscount')}</span>
-                      <span className="font-bold text-[#23A6F0]">- {order?.total_discount_amount?.toFixed(2)} {currencySymbol}</span>
+                      <span className="font-bold text-[#23A6F0]">-{order?.total_discount_amount?.toFixed(2)} {currencySymbol}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t('orders.deliveryFee')}</span>
-                    <span className="font-bold text-gray-800"> {order?.shipping_amount?.toFixed(2)} {currencySymbol}</span>
+                    <span className="font-bold text-gray-800">{order?.shipping_amount?.toFixed(2)} {currencySymbol}</span>
                   </div>
                   {order.tax_amount > 0 && (
                     <div className="flex justify-between">
@@ -718,10 +841,10 @@ export default function OrderDetailsPage() {
                     <span className="font-bold">{t('orders.fullName')}</span>
                     <span className="font-medium text-gray-600">{userName}</span>
                   </div>
-                  {order?.additional_data?.phone && (
+                  {order.additional_data?.phone && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="font-bold">{t('orders.phoneNumber')}</span>
-                      <span className="font-medium text-gray-600" dir="ltr">{order?.additional_data?.phone}</span>
+                      <span className="font-bold">{t('orders.phone')}</span>
+                      <span className="font-medium text-gray-600" dir="ltr">{order.additional_data?.phone}</span>
                     </div>
                   )}
                 </div>
@@ -732,7 +855,7 @@ export default function OrderDetailsPage() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-base font-bold mb-4">{t('orders.deliveryMethod')}</h2>
                 <span className="font-medium text-gray-800">
-                  {order.delivery_method === "pickup" ? t('orders.pickup') : t('orders.delivery')}
+                  {order.delivery_method === "pickup" ? t('checkout.pickup') : t('checkout.delivery')}
                 </span>
                 {order.address && (
                   <div className="flex items-center gap-2 border rounded-[8px] px-2 py-3 mt-3">
@@ -746,6 +869,7 @@ export default function OrderDetailsPage() {
               
               <br/>
               
+              {/* طريقة الدفع */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-base font-bold mb-4">{t('orders.paymentMethod')}</h2>
                 <div className="flex items-center gap-3 p-2 border border-gray-300 rounded-[8px]">
@@ -756,6 +880,50 @@ export default function OrderDetailsPage() {
                     <p className="text-gray-500">{order.payment_method}</p>
                   </div>
                 </div>
+              </div>
+              
+              <br/>
+
+              {/* ✅ حالة الدفع - استخدام JSX مباشر بدلاً من متغير Component */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-base font-bold mb-4">{t('orders.paymentStatus') || 'حالة الدفع'}</h2>
+                <div className={`flex items-center gap-3 p-3 border border-gray-300 rounded-[8px] ${paymentStatusBg}`}>
+                  <div className={`w-12 h-12 rounded-[8px] flex items-center justify-center shadow-sm flex-shrink-0 ${paymentStatusBg}`}>
+                    {/* ✅ استخدام الأيقونات مباشرة مع الشرط */}
+                    {isPaymentPaid(order.payment_status) && <CheckCircle className={`w-5 h-5 ${paymentStatusColor}`} />}
+                    {isPaymentPending(order.payment_status) && <Clock className={`w-5 h-5 ${paymentStatusColor}`} />}
+                    {isPaymentUnpaid(order.payment_status) && <XCircle className={`w-5 h-5 ${paymentStatusColor}`} />}
+                    {!isPaymentPaid(order.payment_status) && !isPaymentPending(order.payment_status) && !isPaymentUnpaid(order.payment_status) && (
+                      <XCircle className={`w-5 h-5 ${paymentStatusColor}`} />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-medium text-sm ${paymentStatusColor}`}>
+                      {paymentStatusText}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ✅ زر إعادة محاولة الدفع */}
+                {showRetryButton && (
+                  <button
+                    onClick={handleRetryPayment}
+                    disabled={isRetryingPayment}
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-[#23A6F0] text-white py-2.5 rounded-[8px] font-medium hover:bg-[#2ECC71] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRetryingPayment ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        {t('orders.preparingPayment') || 'جاري التجهيز...'}
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        {t('orders.retryPayment') || 'محاولة الدفع مجدداً'}
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
               
               <br/>
@@ -773,7 +941,6 @@ export default function OrderDetailsPage() {
               </div>
 
               <div className="flex gap-3 mt-3 md:mt-6 mx-2">
-                {/* إخفاء زر الإرجاع إذا كان الطلب مرتجع أو قيد الانتظار أو مرفوض */}
                 {!isRefunded && !isReturnPending && !isReturnRejected && order.status === "delivered" && (
                   <button 
                     onClick={handleReturnClick} 
@@ -817,7 +984,7 @@ export default function OrderDetailsPage() {
         `}</style>
       </div>
 
-      {/* ✅ Modal تأكيد إلغاء الطلب */}
+      {/* Modal تأكيد إلغاء الطلب */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fadeIn">
@@ -850,7 +1017,7 @@ export default function OrderDetailsPage() {
               <button
                 onClick={confirmCancelOrder}
                 disabled={isCancelling}
-                className="flex-1 py-2.5 rounded-[8px] bg-[#23A6F0] text-white font-medium hover:bg-[#2aa9f3] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-[8px] bg-[#23A6F0] text-white font-medium hover:bg-[#2ECC71] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isCancelling ? (
                   <>

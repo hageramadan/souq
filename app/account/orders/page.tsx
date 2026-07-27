@@ -232,24 +232,13 @@ const mapStatusToEnglish = (statusLabel: string): OrderStatus => {
   return statusMap[statusLabel] || "ordered";
 };
 
-const formatDate = (dateString: string, locale: string = "ar"): string => {
+const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
-    
-    let localeString = '';
-    if (locale === 'ar') {
-      localeString = 'ar-EG';
-    } else if (locale === 'en') {
-      localeString = 'en-US';
-    } else {
-      localeString = 'ar-EG';
-    }
-    
-    return date.toLocaleDateString(localeString, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   } catch {
     return dateString;
   }
@@ -365,7 +354,7 @@ const transformOrder = (apiOrder: any): Order => {
   return {
     id: apiOrder.id,
     orderNumber: apiOrder.order_number || `ORD-${apiOrder.id}`,
-    date: apiOrder.created_at ? apiOrder.created_at : "N/A",
+    date: formatDate(apiOrder.created_at),
     status: englishStatus,
     status_label: apiOrder.status_label || "ordered",
     payment_method: apiOrder.payment_method || "N/A",
@@ -660,7 +649,7 @@ export default function OrdersPage() {
                       </div>
 
                       <p className="text-sm sm:text-[18px] text-[#333333]">
-                        {formatDate(order.created_at, currentLocale)}
+                       {order.date}
                       </p>
 
                       <div className="flex gap-2 items-center text-sm sm:text-base">

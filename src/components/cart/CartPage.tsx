@@ -1,4 +1,3 @@
-// components/cart/CartPage.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -35,15 +34,19 @@ export interface CartItemDisplay {
   quantity: number;
   discount?: number;
   totalPrice: number;
-  currency?:Currency
+  currency?: Currency;
 }
 
 export function CartPage() {
-  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
+  const { t } = useTranslation();
   const { cart, isLoading, updateQuantity, removeItem, refetchCart, isGuest } = useCartContext();
   const [cartItems, setCartItems] = useState<CartItemDisplay[]>([]);
 
   const itemsCount = cart?.items?.length || 0;
+
+  // ✅ استخراج العملة من الـ cart
+  const currencySymbol = cart?.currency?.symbol || "ج.م";
+  const currencyCode = cart?.currency?.code || "EGP";
 
   // ✅ استخراج اللون والذاكرة والهارد ديسك من الـ variant (مع تجاهل القيم غير الصالحة)
   const extractAttributes = (variant: any) => {
@@ -62,17 +65,14 @@ export function CartPage() {
         const isValidValue = (val: string) => val && val !== "-" && val.trim() !== "";
         
         if (attrName === "لون" || attrName === "اللون") {
-          // ✅ حفظ قيمة اللون فقط إذا كانت صالحة
           if (isValidValue(attrValue)) {
             color = attrValue;
           } else {
-            // ✅ إذا كانت القيمة "-" ولكن يوجد Hex، استخدم "لون" كاسم
             if (attr.meta?.color) {
               color = t('cartPage.colorLabel');
               colorHex = attr.meta.color;
             }
           }
-          // ✅ حفظ الـ Hex دائماً
           if (attr.meta?.color) {
             colorHex = attr.meta.color;
           }
@@ -161,6 +161,7 @@ export function CartPage() {
           quantity: item.quantity,
           discount: item.discount_amount || undefined,
           totalPrice: item.total_price,
+          currency: cart.currency, // ✅ إضافة العملة لكل منتج
         };
       });
       
@@ -168,7 +169,7 @@ export function CartPage() {
     } else {
       setCartItems([]);
     }
-  }, [cart, t]); // ✅ إضافة t كـ dependency
+  }, [cart, t]);
 
   const subtotal = cart?.subtotal || 0;
   const totalDiscount = cart?.discount_amount || 0;
@@ -242,6 +243,8 @@ export function CartPage() {
               total={total}
               onApplyPromoCode={applyPromoCode}
               onRemovePromoCode={removePromoCode}
+              currencySymbol={currencySymbol} // ✅ تمرير رمز العملة
+              currencyCode={currencyCode} // ✅ تمرير كود العملة (اختياري)
             />
           </div>
         </div>
