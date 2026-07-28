@@ -112,10 +112,10 @@ export default function CheckoutSuccessContent() {
         if (foundOrder) {
           setOrderId(foundOrder.id);
           
-          // toast.success(t('checkout.success.paymentSuccess'), {
-          //   duration: 3000,
-          //   position: 'top-center',
-          // });
+          toast.success(t('checkout.success.paymentSuccess'), {
+            duration: 3000,
+            position: 'top-center',
+          });
 
           setTimeout(() => {
             router.push(`/account/orders/${foundOrder.id}`);
