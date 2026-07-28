@@ -139,7 +139,7 @@ export default function CheckoutSuccessContent() {
     };
 
     handleSuccess();
-  }, [t]);
+  }, [searchParams, router]);
 
   // ✅ عرض رسالة نجاح مع التحميل
   if (loading) {
