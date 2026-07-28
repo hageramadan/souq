@@ -184,7 +184,7 @@ export default function CheckoutFailedContent() {
             onClick={handleRetry}
             className="w-full bg-[#2D93CA] text-white py-3 rounded-xl font-medium hover:bg-[#1a7fb6] transition flex items-center justify-center gap-2"
           >
-            <ArrowRight className="w-5 h-5" />
+            {/* <ArrowRight className="w-5 h-5" /> */}
             {t('checkout.failed.retryButton')}
           </button>
 
