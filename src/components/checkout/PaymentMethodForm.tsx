@@ -120,7 +120,7 @@ export default function PaymentMethodForm({
           />
           <CreditCard className="w-5 h-5 text-blue-600" />
           <div>
-            <p className="font-medium text-gray-800">بطاقة ائتمان</p>
+            <p className="font-medium text-gray-800">{t('checkout.card')}</p>
           </div>
         </label>
       </div>

@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { getHeaders } from "@/services/api";
+import { useTranslation } from "@/hooks/useTranslation"; // ✅ استيراد hook الترجمة
 
 const API_URL = 'https://dukanah.admin.t-carts.com/api';
 
@@ -16,9 +17,8 @@ const getToken = (): string | null => {
   return null;
 };
 
-
-
 export default function CheckoutSuccessContent() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function CheckoutSuccessContent() {
       const orderNum = searchParams.get('order_number');
       
       if (!orderNum) {
-        setError('رقم الطلب غير موجود');
+        setError(t('checkout.success.errors.orderNumberMissing'));
         setLoading(false);
         return;
       }
@@ -112,7 +112,7 @@ export default function CheckoutSuccessContent() {
         if (foundOrder) {
           setOrderId(foundOrder.id);
           
-          toast.success('🎉 تم الدفع بنجاح!', {
+          toast.success(t('checkout.success.paymentSuccess'), {
             duration: 3000,
             position: 'top-center',
           });
@@ -122,7 +122,7 @@ export default function CheckoutSuccessContent() {
           }, 2000);
         } else {
           // ✅ إذا لم نجد الطلب، نذهب إلى قائمة الطلبات
-          toast.success('🎉 تم الدفع بنجاح! جاري التوجيه إلى طلباتك', {
+          toast.success(t('checkout.success.redirectingToOrders'), {
             duration: 3000,
             position: 'top-center',
           });
@@ -133,25 +133,25 @@ export default function CheckoutSuccessContent() {
         }
       } catch (error) {
         console.error('❌ Error processing payment:', error);
-        setError('حدث خطأ في معالجة الدفع');
+        setError(t('checkout.success.errors.processingError'));
         setLoading(false);
       }
     };
 
     handleSuccess();
-  }, [searchParams, router]);
+  }, [searchParams, router, t]);
 
   // ✅ عرض رسالة نجاح مع التحميل
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center px-4">
         <div className="text-center">
-          <Loader2 className="w-16 h-16 text-[#EC221F] animate-spin mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">جاري تأكيد الدفع...</h2>
-          <p className="text-gray-500">يرجى الانتظار لحظة</p>
+          <Loader2 className="w-16 h-16 text-[#2D93CA] animate-spin mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('checkout.success.confirmingPayment')}</h2>
+          <p className="text-gray-500">{t('checkout.success.pleaseWait')}</p>
           {orderNumber && (
             <p className="text-gray-400 text-sm mt-4">
-              رقم الطلب: <span className="font-medium">{orderNumber}</span>
+              {t('checkout.success.orderNumber')}: <span className="font-medium">{orderNumber}</span>
             </p>
           )}
         </div>
@@ -167,13 +167,13 @@ export default function CheckoutSuccessContent() {
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">✅ تم الدفع بنجاح!</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('checkout.success.paymentSuccessTitle')}</h2>
           <p className="text-gray-500 mb-2">
-            رقم الطلب: <span className="font-bold text-[#EC221F]">{orderNumber}</span>
+            {t('checkout.success.orderNumber')}: <span className="font-bold text-[#2D93CA]">{orderNumber}</span>
           </p>
-          <p className="text-gray-400 text-sm mb-6">جاري تحويلك إلى صفحة تفاصيل الطلب...</p>
+          <p className="text-gray-400 text-sm mb-6">{t('checkout.success.redirectingToOrderDetails')}</p>
           <div className="flex justify-center">
-            <div className="w-8 h-8 border-2 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-2 border-[#2D93CA] border-t-transparent rounded-full animate-spin"></div>
           </div>
         </div>
       </div>
@@ -188,21 +188,21 @@ export default function CheckoutSuccessContent() {
           <XCircle className="w-10 h-10 text-yellow-500" />
         </div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          {error || 'تم الدفع ولكن لم نتمكن من العثور على الطلب'}
+          {error || t('checkout.success.errors.orderNotFound')}
         </h2>
         {orderNumber && (
           <p className="text-gray-500 mb-2">
-            رقم الطلب: <span className="font-medium">{orderNumber}</span>
+            {t('checkout.success.orderNumber')}: <span className="font-medium">{orderNumber}</span>
           </p>
         )}
         <p className="text-gray-400 text-sm mb-6">
-          سيتم توجيهك إلى قائمة طلباتك
+          {t('checkout.success.redirectingToOrdersList')}
         </p>
         <button
           onClick={() => router.push('/account/orders')}
-          className="bg-[#EC221F] text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
+          className="bg-[#2D93CA] text-white px-6 py-2 rounded-lg hover:bg-[#349ad1] transition"
         >
-          عرض طلباتي
+          {t('checkout.success.viewOrdersButton')}
         </button>
       </div>
     </div>

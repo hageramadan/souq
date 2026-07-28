@@ -26,6 +26,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ar_EG",
   },
+   icons: {
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/logo.png", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

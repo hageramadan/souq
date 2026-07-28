@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { XCircle, AlertCircle, CreditCard, ArrowRight, Home } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/hooks/useTranslation"; // ✅ استيراد hook الترجمة
 
 export default function CheckoutFailedContent() {
+  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const searchParams = useSearchParams();
   const router = useRouter();
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
@@ -25,35 +27,35 @@ export default function CheckoutFailedContent() {
     });
 
     if (reasonParam === 'payment_declined') {
-      toast.error(' تم رفض عملية الدفع', {
+      toast.error(t('checkout.failed.paymentDeclined'), {
         duration: 4000,
         position: 'top-center',
       });
     } else {
-      toast.error(' فشلت عملية الدفع', {
+      toast.error(t('checkout.failed.paymentFailed'), {
         duration: 4000,
         position: 'top-center',
       });
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const getErrorMessage = (reason: string | null): string => {
     const messages: Record<string, string> = {
-      'payment_declined': 'تم رفض الدفع من قبل البنك أو جهة الإصدار',
-      'insufficient_funds': 'الرصيد غير كافٍ لإتمام العملية',
-      'card_expired': 'البطاقة منتهية الصلاحية',
-      'invalid_card': 'بيانات البطاقة غير صحيحة',
-      'technical_error': 'حدث خطأ تقني أثناء معالجة الدفع',
-      'timeout': 'انتهت مهلة الدفع، يرجى المحاولة مرة أخرى',
-      'cancelled_by_user': 'تم إلغاء الدفع من قبلك',
-      'fraud_suspected': 'تم رفض العملية للاشتباه في احتيال',
-      'authentication_failed': 'فشل التحقق من الهوية',
+      'payment_declined': t('checkout.failed.errors.paymentDeclined'),
+      'insufficient_funds': t('checkout.failed.errors.insufficientFunds'),
+      'card_expired': t('checkout.failed.errors.cardExpired'),
+      'invalid_card': t('checkout.failed.errors.invalidCard'),
+      'technical_error': t('checkout.failed.errors.technicalError'),
+      'timeout': t('checkout.failed.errors.timeout'),
+      'cancelled_by_user': t('checkout.failed.errors.cancelledByUser'),
+      'fraud_suspected': t('checkout.failed.errors.fraudSuspected'),
+      'authentication_failed': t('checkout.failed.errors.authenticationFailed'),
     };
 
     if (reason && messages[reason]) {
       return messages[reason];
     }
-    return 'حدثت مشكلة أثناء معالجة الدفع. يرجى المحاولة مرة أخرى أو استخدام طريقة دفع أخرى.';
+    return t('checkout.failed.errors.default');
   };
 
   const getIcon = (reason: string | null) => {
@@ -76,30 +78,30 @@ export default function CheckoutFailedContent() {
   const getSuggestions = (reason: string | null): string[] => {
     const suggestions: Record<string, string[]> = {
       'payment_declined': [
-        'تأكد من صحة بيانات البطاقة',
-        'جرب استخدام بطاقة أخرى',
-        'تواصل مع البنك للتأكد من تفعيل الدفع الإلكتروني'
+        t('checkout.failed.suggestions.paymentDeclined.0'),
+        t('checkout.failed.suggestions.paymentDeclined.1'),
+        t('checkout.failed.suggestions.paymentDeclined.2')
       ],
       'insufficient_funds': [
-        'تأكد من وجود رصيد كافٍ في الحساب',
-        'جرب استخدام بطاقة أخرى',
-        'تواصل مع البنك لمعرفة الحدود اليومية'
+        t('checkout.failed.suggestions.insufficientFunds.0'),
+        t('checkout.failed.suggestions.insufficientFunds.1'),
+        t('checkout.failed.suggestions.insufficientFunds.2')
       ],
       'card_expired': [
-        'استخدم بطاقة أخرى غير منتهية الصلاحية',
-        'تواصل مع البنك لتجديد البطاقة'
+        t('checkout.failed.suggestions.cardExpired.0'),
+        t('checkout.failed.suggestions.cardExpired.1')
       ],
       'invalid_card': [
-        'تأكد من إدخال رقم البطاقة وتاريخ الانتهاء ورمز CVV بشكل صحيح',
-        'جرب استخدام بطاقة أخرى'
+        t('checkout.failed.suggestions.invalidCard.0'),
+        t('checkout.failed.suggestions.invalidCard.1')
       ],
       'timeout': [
-        'حاول مرة أخرى مع التأكد من استقرار الاتصال بالإنترنت',
-        'تأكد من إتمام عملية الدفع خلال الوقت المحدد'
+        t('checkout.failed.suggestions.timeout.0'),
+        t('checkout.failed.suggestions.timeout.1')
       ],
       'cancelled_by_user': [
-        'يمكنك المحاولة مرة أخرى في أي وقت',
-        'تأكد من رغبتك في إتمام الشراء قبل البدء'
+        t('checkout.failed.suggestions.cancelledByUser.0'),
+        t('checkout.failed.suggestions.cancelledByUser.1')
       ],
     };
 
@@ -107,9 +109,9 @@ export default function CheckoutFailedContent() {
       return suggestions[reason];
     }
     return [
-      'حاول مرة أخرى باستخدام طريقة دفع مختلفة',
-      'تأكد من صحة بيانات الدفع',
-      'تواصل مع خدمة العملاء للمساعدة'
+      t('checkout.failed.suggestions.default.0'),
+      t('checkout.failed.suggestions.default.1'),
+      t('checkout.failed.suggestions.default.2')
     ];
   };
 
@@ -117,20 +119,12 @@ export default function CheckoutFailedContent() {
 
   // ✅ دالة إعادة المحاولة
   const handleRetry = () => {
-    // الخيار 1: العودة إلى الصفحة السابقة (صفحة الدفع)
     router.back();
-    
-    // أو الخيار 2: التوجيه إلى صفحة الدفع إذا كان المسار معروفاً
-    // router.push(`/checkout?order_number=${orderNumber}`);
-    
-    // أو الخيار 3: التوجيه إلى صفحة الطلب مع إعادة المحاولة
-    // router.push(`/account/orders/${orderNumber}?retry=true`);
   };
 
   // ✅ دالة عرض الطلب
   const handleViewOrder = () => {
     if (orderNumber) {
-      // محاولة البحث عن الطلب وتوجيه المستخدم إليه
       router.push(`/account/orders?order=${orderNumber}`);
     } else {
       router.push('/account/orders');
@@ -149,13 +143,15 @@ export default function CheckoutFailedContent() {
 
         {/* العنوان */}
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
-          {reason === 'cancelled_by_user' ? 'تم إلغاء الدفع' : 'فشلت عملية الدفع'}
+          {reason === 'cancelled_by_user' 
+            ? t('checkout.failed.titleCancelled') 
+            : t('checkout.failed.titleFailed')}
         </h1>
 
         {/* رقم الطلب */}
         {orderNumber && (
           <p className="text-center text-gray-500 mb-2">
-            رقم الطلب: <span className="font-bold text-[#EC221F]">{orderNumber}</span>
+            {t('checkout.failed.orderNumber')}: <span className="font-bold text-[#EC221F]">{orderNumber}</span>
           </p>
         )}
 
@@ -170,7 +166,7 @@ export default function CheckoutFailedContent() {
         <div className="mb-8">
           <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-gray-500" />
-            حلول مقترحة:
+            {t('checkout.failed.suggestionsTitle')}:
           </h3>
           <ul className="space-y-2">
             {suggestions.map((suggestion, index) => (
@@ -189,14 +185,14 @@ export default function CheckoutFailedContent() {
             className="w-full bg-[#EC221F] text-white py-3 rounded-xl font-medium hover:bg-red-700 transition flex items-center justify-center gap-2"
           >
             <ArrowRight className="w-5 h-5" />
-            محاولة الدفع مرة أخرى
+            {t('checkout.failed.retryButton')}
           </button>
 
           <button
             onClick={handleViewOrder}
             className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2"
           >
-            عرض طلباتي
+            {t('checkout.failed.viewOrdersButton')}
           </button>
 
           <button
@@ -204,18 +200,8 @@ export default function CheckoutFailedContent() {
             className="w-full text-gray-500 py-2 text-sm hover:text-gray-700 transition flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
-            العودة إلى الرئيسية
+            {t('checkout.failed.homeButton')}
           </button>
-        </div>
-
-        {/* معلومات إضافية للمساعدة */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-center text-gray-400">
-            إذا استمرت المشكلة، يرجى التواصل مع خدمة العملاء على{' '}
-            <a href="mailto:support@dukanah.com" className="text-[#EC221F] hover:underline">
-              support@dukanah.com
-            </a>
-          </p>
         </div>
       </div>
     </div>

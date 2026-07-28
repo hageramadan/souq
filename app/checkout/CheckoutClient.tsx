@@ -1079,11 +1079,11 @@ export default function CheckoutClient() {
               </div>
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">
-              {t('checkout.redirectingToPayment')}
+              {t('checkout.redirectingAuto')}
             </h3>
-            <p className="text-gray-500 text-sm mb-4">
+            {/* <p className="text-gray-500 text-sm mb-4">
               {t('checkout.redirectingToPaymentDesc')}
-            </p>
+            </p> */}
             <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
               <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
               <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse delay-150"></div>

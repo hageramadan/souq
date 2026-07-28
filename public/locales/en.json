@@ -581,7 +581,7 @@
     "phoneLengthError": "Phone number in {country} must be {length} digits (current length: {current})",
     "phoneStartsWithError": "Phone number in {country} must start with ({prefixes})",
     "phoneInvalidForCountry": "Invalid phone number for {country}",
-  
+   "card":"Credit Card",
     "nameRequired": "Name is required",
     "nameMinLength": "Name must be at least 3 characters",
     "correctAccountErrors": "Please correct the errors in account data",
@@ -590,13 +590,87 @@
     "accountCreationError": "An error occurred while creating the account",
     "createAccount": "Create new account",
     "sending": "Sending...",
-    "createAccountDescription": "An account will be created using your data (email, phone number, name)"
+    "createAccountDescription": "An account will be created using your data (email, phone number, name)",
+    "redirectingAuto": "Preparing payment gateway...",
+      "failed": {
+      "paymentDeclined": "Payment declined",
+      "paymentFailed": "Payment failed",
+      "titleCancelled": "Payment Cancelled",
+      "titleFailed": "Payment Failed",
+      "orderNumber": "Order Number",
+      "suggestionsTitle": "Suggested Solutions",
+      "retryButton": "Try Payment Again",
+      "viewOrdersButton": "View My Orders",
+      "homeButton": "Back to Home",
+      "errors": {
+        "paymentDeclined": "Payment was declined by the bank or issuer",
+        "insufficientFunds": "Insufficient balance to complete the transaction",
+        "cardExpired": "Card has expired",
+        "invalidCard": "Invalid card details",
+        "technicalError": "A technical error occurred while processing payment",
+        "timeout": "Payment timed out, please try again",
+        "cancelledByUser": "Payment was cancelled by you",
+        "fraudSuspected": "Transaction declined due to suspected fraud",
+        "authenticationFailed": "Authentication failed",
+        "default": "An issue occurred while processing payment. Please try again or use a different payment method."
+      },
+      "suggestions": {
+        "paymentDeclined": [
+          "Verify your card details are correct",
+          "Try using a different card",
+          "Contact your bank to ensure online payments are enabled"
+        ],
+        "insufficientFunds": [
+          "Ensure you have sufficient balance in your account",
+          "Try using a different card",
+          "Contact your bank to check daily limits"
+        ],
+        "cardExpired": [
+          "Use a different card that is not expired",
+          "Contact your bank to renew your card"
+        ],
+        "invalidCard": [
+          "Ensure card number, expiry date, and CVV are entered correctly",
+          "Try using a different card"
+        ],
+        "timeout": [
+          "Try again with a stable internet connection",
+          "Make sure to complete payment within the time limit"
+        ],
+        "cancelledByUser": [
+          "You can try again at any time",
+          "Make sure you want to complete the purchase before starting"
+        ],
+        "default": [
+          "Try again using a different payment method",
+          "Verify your payment details are correct",
+          "Contact customer service for assistance"
+        ]
+      }
+    },
+     "success": {
+      "paymentSuccess": "🎉 Payment successful!",
+      "redirectingToOrders": "🎉 Payment successful! Redirecting to your orders",
+      "confirmingPayment": "Confirming payment...",
+      "pleaseWait": "Please wait a moment",
+      "orderNumber": "Order Number",
+      "paymentSuccessTitle": "✅ Payment Successful!",
+      "redirectingToOrderDetails": "Redirecting to order details page...",
+      "redirectingToOrdersList": "You will be redirected to your orders list",
+      "viewOrdersButton": "View My Orders",
+      "errors": {
+        "orderNumberMissing": "Order number not found",
+        "processingError": "An error occurred while processing payment",
+        "orderNotFound": "Payment completed but we couldn't find the order"
+      }
+    }
+  
   },
   "orders": {
      "paymentPaid": "Paid",
     "paymentPending": "Pending",
     "paymentUnpaid": "Unpaid",
-   
+  
     "title": "My Orders",
      "paymentStatus": "Payment Status",
     "retryPayment": "Retry Payment",
