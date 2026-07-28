@@ -46,7 +46,7 @@ const { t, isClient } = useTranslation();
         let foundOrder = null;
         
         try {
-          const response = await fetch(`${API_URL}/orders/by-number/${orderNum}`, {
+          const response = await fetch(`${API_URL}/orders/${orderNum}`, {
             method: 'GET',
             headers: getHeaders(),
           });
