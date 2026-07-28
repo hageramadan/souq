@@ -18,6 +18,7 @@ const getToken = (): string | null => {
 };
 
 export default function CheckoutSuccessContent() {
+   console.log("=== CheckoutSuccessContent Render ===");
   const { t } = useTranslation(); // ✅ استخدام hook الترجمة
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -27,9 +28,11 @@ export default function CheckoutSuccessContent() {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   useEffect(() => {
+     console.count("useEffect");
     const handleSuccess = async () => {
+         console.count("handleSuccess");
       const orderNum = searchParams.get('order_number');
-      
+       console.log("orderNum:", orderNum);
       if (!orderNum) {
         setError(t('checkout.success.errors.orderNumberMissing'));
         setLoading(false);
@@ -111,11 +114,11 @@ export default function CheckoutSuccessContent() {
         // ✅ إذا تم العثور على الطلب
         if (foundOrder) {
           setOrderId(foundOrder.id);
-          
-          // toast.success(t('checkout.success.paymentSuccess'), {
-          //   duration: 3000,
-          //   position: 'top-center',
-          // });
+          console.count("toast.success");
+          toast.success(t('checkout.success.paymentSuccess'), {
+            duration: 3000,
+            position: 'top-center',
+          });
 
           setTimeout(() => {
             router.push(`/account/orders/${foundOrder.id}`);
