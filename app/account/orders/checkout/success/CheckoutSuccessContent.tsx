@@ -102,7 +102,7 @@ const { t, isClient } = useTranslation();
 
                 // البحث عن الطلب
                 if (orders.length > 0) {
-                  foundOrder = orders.find((order: any) => order.id === orderNum);
+                  foundOrder = orders.find((order: any) => order.order_number === orderNum);
                 }
               }
             }
