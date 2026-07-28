@@ -82,17 +82,7 @@ export default function ForgotWithPhone() {
 
   return (
     <>
-      {/* <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            fontSize: "14px",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            direction: "rtl",
-          },
-        }}
-      /> */}
+      
 
       <div className=" page-with-padding bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
         <div className="container mx-auto px-4 py-6 md:py-12">
