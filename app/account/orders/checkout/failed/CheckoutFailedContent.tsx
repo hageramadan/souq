@@ -27,15 +27,15 @@ export default function CheckoutFailedContent() {
     });
 
     if (reasonParam === 'payment_declined') {
-      toast.error(t('checkout.failed.paymentDeclined'), {
-        duration: 4000,
-        position: 'top-center',
-      });
+      // toast.error(t('checkout.failed.paymentDeclined'), {
+      //   duration: 4000,
+      //   position: 'top-center',
+      // });
     } else {
-      toast.error(t('checkout.failed.paymentFailed'), {
-        duration: 4000,
-        position: 'top-center',
-      });
+      // toast.error(t('checkout.failed.paymentFailed'), {
+      //   duration: 4000,
+      //   position: 'top-center',
+      // });
     }
   }, [searchParams, t]);
 
@@ -133,7 +133,7 @@ export default function CheckoutFailedContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center px-4 py-8">
-      <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+      <div className="container-custom bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
         {/* الأيقونة */}
         <div className="flex justify-center mb-6">
           <div className={`w-24 h-24 ${getBgColor(reason)} rounded-full flex items-center justify-center`}>
@@ -151,7 +151,7 @@ export default function CheckoutFailedContent() {
         {/* رقم الطلب */}
         {orderNumber && (
           <p className="text-center text-gray-500 mb-2">
-            {t('checkout.failed.orderNumber')}: <span className="font-bold text-[#EC221F]">{orderNumber}</span>
+            {t('checkout.failed.orderNumber')}: <span className="font-bold text-[#2D93CA]">{orderNumber}</span>
           </p>
         )}
 
@@ -171,7 +171,7 @@ export default function CheckoutFailedContent() {
           <ul className="space-y-2">
             {suggestions.map((suggestion, index) => (
               <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                <span className="text-[#EC221F] font-bold text-lg leading-none mt-0.5">•</span>
+                <span className="text-[#2D93CA] font-bold text-lg leading-none mt-0.5">•</span>
                 <span>{suggestion}</span>
               </li>
             ))}
@@ -182,7 +182,7 @@ export default function CheckoutFailedContent() {
         <div className="flex flex-col gap-3">
           <button
             onClick={handleRetry}
-            className="w-full bg-[#EC221F] text-white py-3 rounded-xl font-medium hover:bg-red-700 transition flex items-center justify-center gap-2"
+            className="w-full bg-[#2D93CA] text-white py-3 rounded-xl font-medium hover:bg-red-700 transition flex items-center justify-center gap-2"
           >
             <ArrowRight className="w-5 h-5" />
             {t('checkout.failed.retryButton')}

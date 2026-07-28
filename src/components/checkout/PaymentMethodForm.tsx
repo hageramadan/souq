@@ -116,7 +116,7 @@ export default function PaymentMethodForm({
             value="card"
             checked={paymentMethod === "card"}
             onChange={() => handlePaymentChange("card")}
-            className="w-4 h-4 text-[#EC221F] focus:ring-[#EC221F]"
+            className="w-4 h-4 text-[#2D93CA] focus:ring-[#2D93CA]"
           />
           <CreditCard className="w-5 h-5 text-blue-600" />
           <div>

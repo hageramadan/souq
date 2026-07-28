@@ -380,7 +380,7 @@ export default function WishlistPage() {
                 </p>
                 <p className="text-gray-500 text-sm">
                   {t("wishlist.confirmWarning")}{" "}
-                  <span className="font-bold text-[#EC221F]">
+                  <span className="font-bold text-[#2D93CA]">
                     {items.length}
                   </span>{" "}
                   {items.length > 2
