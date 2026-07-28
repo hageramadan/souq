@@ -7,13 +7,7 @@ export default function ProductsLoading() {
           <div className="flex-1">
             <div className="rounded-[8px] mb-6">
               <div className="flex justify-between items-start sm:items-center gap-4">
-                <div className="flex items-end gap-1">
-                  <span className="text-[#726C6C] text-xl">الرئيسية</span>
-                  <span>/</span>
-                  <h1 className="text-base md:text-xl font-bold text-[#180100]">
-                    جميع المنتجات
-                  </h1>
-                </div>
+               
               </div>
             </div>
 

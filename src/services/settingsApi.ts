@@ -146,3 +146,79 @@ export async function getSocialLinks(): Promise<{
     };
   }
 }
+
+// ============================================
+// ✅ دوال العملة (المضافة حديثاً)
+// ============================================
+
+// ✅ دالة للحصول على رمز العملة
+export async function getCurrencySymbol(): Promise<string> {
+  try {
+    const settings = await getSettings();
+    // التحقق من وجود العملة ورمزها
+    if (settings.setting.currency?.symbol) {
+      return settings.setting.currency.symbol;
+    }
+    // القيمة الافتراضية في حال عدم وجودها
+    return "ج.م";
+  } catch {
+    return "ج.م";
+  }
+}
+
+// ✅ دالة للحصول على كود العملة
+export async function getCurrencyCode(): Promise<string> {
+  try {
+    const settings = await getSettings();
+    if (settings.setting.currency?.code) {
+      return settings.setting.currency.code;
+    }
+    return "EGP";
+  } catch {
+    return "EGP";
+  }
+}
+
+// ✅ دالة للحصول على معلومات العملة كاملة
+export async function getCurrencyInfo(): Promise<{
+  code: string;
+  symbol: string;
+  name: string;
+  rate: number;
+  country_code: string;
+  country_name: string;
+  base: string;
+} | null> {
+  try {
+    const settings = await getSettings();
+    return settings.setting.currency || null;
+  } catch {
+    return null;
+  }
+}
+
+// ✅ دالة للحصول على اسم الدولة من العملة
+export async function getCurrencyCountry(): Promise<string> {
+  try {
+    const settings = await getSettings();
+    if (settings.setting.currency?.country_name) {
+      return settings.setting.currency.country_name;
+    }
+    return "مصر";
+  } catch {
+    return "مصر";
+  }
+}
+
+// ✅ دالة للحصول على سعر الصرف (لو فيه عملات متعددة)
+export async function getCurrencyRate(): Promise<number> {
+  try {
+    const settings = await getSettings();
+    if (settings.setting.currency?.rate) {
+      return settings.setting.currency.rate;
+    }
+    return 1;
+  } catch {
+    return 1;
+  }
+}

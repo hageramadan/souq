@@ -16,7 +16,6 @@ import Link from "next/link";
 import { VscSettings } from "react-icons/vsc";
 import { useTranslation } from "@/hooks/useTranslation";
 import { BsArrowDownUp } from "react-icons/bs";
-// ✅ استيراد الأنواع من الملف المشترك
 import { 
   ProductVariant, 
   extractColorsFromVariants,
@@ -53,6 +52,10 @@ export default function ProductsContent() {
   const searchParams = useSearchParams();
   const { t } = useTranslation();
 
+  // ✅ حالات التحميل
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
+
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,17 +65,11 @@ export default function ProductsContent() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [categoryName, setCategoryName] = useState<string | null>(null);
   const [categorySliders, setCategorySliders] = useState<SliderImage[]>([]);
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(
-    null,
-  );
+  const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(null);
 
   // ✅ حالة البراندات
-  const [allBrands, setAllBrands] = useState<
-    Array<{ id: number; name: string }>
-  >([]);
-  const [categoryBrands, setCategoryBrands] = useState<
-    Array<{ id: number; name: string }>
-  >([]);
+  const [allBrands, setAllBrands] = useState<Array<{ id: number; name: string }>>([]);
+  const [categoryBrands, setCategoryBrands] = useState<Array<{ id: number; name: string }>>([]);
   const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
   const [isCategorySpecificBrands, setIsCategorySpecificBrands] = useState(false);
 
@@ -80,17 +77,12 @@ export default function ProductsContent() {
   const [sortBy, setSortBy] = useState<string>("all");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  // ✅ إضافة ref للمنيو الترتيب
   const sortMenuRef = useRef<HTMLDivElement>(null);
-
   const perPage = 12;
-
-  const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFilterChangeRef = useRef(false);
-  const [loadingSliders, setLoadingSliders] = useState(false);
 
-  // ✅ إغلاق المنيو عند النقر في أي مكان خارج العنصر
+  // ✅ إغلاق المنيو
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
@@ -98,119 +90,106 @@ export default function ProductsContent() {
       }
     };
 
-    // إضافة مستمع الحدث عند فتح المنيو فقط
     if (isSortOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
 
-    // تنظيف المستمع
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isSortOpen]);
 
-  // ✅ تحميل البراندات العامة
+  // ✅ ========== تحميل جميع البيانات بالتوازي ==========
   useEffect(() => {
-    const fetchBrands = async () => {
+    const loadAllData = async () => {
+      setIsPageLoading(true);
+      setIsProductsLoading(true);
+      
       try {
-        const brandsData = await getBrands();
+        const categoriesParam = searchParams.get("categories");
+        
+        // ✅ 1️⃣ جلب البراندات والفئات بالتوازي (أسرع)
+        const [brandsData, categoriesData] = await Promise.all([
+          getBrands(),
+          getCategories(),
+        ]);
+
         setAllBrands(brandsData);
-      } catch (error) {
-        console.error("Error loading brands:", error);
-      }
-    };
-    fetchBrands();
-  }, []);
 
-  // ✅ تحميل بيانات الفئة - التعديل الرئيسي
-  useEffect(() => {
-    const categoriesParam = searchParams.get("categories");
-    
-    const loadCategoryData = async () => {
-      try {
-         setLoadingSliders(true);
-        // إذا لم توجد فئة محددة
-        if (!categoriesParam) {
-          setCategoryBrands(allBrands);
-          setIsCategorySpecificBrands(false);
-          setCategoryName(null);
-          setCategorySliders([]);
-          setCurrentCategoryId(null);
-          return;
-        }
+        // 2️⃣ معالجة بيانات الفئة
+        if (categoriesParam) {
+          const categoryIds = JSON.parse(categoriesParam);
+          if (categoryIds && categoryIds.length > 0) {
+            const categoryId = categoryIds[0];
+            setCurrentCategoryId(categoryId);
+            setFilters((prev) => ({ ...prev, categoryIds: [categoryId] }));
 
-        const categoryIds = JSON.parse(categoriesParam);
-        if (!categoryIds || categoryIds.length === 0) {
-          setCategoryBrands(allBrands);
-          setIsCategorySpecificBrands(false);
-          setCategoryName(null);
-          setCategorySliders([]);
-          setCurrentCategoryId(null);
-          return;
-        }
+            const category = categoriesData.find((c) => c.id === categoryId);
 
-        const categoryId = categoryIds[0];
-        setCurrentCategoryId(categoryId);
-        setFilters((prev) => ({ ...prev, categoryIds: [categoryId] }));
+            if (category) {
+              setCategoryName(category.name);
 
-        // جلب جميع الفئات من الـ API
-        const categories = await getCategories();
-        const category = categories.find((c) => c.id === categoryId);
+              if (category.sliders && category.sliders.length > 0) {
+                setCategorySliders(category.sliders);
+              }
 
-        if (category) {
-          setCategoryName(category.name);
-
-          // جلب السلايدرات
-          if (category.sliders && category.sliders.length > 0) {
-            setCategorySliders(category.sliders);
-          } else {
-            setCategorySliders([]);
-          }
-
-          // ✅ جلب براندات الفئة
-          if (category.brands && category.brands.length > 0) {
-            console.log("✅ Category brands found:", category.brands);
-            setCategoryBrands(category.brands);
-            setIsCategorySpecificBrands(true);
-          } else {
-            console.log("⚠️ No category brands, using all brands");
-            setCategoryBrands(allBrands.length > 0 ? allBrands : []);
-            setIsCategorySpecificBrands(false);
+              if (category.brands && category.brands.length > 0) {
+                setCategoryBrands(category.brands);
+                setIsCategorySpecificBrands(true);
+              } else {
+                setCategoryBrands(brandsData);
+                setIsCategorySpecificBrands(false);
+              }
+            }
           }
         } else {
-          // إذا لم يتم العثور على الفئة
-          setCategoryBrands(allBrands.length > 0 ? allBrands : []);
+          setCategoryBrands(brandsData);
           setIsCategorySpecificBrands(false);
           setCategoryName(null);
           setCategorySliders([]);
+          setCurrentCategoryId(null);
         }
+
+        // ✅ انتهى تحميل السلايدر والبراندات
+        setIsPageLoading(false);
+
+        // 3️⃣ تحميل المنتجات (بعد تحديد الفلاتر)
+        await loadProducts();
+
       } catch (error) {
-        console.error("Error loading category data:", error);
-        setCategoryBrands(allBrands.length > 0 ? allBrands : []);
-        setIsCategorySpecificBrands(false);
+        console.error("Error loading data:", error);
+        setIsPageLoading(false);
+        setIsProductsLoading(false);
       }
     };
 
-    loadCategoryData();
-  }, [searchParams, allBrands]);
+    loadAllData();
 
-  const loadProducts = useCallback(async () => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [searchParams]);
+
+  // ✅ تحميل المنتجات - بدون useCallback لتجنب مشكلة React Compiler
+  const loadProducts = async () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
     abortControllerRef.current = new AbortController();
-
+    setIsProductsLoading(true);
     setLoading(true);
+
     try {
       const filterParams: any = {
         page: currentPage,
         per_page: perPage,
       };
 
-      // إضافة معامل الترتيب
       if (sortBy !== "all") {
         filterParams.sort = sortBy;
       }
@@ -228,14 +207,10 @@ export default function ProductsContent() {
         filterParams.brands = selectedBrands;
       }
       if (filters.minPrice !== undefined && filters.minPrice > 0) {
-        filterParams.price_range = [
-          filters.minPrice,
-          filters.maxPrice || 1000000,
-        ];
+        filterParams.price_range = [filters.minPrice, filters.maxPrice || 1000000];
       }
 
-      const { products: productsData, pagination } =
-        await getAllProducts(filterParams);
+      const { products: productsData, pagination } = await getAllProducts(filterParams);
 
       if (!abortControllerRef.current?.signal.aborted) {
         setProducts(productsData);
@@ -243,7 +218,6 @@ export default function ProductsContent() {
           setLastPage(pagination.last_page || 1);
           setTotalProducts(pagination.total || 0);
         }
-        hasLoadedRef.current = true;
       }
     } catch (error) {
       if (!abortControllerRef.current?.signal.aborted) {
@@ -251,31 +225,34 @@ export default function ProductsContent() {
       }
     } finally {
       if (!abortControllerRef.current?.signal.aborted) {
+        setIsProductsLoading(false);
         setLoading(false);
       }
     }
-  }, [currentPage, filters, selectedBrands, perPage, sortBy]);
+  };
+
+  // ✅ تحميل المنتجات عند تغيير الفلاتر
+  useEffect(() => {
+    if (!isPageLoading) {
+      loadProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPageLoading, currentPage, filters, selectedBrands, sortBy]);
 
   // ✅ معالج اختيار البراند
   const handleBrandToggle = useCallback((brandId: number) => {
     setSelectedBrands((prev) => {
-      if (brandId === -1) {
-        return [];
-      }
-
-      if (prev.includes(brandId)) {
-        return prev.filter((id) => id !== brandId);
-      } else {
-        return [...prev, brandId];
-      }
+      if (brandId === -1) return [];
+      return prev.includes(brandId) 
+        ? prev.filter((id) => id !== brandId)
+        : [...prev, brandId];
     });
     setCurrentPage(1);
   }, []);
 
-  // ترتيب المنتجات على الواجهة الأمامية
+  // ترتيب المنتجات
   const sortedProducts = useMemo(() => {
     if (!products.length) return products;
-
     const sorted = [...products];
 
     switch (sortBy) {
@@ -298,46 +275,17 @@ export default function ProductsContent() {
       default:
         break;
     }
-
     return sorted;
   }, [products, sortBy]);
 
-  useEffect(() => {
-    if (hasLoadedRef.current || isFilterChangeRef.current) {
-      loadProducts();
-    } else {
-      hasLoadedRef.current = true;
-      loadProducts();
-    }
-
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [loadProducts]);
-
   const handleFilterChange = (newFilters: any) => {
     const updatedFilters: FiltersState = {};
-
-    if (newFilters.categoryIds) {
-      updatedFilters.categoryIds = newFilters.categoryIds;
-    }
-    if (newFilters.colors) {
-      updatedFilters.colors = newFilters.colors;
-    }
-    if (newFilters.attribute_values) {
-      updatedFilters.attribute_values = newFilters.attribute_values;
-    }
-    if (newFilters.brands) {
-      setSelectedBrands(newFilters.brands);
-    }
-    if (newFilters.minPrice !== undefined) {
-      updatedFilters.minPrice = newFilters.minPrice;
-    }
-    if (newFilters.maxPrice !== undefined) {
-      updatedFilters.maxPrice = newFilters.maxPrice;
-    }
+    if (newFilters.categoryIds) updatedFilters.categoryIds = newFilters.categoryIds;
+    if (newFilters.colors) updatedFilters.colors = newFilters.colors;
+    if (newFilters.attribute_values) updatedFilters.attribute_values = newFilters.attribute_values;
+    if (newFilters.brands) setSelectedBrands(newFilters.brands);
+    if (newFilters.minPrice !== undefined) updatedFilters.minPrice = newFilters.minPrice;
+    if (newFilters.maxPrice !== undefined) updatedFilters.maxPrice = newFilters.maxPrice;
 
     isFilterChangeRef.current = true;
     setFilters(updatedFilters);
@@ -369,28 +317,20 @@ export default function ProductsContent() {
     };
   }, [isMobileFilterOpen]);
 
-  // ✅ تحويل المنتج للـ Card باستخدام الدوال المشتركة
+  // ✅ تحويل المنتج
   const transformProductForCard = (product: ProductData) => {
     let colors: Array<{ color: string; name: string }> = [];
 
-    if (
-      product.has_variants &&
-      product.variants &&
-      product.variants.length > 0
-    ) {
+    if (product.has_variants && product.variants && product.variants.length > 0) {
       colors = extractColorsFromVariants(product.variants as ProductVariant[]);
     }
 
-    // ✅ حساب الكمية الإجمالية
     let totalQuantity: number | null = 0;
-    
     if (product.has_variants && product.variants && product.variants.length > 0) {
-      // ✅ إذا كان المنتج له فاريانتات، نجمع الكميات من جميع الفاريانتات
       totalQuantity = product.variants.reduce((sum: number, variant: any) => {
         return sum + (variant.quantity || 0);
       }, 0);
     } else {
-      // ✅ إذا لم يكن له فاريانتات، نستخدم الكمية الأساسية
       totalQuantity = product.quantity || 0;
     }
 
@@ -399,20 +339,11 @@ export default function ProductsContent() {
       name: product.name,
       price: product.pricing.final_price,
       image: cleanImageUrl(product.images?.[0]),
-      hoverImage: product.images?.[1]
-        ? cleanImageUrl(product.images[1])
-        : cleanImageUrl(product.images?.[0]),
+      hoverImage: product.images?.[1] ? cleanImageUrl(product.images[1]) : cleanImageUrl(product.images?.[0]),
       href: `/product/${product.id}`,
-      originalPrice: product.pricing.has_discount
-        ? product.pricing.price
-        : undefined,
+      originalPrice: product.pricing.has_discount ? product.pricing.price : undefined,
       discount: product.pricing.has_discount
-        ? Math.round(
-            ((product.pricing.price -
-              (product.pricing.price_after_discount || 0)) /
-              product.pricing.price) *
-              100,
-          )
+        ? Math.round(((product.pricing.price - (product.pricing.price_after_discount || 0)) / product.pricing.price) * 100)
         : undefined,
       colors: colors,
       rating: product.avg_rating || 0,
@@ -420,54 +351,108 @@ export default function ProductsContent() {
       isBestSeller: product.is_active,
       hasVariants: product.has_variants || false,
       variants: product.variants || [],
-      quantity: totalQuantity, // ✅ أضف الكمية المحسوبة
-      // ✅ إضافة العملة
-      currency: product.currency || {
-        code: "EGP",
-        symbol: "ج.م",
-        name: "Egyptian Pound",
-        rate: 1
-      }
+      quantity: totalQuantity,
+      currency: product.currency || { code: "EGP", symbol: "ج.م", name: "Egyptian Pound", rate: 1 }
     };
   };
 
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filters.categoryIds && filters.categoryIds.length > 0)
-      count += filters.categoryIds.length;
-    if (filters.colors && filters.colors.length > 0)
-      count += filters.colors.length;
-    if (filters.attribute_values && filters.attribute_values.length > 0)
-      count += filters.attribute_values.length;
-    if (selectedBrands && selectedBrands.length > 0)
-      count += selectedBrands.length;
-    if (filters.minPrice !== undefined && filters.minPrice > 0) count++;
-    if (filters.maxPrice !== undefined && filters.maxPrice < 1000) count++;
-    return count;
-  };
-
-  // ✅ تحديد البراندات التي سيتم عرضها - مع التأكد من مسح البراندات القديمة
   const displayBrands = useMemo(() => {
-    // إذا كانت الفئة محددة ولديها براندات خاصة
     if (currentCategoryId !== null && isCategorySpecificBrands) {
       return categoryBrands;
     }
-    
-    // إذا كانت الفئة محددة ولكن ليس لديها براندات
     if (currentCategoryId !== null && !isCategorySpecificBrands) {
-      return []; // ✅ عرض فارغ بدلاً من البراندات العامة
+      return [];
     }
-    
-    // إذا لم توجد فئة محددة، استخدم البراندات العامة
     return allBrands;
   }, [currentCategoryId, isCategorySpecificBrands, categoryBrands, allBrands]);
 
+  // ✅ إذا كانت الصفحة في حالة تحميل
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen page-with-padding">
+        <div className="container mx-auto px-4 pb-16">
+          {/* لودينج السلايدر */}
+          <div className="mb-2">
+            <div className="bg-gray-200 rounded-2xl h-[200px] lg:h-[500px] animate-pulse" />
+          </div>
+
+          {/* لودينج البراندات */}
+          <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4">
+            <div className="flex gap-4 overflow-x-auto">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 min-w-[100px] sm:min-w-[120px] md:min-w-[140px] px-3 py-2 rounded-full bg-gray-200 h-12 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* لودينج المنتجات + الفلتر */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="rounded-[8px] mb-3 flex justify-between items-center">
+                <div className="flex justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-gray-200 rounded-[8px] animate-pulse" />
+                  </div>
+                </div>
+                <div className="w-32 h-10 bg-gray-200 rounded-[8px] animate-pulse" />
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 rounded-lg h-64 mb-3" />
+                    <div className="bg-gray-200 h-4 rounded w-3/4 mb-2" />
+                    <div className="bg-gray-200 h-4 rounded w-1/2" />
+                    <div className="flex gap-1 mt-2">
+                      <div className="w-6 h-6 rounded-full bg-gray-200" />
+                      <div className="w-6 h-6 rounded-full bg-gray-200" />
+                      <div className="w-6 h-6 rounded-full bg-gray-200" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-12 flex justify-center">
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="w-10 h-10 bg-gray-200 rounded animate-pulse" />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden md:block w-[340px]">
+              <div className="border rounded-[8px] p-4">
+                <div className="animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-4" />
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="mb-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                      <div className="space-y-2">
+                        {[1, 2, 3].map((j) => (
+                          <div key={j} className="h-3 bg-gray-200 rounded w-3/4" />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ عرض الصفحة
   return (
     <div className="min-h-screen">
-      {/* Add CSS for responsive sorting sections */}
       <style jsx>{`
         .sort-section1 {
-        position:relative;
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: flex-end;
@@ -475,7 +460,6 @@ export default function ProductsContent() {
         .sort-section2 {
           display: none;
         }
-        
         @media (max-width: 768px) {
           .sort-section1 {
             display: none;
@@ -486,23 +470,20 @@ export default function ProductsContent() {
         }
       `}</style>
 
-      <div className="flex items-end gap-1 container page-with-padding ">
+      <div className="flex items-end gap-1 container page-with-padding">
         <Link href="/" className="text-[#726C6C] text-lg lg:text-xl mb-2 lg:mb-5">
           {t("products.home")}
         </Link>
         <span className="mb-2 lg:mb-5">/</span>
         <h1 className="text-base md:text-xl font-bold text-[#180100] mb-2 lg:mb-5">
-          {categoryName
-            ? ` ${categoryName}`
-            : t("products.allProducts")}
+          {categoryName ? ` ${categoryName}` : t("products.allProducts")}
         </h1>
       </div>
 
-      <div className="container mx-auto px-4 pb-16 ">
+      <div className="container mx-auto px-4 pb-16">
         {/* ✅ Category Slider */}
-     
         {categorySliders.length > 0 && (
-          <div className="mb-2" key={currentCategoryId}> {/* ✅ إضافة key */}
+          <div className="mb-2" key={currentCategoryId}>
             <CategorySlider
               sliders={categorySliders}
               categoryName={categoryName || undefined}
@@ -513,9 +494,9 @@ export default function ProductsContent() {
           </div>
         )}
 
-        {/* ✅ BrandSlider - يعرض براندات الفئة المختارة */}
+        {/* ✅ BrandSlider */}
         {categoryBrands.length > 0 && (
-          <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4 ">
+          <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4">
             <BrandSlider
               brands={displayBrands}
               selectedBrands={selectedBrands}
@@ -525,14 +506,14 @@ export default function ProductsContent() {
             />
           </div>
         )}
-        
-        {/* فلتر الترتيب - نسخة سطح المكتب (sort-section1) */}
+
+        {/* ✅ Sort - Desktop */}
         <div className="sort-section1" ref={sortMenuRef}>
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
             className="px-4 py-2 relative bg-white border border-gray-300 rounded-[8px] flex items-center gap-2 hover:bg-gray-100 transition-colors"
           >
-            <BsArrowDownUp className=" " />
+            <BsArrowDownUp />
             <span className="text-gray-600 text-sm whitespace-nowrap">
               {t("products.sortBy")}
             </span>
@@ -542,12 +523,7 @@ export default function ProductsContent() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
@@ -557,60 +533,21 @@ export default function ProductsContent() {
                 t("common.dir") === "rtl" ? "end-3" : "start-3"
               }`}
             >
-              <button
-                onClick={() => handleSortChange("all")}
-                className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                  sortBy === "all"
-                    ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {t("products.sortAll")}
-              </button>
-              <button
-                onClick={() => handleSortChange("price_asc")}
-                className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                  sortBy === "price_asc"
-                    ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {t("products.sortPriceAsc")}
-              </button>
-              <button
-                onClick={() => handleSortChange("price_desc")}
-                className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                  sortBy === "price_desc"
-                    ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {t("products.sortPriceDesc")}
-              </button>
-              <button
-                onClick={() => handleSortChange("best_seller")}
-                className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                  sortBy === "best_seller"
-                    ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {t("products.sortBestSeller")}
-              </button>
-              <button
-                onClick={() => handleSortChange("offers")}
-                className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                  sortBy === "offers"
-                    ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {t("products.sortOffers")}
-              </button>
+              {["all", "price_asc", "price_desc", "best_seller", "offers"].map((value) => (
+                <button
+                  key={value}
+                  onClick={() => handleSortChange(value)}
+                  className={`block w-full px-4 py-2 hover:bg-gray-100 transition-colors ${
+                    sortBy === value ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700" : "text-gray-700"
+                  }`}
+                >
+                  {t(`products.sort${value.charAt(0).toUpperCase() + value.slice(1)}`)}
+                </button>
+              ))}
             </div>
           )}
         </div>
-        
+
         <div className="flex gap-4">
           <div className="flex-1">
             <div className="rounded-[8px] mb-3 flex justify-between items-center">
@@ -618,24 +555,21 @@ export default function ProductsContent() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsMobileFilterOpen(true);
-                    }}
+                    onClick={() => setIsMobileFilterOpen(true)}
                     className="md:hidden flex items-center gap-2 px-4 py-2 bg-[#2D93CA] rounded-[8px] hover:bg-gray-200 transition-colors"
                   >
                     <VscSettings className="w-6 h-6 text-white" />
                   </button>
-                  
                 </div>
               </div>
-              
-              {/* فلتر الترتيب - نسخة الموبايل (sort-section2) */}
+
+              {/* ✅ Sort - Mobile */}
               <div className="sort-section2" ref={sortMenuRef}>
                 <button
                   onClick={() => setIsSortOpen(!isSortOpen)}
                   className="px-4 py-2 bg-white border border-gray-300 rounded-[8px] flex items-center gap-2 hover:bg-gray-100 transition-colors"
                 >
-                  <BsArrowDownUp className=" " />
+                  <BsArrowDownUp />
                   <span className="text-gray-600 text-sm whitespace-nowrap">
                     {t("products.sortBy")}
                   </span>
@@ -645,12 +579,7 @@ export default function ProductsContent() {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
@@ -660,76 +589,31 @@ export default function ProductsContent() {
                       t("common.dir") === "rtl" ? "end-3" : "start-3"
                     }`}
                   >
-                    <button
-                      onClick={() => handleSortChange("all")}
-                      className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                        sortBy === "all"
-                          ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                          : "text-gray-700 "
-                      }`}
-                    >
-                      {t("products.sortAll")}
-                    </button>
-                    <button
-                      onClick={() => handleSortChange("price_asc")}
-                      className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                        sortBy === "price_asc"
-                          ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {t("products.sortPriceAsc")}
-                    </button>
-                    <button
-                      onClick={() => handleSortChange("price_desc")}
-                      className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                        sortBy === "price_desc"
-                          ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {t("products.sortPriceDesc")}
-                    </button>
-                    <button
-                      onClick={() => handleSortChange("best_seller")}
-                      className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                        sortBy === "best_seller"
-                          ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {t("products.sortBestSeller")}
-                    </button>
-                    <button
-                      onClick={() => handleSortChange("offers")}
-                      className={`block w-full  px-4 py-2 hover:bg-gray-100 transition-colors ${
-                        sortBy === "offers"
-                          ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {t("products.sortOffers")}
-                    </button>
+                    {["all", "price_asc", "price_desc", "best_seller", "offers"].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => handleSortChange(value)}
+                        className={`block w-full px-4 py-2 hover:bg-gray-100 transition-colors ${
+                          sortBy === value ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700" : "text-gray-700"
+                        }`}
+                      >
+                        {t(`products.sort${value.charAt(0).toUpperCase() + value.slice(1)}`)}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
 
-            {loading ? (
-              <LoadingSpinner
-                size="lg"
-                text={t("products.loading")}
-              />
+            {isProductsLoading ? (
+              <LoadingSpinner size="lg" text={t("products.loading")} />
             ) : sortedProducts.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedProducts.map((product) => {
                     const cardData = transformProductForCard(product);
                     return (
-                      <div
-                        key={cardData.id}
-                        className="flex justify-center w-full"
-                      >
+                      <div key={cardData.id} className="flex justify-center w-full">
                         <ProductCard
                           id={cardData.id}
                           name={cardData.name}
@@ -745,13 +629,9 @@ export default function ProductsContent() {
                           isBestSeller={cardData.isBestSeller}
                           hasVariants={cardData.hasVariants}
                           variants={cardData.variants}
-                          variantId={
-                            cardData.hasVariants && cardData.variants.length > 0
-                              ? cardData.variants[0].id
-                              : null
-                          }
+                          variantId={cardData.hasVariants && cardData.variants.length > 0 ? cardData.variants[0].id : null}
                           currency={cardData.currency}
-                          quantity={cardData.quantity} // ✅ أضف هذه الخاصية
+                          quantity={cardData.quantity}
                         />
                       </div>
                     );
@@ -769,12 +649,8 @@ export default function ProductsContent() {
               </>
             ) : (
               <div className="text-center py-16">
-                <p className="text-xl text-gray-600">
-                  {t("products.noProducts")}
-                </p>
-                <p className="text-gray-500 mt-2">
-                  {t("products.tryChangingFilters")}
-                </p>
+                <p className="text-xl text-gray-600">{t("products.noProducts")}</p>
+                <p className="text-gray-500 mt-2">{t("products.tryChangingFilters")}</p>
               </div>
             )}
           </div>
@@ -791,36 +667,23 @@ export default function ProductsContent() {
 
       {/* Mobile Filter Overlay */}
       <div
-        className={`
-          fixed inset-0 z-30 md:hidden
-          ${isMobileFilterOpen ? "block" : "hidden"}
-        `}
+        className={`fixed inset-0 z-30 md:hidden ${isMobileFilterOpen ? "block" : "hidden"}`}
       >
         <div
           className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
           onClick={() => setIsMobileFilterOpen(false)}
         />
-
         <div
-          className={`
-            absolute bottom-0 end-3 start-3 
-            bg-white rounded-t-3xl shadow-2xl
-            transition-transform duration-300 ease-out
-            ${isMobileFilterOpen ? "translate-y-0" : "translate-y-full"}
-          `}
-          style={{
-            maxHeight: "85vh",
-            height: "auto",
-          }}
+          className={`absolute bottom-0 end-3 start-3 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out ${
+            isMobileFilterOpen ? "translate-y-0" : "translate-y-full"
+          }`}
+          style={{ maxHeight: "85vh", height: "auto" }}
         >
           <div className="flex justify-center pt-3 pb-2">
-            <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
           </div>
-
-          <div className="sticky top-0  bg-white border-b border-gray-200 p-4 flex justify-between items-center z-50 rounded-t-3xl">
-            <h2 className="text-lg font-bold">
-              {t("products.filterProducts")}
-            </h2>
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-50 rounded-t-3xl">
+            <h2 className="text-lg font-bold">{t("products.filterProducts")}</h2>
             <button
               onClick={() => setIsMobileFilterOpen(false)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -828,11 +691,7 @@ export default function ProductsContent() {
               <X className="w-5 h-5" />
             </button>
           </div>
-
-          <div
-            className="overflow-y-auto pb-8"
-            style={{ maxHeight: "calc(85vh - 120px)" }}
-          >
+          <div className="overflow-y-auto pb-8" style={{ maxHeight: "calc(85vh - 120px)" }}>
             <ProductFilters
               onFilterChange={handleFilterChange}
               isMobile={true}
