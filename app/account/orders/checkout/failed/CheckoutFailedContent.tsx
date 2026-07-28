@@ -182,7 +182,7 @@ export default function CheckoutFailedContent() {
         <div className="flex flex-col gap-3">
           <button
             onClick={handleRetry}
-            className="w-full bg-[#2D93CA] text-white py-3 rounded-xl font-medium hover:bg-red-700 transition flex items-center justify-center gap-2"
+            className="w-full bg-[#2D93CA] text-white py-3 rounded-xl font-medium hover:bg-[#1a7fb6] transition flex items-center justify-center gap-2"
           >
             <ArrowRight className="w-5 h-5" />
             {t('checkout.failed.retryButton')}
