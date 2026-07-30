@@ -1,4 +1,3 @@
-// app/product/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -55,6 +54,11 @@ const transformProductData = (apiProduct: ProductData, language: string) => {
   const originalPrice = getOriginalPrice(apiProduct);
   const discountPercentage = getDiscountPercentage(apiProduct);
   
+  // ✅ حساب isMostRequested من orders_num
+  const isMostRequested = apiProduct.orders_num !== undefined && 
+                          apiProduct.orders_num !== null && 
+                          apiProduct.orders_num >= 10;
+  
   // تنظيف رابط الصورة
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
@@ -92,10 +96,12 @@ const transformProductData = (apiProduct: ProductData, language: string) => {
     rating: apiProduct.avg_rating || 4.5,
     reviewsCount: apiProduct.total_reviews || 0,
     sku: `SKU-${apiProduct.id}`,
-   availability: apiProduct.is_active && ((apiProduct.quantity ?? 0) > 0 || apiProduct.has_variants),
+    availability: apiProduct.is_active && ((apiProduct.quantity ?? 0) > 0 || apiProduct.has_variants),
     variants: apiProduct.variants || [],
     has_variants: apiProduct.has_variants || false,
     video: apiProduct.video || null,
+    isMostRequested: isMostRequested, // ✅ أضف هذه الخاصية
+    quantity: apiProduct.quantity ?? 0, // ✅ أضف الكمية
   };
 };
 

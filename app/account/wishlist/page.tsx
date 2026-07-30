@@ -75,6 +75,7 @@ interface TransformedProduct {
   colors?: Array<{ color: string; name: string }>;
   rating?: number;
   reviewsCount?: number;
+  isMostRequested?: boolean;
   isBestSeller?: boolean;
   hasVariants?: boolean;
   variants?: Array<{ id: number }>;
@@ -138,7 +139,7 @@ export default function WishlistPage() {
       try {
         // ✅ استخراج المنتج من الـ favorite
         const product = favorite.product || favorite;
-
+  const isMostRequested = product.orders_num !== undefined && product.orders_num >= 10;
         // ✅ حساب الكمية الإجمالية
         let totalQuantity: number | null = 0;
         
@@ -158,6 +159,7 @@ export default function WishlistPage() {
         if (transformed && transformed.id && transformed.id !== "0") {
           transformedItems.push({
             ...transformed,
+             isMostRequested: isMostRequested, 
             hasVariants: product.has_variants || false,
             variants: product.variants || [],
             variantId:
@@ -170,6 +172,7 @@ export default function WishlistPage() {
               name: "Egyptian Pound",
               rate: 1,
             },
+
             quantity: totalQuantity, // ✅ أضف الكمية المحسوبة
           });
         }
@@ -328,7 +331,8 @@ export default function WishlistPage() {
                 colors={item.colors}
                 rating={item.rating}
                 reviewsCount={item.reviewsCount}
-                isBestSeller={item.isBestSeller}
+                // isBestSeller={item.isBestSeller}
+                isMostRequested={item.isMostRequested}
                 hasVariants={item.hasVariants || false}
                 variants={item.variants || []}
                 variantId={item.variantId || null}

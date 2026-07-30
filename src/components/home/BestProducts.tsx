@@ -67,6 +67,7 @@ let totalQuantity: number | null = 0;
     // ✅ إذا لم يكن له فاريانتات، نستخدم الكمية الأساسية
     totalQuantity = product.quantity || 0;
   }
+   const isMostRequested = product.orders_num !== undefined && product.orders_num >= 10;
   return {
     id: product.id.toString(),
     name: product.name,
@@ -79,7 +80,8 @@ let totalQuantity: number | null = 0;
     colors: colors,
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
-    isBestSeller: product.is_active,
+     isMostRequested: isMostRequested,
+    // isBestSeller: product.is_active,
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
@@ -599,7 +601,8 @@ export function BestProducts({ onLoad }: BestProductsProps) {
                       colors={product.colors}
                       rating={product.rating}
                       reviewsCount={product.reviewsCount}
-                      isBestSeller={product.isBestSeller}
+                      // isBestSeller={product.isBestSeller}
+                       isMostRequested={product.isMostRequested}
                       hasVariants={product.hasVariants || false}
                       variants={product.variants || []}
                       variantId={product.variantId || null}

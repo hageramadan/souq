@@ -50,12 +50,13 @@ export interface Product {
   image: string;
   hoverImage?: string;
   href: string;
+  isMostRequested?: boolean; 
   originalPrice?: number;
   discount?: number;
   colors?: ColorOption[];
   rating?: number;
   reviewsCount?: number;
-  isBestSeller?: boolean;
+  // isBestSeller?: boolean;
   hasVariants?: boolean;
   variants?: ProductVariant[];
   variantId?: number | null;
@@ -104,6 +105,7 @@ export const cleanImageUrl = (url: string): string => {
 
 // ✅ دالة تحويل البيانات من API
 export const transformProduct = (product: any): Product => {
+ const isMostRequested = product.orders_num !== undefined && product.orders_num >= 10;
   const mainImage =
     product.images && product.images.length > 0
       ? cleanImageUrl(product.images[0])
@@ -150,7 +152,8 @@ export const transformProduct = (product: any): Product => {
     colors: colors,
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
-    isBestSeller: product.is_active,
+    // isBestSeller: product.is_active,
+    isMostRequested: isMostRequested,
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,

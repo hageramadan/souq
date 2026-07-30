@@ -37,7 +37,8 @@ interface ProductCardProps {
   colors?: ColorOption[];
   rating?: number;
   reviewsCount?: number;
-  isBestSeller?: boolean;
+  // isBestSeller?: boolean;
+  isMostRequested?: boolean; 
   variantId?: number | null;
   hasVariants?: boolean;
   variants?: Array<{ id: number }>;
@@ -51,7 +52,8 @@ const getTranslations = (lang: string) => {
     return {
       loginRequired: "Please login first to add products to favorites",
       errorAdding: "Error adding to favorites",
-      bestSeller: "Best Seller",
+      // bestSeller: "Best Seller",
+       mostRequested: "Most Requested",
       quickView: "Quick View",
       addToCart: "Add to Cart",
       removeFromFavorites: "Remove from favorites",
@@ -63,7 +65,8 @@ const getTranslations = (lang: string) => {
   return {
     loginRequired: "يرجى تسجيل الدخول أولاً لإضافة المنتجات إلى المفضلة",
     errorAdding: "حدث خطأ أثناء إضافة المنتج إلى المفضلة",
-    bestSeller: "الاكثر طلبا",
+    // bestSeller: "الاكثر طلبا",
+    mostRequested: "الأكثر طلباً", // ✅ فقط الأكثر طلباً
     quickView: "معاينة سريعة",
     addToCart: "أضف إلى السلة",
     removeFromFavorites: "إزالة من المفضلة",
@@ -84,7 +87,8 @@ export function ProductCard({
   colors = [],
   rating = 0,
   reviewsCount = 0,
-  isBestSeller,
+  // isBestSeller,
+   isMostRequested,
   variantId = null,
   hasVariants = false,
   variants = [],
@@ -264,10 +268,10 @@ export function ProductCard({
           </button>
 
           {/* Best Seller Badge */}
-          {isBestSeller && (
+          {isMostRequested && (
             <div className="absolute top-2 start-2 z-10">
               <p className="text-[9px] sm:text-xs font-bold text-white bg-[#FF7700] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                {t.bestSeller}
+                {t.mostRequested}
               </p>
             </div>
           )}

@@ -247,6 +247,7 @@ export interface ProductData {
   type: string;
   is_active: boolean;
   name: string;
+  orders_num?:number;
   avg_rating: number;
   total_reviews: number;  
   description: string;

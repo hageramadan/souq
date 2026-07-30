@@ -7,12 +7,12 @@ import { ProductCard } from "../products/ProductCard";
 import { getNewProducts, ProductData } from "@/services/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HiArrowNarrowLeft, HiOutlineArrowNarrowRight } from "react-icons/hi";
-// ✅ استيراد الأنواع والدوال من الملف المشترك
 import { 
   Product, 
   ProductVariant,
   extractColorsFromVariants,
-  cleanImageUrl
+  cleanImageUrl,
+  transformProduct
 } from "@/types/product";
 
 interface LatestProductsProps {
@@ -40,75 +40,81 @@ const getTranslations = (lang: string) => {
 };
 
 // تحويل البيانات من API إلى شكل المنتج المطلوب
-const transformProduct = (product: ProductData): Product => {
-  const mainImage =
-    product.images && product.images.length > 0
-      ? cleanImageUrl(product.images[0])
-      : "/images/placeholder.jpg";
+// const transformProduct = (product: ProductData): Product => {
+//   const mainImage =
+//     product.images && product.images.length > 0
+//       ? cleanImageUrl(product.images[0])
+//       : "/images/placeholder.jpg";
 
-  const hoverImage =
-    product.images && product.images.length > 1
-      ? cleanImageUrl(product.images[1])
-      : mainImage;
+//   const hoverImage =
+//     product.images && product.images.length > 1
+//       ? cleanImageUrl(product.images[1])
+//       : mainImage;
 
-  let discount: number | undefined;
-  let originalPrice: number | undefined;
+//   let discount: number | undefined;
+//   let originalPrice: number | undefined;
 
-  if (product.pricing.has_discount && product.pricing.price_after_discount) {
-    discount = Math.round(
-      ((product.pricing.price - product.pricing.price_after_discount) /
-        product.pricing.price) *
-        100,
-    );
-    originalPrice = product.pricing.price;
-  }
+//   if (product.pricing.has_discount && product.pricing.price_after_discount) {
+//     discount = Math.round(
+//       ((product.pricing.price - product.pricing.price_after_discount) /
+//         product.pricing.price) *
+//         100,
+//     );
+//     originalPrice = product.pricing.price;
+//   }
 
-  let colors: Array<{ color: string; name: string }> = [];
-  let hasVariants = false;
-  let variants: ProductVariant[] = [];
-  let variantId: number | null = null;
+//   let colors: Array<{ color: string; name: string }> = [];
+//   let hasVariants = false;
+//   let variants: ProductVariant[] = [];
+//   let variantId: number | null = null;
 
-  if (product.has_variants && product.variants && product.variants.length > 0) {
-    hasVariants = true;
-    variants = product.variants as ProductVariant[];
-    variantId = product.variants[0].id;
-    colors = extractColorsFromVariants(product.variants as ProductVariant[]);
-  }
- let totalQuantity: number | null = 0;
+//   if (product.has_variants && product.variants && product.variants.length > 0) {
+//     hasVariants = true;
+//     variants = product.variants as ProductVariant[];
+//     variantId = product.variants[0].id;
+//     colors = extractColorsFromVariants(product.variants as ProductVariant[]);
+//   }
+
+//   let totalQuantity: number | null = 0;
   
-  if (product.has_variants && product.variants && product.variants.length > 0) {
-    totalQuantity = product.variants.reduce((sum: number, variant: any) => {
-      return sum + (variant.quantity || 0);
-    }, 0);
-  } else {
+//   if (product.has_variants && product.variants && product.variants.length > 0) {
+//     totalQuantity = product.variants.reduce((sum: number, variant: any) => {
+//       return sum + (variant.quantity || 0);
+//     }, 0);
+//   } else {
+//     totalQuantity = product.quantity || 0;
+//   }
 
-    totalQuantity = product.quantity || 0;
-  }
-  return {
-    id: product.id.toString(),
-    name: product.name,
-    price: product.pricing.final_price,
-    image: mainImage,
-    hoverImage: hoverImage,
-    href: `/product/${product.id}`,
-    originalPrice: originalPrice,
-    discount: discount,
-    colors: colors,
-    rating: product.avg_rating || 0,
-    reviewsCount: product.total_reviews || 0,
-    isBestSeller: product.is_active,
-    hasVariants: hasVariants,
-    variants: variants,
-    variantId: variantId,
-    currency: product.currency || {
-      code: "EGP",
-      symbol: "ج.م",
-      name: "Egyptian Pound",
-      rate: 1
-    },
-    quantity: totalQuantity, 
-  };
-};
+//   // ✅ إضافة منطق تحديد الباتش الأكثر طلباً
+//   // عندما يكون orders_num أكبر من أو يساوي 10
+//   // const isBestSeller = product.orders_num !== undefined && product.orders_num >= 10;
+//   const isMostRequested = product.orders_num !== undefined && product.orders_num >= 10;
+//   return {
+//     id: product.id.toString(),
+//     name: product.name,
+//     price: product.pricing.final_price,
+//     image: mainImage,
+//     hoverImage: hoverImage,
+//     href: `/product/${product.id}`,
+//     originalPrice: originalPrice,
+//     discount: discount,
+//     colors: colors,
+//     rating: product.avg_rating || 0,
+//     reviewsCount: product.total_reviews || 0,
+//     // isBestSeller: isBestSeller, 
+//     isMostRequested: isMostRequested,
+//     hasVariants: hasVariants,
+//     variants: variants,
+//     variantId: variantId,
+//     currency: product.currency || {
+//       code: "EGP",
+//       symbol: "ج.م",
+//       name: "Egyptian Pound",
+//       rate: 1
+//     },
+//     quantity: totalQuantity,
+//   };
+// };
 
 export function LatestProducts({ onLoad }: LatestProductsProps) {
   const { language } = useLanguage();
@@ -588,7 +594,8 @@ export function LatestProducts({ onLoad }: LatestProductsProps) {
                       colors={product.colors}
                       rating={product.rating}
                       reviewsCount={product.reviewsCount}
-                      isBestSeller={product.isBestSeller}
+                      // isBestSeller={product.isBestSeller}
+                       isMostRequested={product.isMostRequested}
                       hasVariants={product.hasVariants || false}
                       variants={product.variants || []}
                       variantId={product.variantId || null}

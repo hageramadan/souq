@@ -83,7 +83,9 @@ interface ProductDetailsProps {
     has_variants?: boolean;
     video?: string;
     currency?: Currency;
-    quantity?: number | null; // ✅ إضافة الكمية الرئيسية للمنتج
+    quantity?: number | null;
+     // ✅ إضافة الكمية الرئيسية للمنتج
+     isMostRequested?: boolean;
   };
 }
 
@@ -766,6 +768,13 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                     {discountPercentage}% {t.discount}
                   </span>
                 )}
+                {product.isMostRequested && (
+  <div className="inline-block mt-2">
+    <span className="text-xs font-bold text-white bg-[#E74C3C] px-3 py-1 rounded">
+      {language === 'ar' ? 'الأكثر طلباً' : 'Most Requested'}
+    </span>
+  </div>
+)}
 
                 {/* ✅ عرض علامة " نفذ من المخزون" إذا كانت الكمية صفر */}
                 {/* {!isAvailable && (
@@ -859,11 +868,14 @@ export function ProductDetails({ product }: ProductDetailsProps) {
 
           {/* Rating */}
           <div className="flex items-center gap-1.5 lg:mt-4">
-            <div className="flex items-center bg-[#EDF0F8] text-[#3A4980] font-bold text-xs rounded-full px-2 py-0.5 gap-1">
+            {product.reviewsCount > 0 &&(
+              <div className="flex items-center bg-[#EDF0F8] text-[#3A4980] font-bold text-xs rounded-full px-2 py-0.5 gap-1">
               <IoChatboxEllipsesOutline className="w-3 h-3" />
               <span>{product.reviewsCount}</span>
               <span>{t.review}</span>
             </div>
+            )}
+            
             {product.avg_rating > 0 && (
               <div className="flex items-center bg-[#FFF5F4] text-[#FA6054] font-bold text-xs rounded-full px-2 py-0.5 gap-1">
                 <FaRegStar className="w-2.5 h-2.5" />

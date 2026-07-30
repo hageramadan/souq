@@ -1,4 +1,3 @@
-// app/search/page.tsx
 "use client";
 
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
@@ -9,7 +8,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Pagination from "@/components/products/Pagination";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/hooks/useTranslation";
-import {  getHeaders } from "@/services/api";
+import { getHeaders } from "@/services/api";
 
 const API_URL = "https://admin.souqkaber.com/api";
 
@@ -53,10 +52,11 @@ interface TransformedProduct {
   rating?: number;
   reviewsCount?: number;
   isBestSeller?: boolean;
+  isMostRequested?: boolean; // ✅ أضف هذه
   hasVariants?: boolean;
   variants?: ProductVariant[];
   variantId?: number | null;
-  quantity?: number | null; // ✅ أضف هذا
+  quantity?: number | null;
 }
 
 // دالة جلب التوكن
@@ -115,7 +115,6 @@ const searchProducts = async (
 
     const data = await response.json();
 
-    // ✅ التأكد من أن البيانات بالشكل الصحيح
     if (data.result === true && data.data) {
       return {
         result: true,
@@ -149,6 +148,11 @@ const transformProductForCard = (product: any): TransformedProduct => {
   let variants: ProductVariant[] = [];
   let variantId: number | null = null;
 
+  // ✅ حساب isMostRequested
+  const isMostRequested = product.orders_num !== undefined && 
+                          product.orders_num !== null && 
+                          product.orders_num >= 10;
+
   // ✅ استخراج المعلومات من الفاريانتات
   if (product.has_variants && product.variants && product.variants.length > 0) {
     hasVariants = true;
@@ -161,12 +165,10 @@ const transformProductForCard = (product: any): TransformedProduct => {
   let totalQuantity: number | null = 0;
   
   if (product.has_variants && product.variants && product.variants.length > 0) {
-    // ✅ إذا كان المنتج له فاريانتات، نجمع الكميات من جميع الفاريانتات
     totalQuantity = product.variants.reduce((sum: number, variant: any) => {
       return sum + (variant.quantity || 0);
     }, 0);
   } else {
-    // ✅ إذا لم يكن له فاريانتات، نستخدم الكمية الأساسية
     totalQuantity = product.quantity || 0;
   }
 
@@ -178,9 +180,7 @@ const transformProductForCard = (product: any): TransformedProduct => {
     return url;
   };
 
-  // حساب السعر النهائي
-  const finalPrice =
-    product.pricing?.final_price || product.pricing?.price || 0;
+  const finalPrice = product.pricing?.final_price || product.pricing?.price || 0;
   const originalPrice = product.pricing?.price;
   const hasDiscount = product.pricing?.has_discount || false;
 
@@ -204,10 +204,11 @@ const transformProductForCard = (product: any): TransformedProduct => {
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
     isBestSeller: product.is_active,
+    isMostRequested: isMostRequested, // ✅ أضف هذه
     hasVariants: hasVariants,
     variants: variants,
     variantId: variantId,
-    quantity: totalQuantity, // ✅ أضف الكمية المحسوبة
+    quantity: totalQuantity,
   };
 };
 
@@ -228,7 +229,7 @@ function SearchContent() {
   const [searchInput, setSearchInput] = useState(query);
   const [sortBy, setSortBy] = useState("newest");
 
-  const perPage = 10; // ✅ 10 منتجات في كل صفحة
+  const perPage = 10;
 
   const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -412,7 +413,7 @@ function SearchContent() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('search.placeholder')}
-              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none  focus:ring-[#23A6F0] "
+              className="w-full px-6 py-3 ps-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-[#23A6F0]"
             />
             <button
               type="submit"
@@ -441,7 +442,7 @@ function SearchContent() {
             <select
               value={sortBy}
               onChange={handleSortChange}
-              className="px-4 py-2 border border-gray-200 rounded-[8px] focus:outline-none  focus:ring-[#23A6F0]"
+              className="px-4 py-2 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-[#23A6F0]"
             >
               <option value="newest">{t('search.sortNewest')}</option>
               <option value="popular">{t('search.sortPopular')}</option>
@@ -484,18 +485,18 @@ function SearchContent() {
                       colors={cardData.colors}
                       rating={cardData.rating}
                       reviewsCount={cardData.reviewsCount}
-                      isBestSeller={cardData.isBestSeller}
+                      isMostRequested={cardData.isMostRequested} // ✅ أضف هذه
                       hasVariants={cardData.hasVariants || false}
                       variants={cardData.variants || []}
                       variantId={cardData.variantId || null}
-                      quantity={cardData.quantity} // ✅ أضف هذه الخاصية
+                      quantity={cardData.quantity}
                     />
                   </div>
                 );
               })}
             </div>
 
-            {/* ✅ الباجينشن - يظهر فقط لو في اكتر من صفحة */}
+            {/* ✅ الباجينشن */}
             {lastPage > 1 && (
               <div className="mt-12">
                 <Pagination
