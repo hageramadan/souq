@@ -17,12 +17,12 @@ import Link from "next/link";
 import { VscSettings } from "react-icons/vsc";
 import { useTranslation } from "@/hooks/useTranslation";
 import { BsArrowDownUp } from "react-icons/bs";
-import { 
-  ProductVariant, 
+import {
+  ProductVariant,
   extractColorsFromVariants,
   cleanImageUrl,
   Currency,
-  transformProduct as transformProductBase
+  transformProduct as transformProductBase,
 } from "@/types/product";
 
 // ============================================================================
@@ -52,7 +52,20 @@ interface SliderImage {
 
 export default function ProductsContent() {
   const searchParams = useSearchParams();
+
   const { t } = useTranslation();
+  const categoryIdsFromUrl = useMemo(() => {
+    const value = searchParams.get("categories");
+
+    if (!value) return [];
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [searchParams]);
 
   // ✅ حالات التحميل
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -67,13 +80,20 @@ export default function ProductsContent() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [categoryName, setCategoryName] = useState<string | null>(null);
   const [categorySliders, setCategorySliders] = useState<SliderImage[]>([]);
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(null);
+  const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(
+    null,
+  );
 
   // ✅ حالة البراندات
-  const [allBrands, setAllBrands] = useState<Array<{ id: number; name: string }>>([]);
-  const [categoryBrands, setCategoryBrands] = useState<Array<{ id: number; name: string }>>([]);
+  const [allBrands, setAllBrands] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
+  const [categoryBrands, setCategoryBrands] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
-  const [isCategorySpecificBrands, setIsCategorySpecificBrands] = useState(false);
+  const [isCategorySpecificBrands, setIsCategorySpecificBrands] =
+    useState(false);
 
   // حالة الترتيب
   const [sortBy, setSortBy] = useState<string>("all");
@@ -83,26 +103,29 @@ export default function ProductsContent() {
   const perPage = 12;
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFilterChangeRef = useRef(false);
-  
+
   // ✅ متغير عشان نعرف إذا كان أول تحميل
   const isInitialLoadRef = useRef(true);
 
   // ✅ إغلاق المنيو
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+      if (
+        sortMenuRef.current &&
+        !sortMenuRef.current.contains(event.target as Node)
+      ) {
         setIsSortOpen(false);
       }
     };
 
     if (isSortOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     } else {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSortOpen]);
 
@@ -111,10 +134,10 @@ export default function ProductsContent() {
     const loadAllData = async () => {
       setIsPageLoading(true);
       setIsProductsLoading(true);
-      
+
       try {
         const categoriesParam = searchParams.get("categories");
-        
+
         // ✅ 1️⃣ جلب البراندات والفئات بالتوازي (أسرع)
         const [brandsData, categoriesData] = await Promise.all([
           getBrands(),
@@ -127,10 +150,26 @@ export default function ProductsContent() {
         if (categoriesParam) {
           try {
             const categoryIds = JSON.parse(categoriesParam);
-            if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+            if (
+              categoryIds &&
+              Array.isArray(categoryIds) &&
+              categoryIds.length > 0
+            ) {
               const categoryId = categoryIds[0];
               setCurrentCategoryId(categoryId);
-              setFilters((prev) => ({ ...prev, categoryIds: [categoryId] }));
+              setFilters((prev) => {
+                if (
+                  prev.categoryIds?.length === 1 &&
+                  prev.categoryIds[0] === categoryId
+                ) {
+                  return prev;
+                }
+
+                return {
+                  ...prev,
+                  categoryIds: [categoryId],
+                };
+              });
 
               const category = categoriesData.find((c) => c.id === categoryId);
 
@@ -170,13 +209,12 @@ export default function ProductsContent() {
 
         // ✅ انتهى تحميل السلايدر والبراندات
         setIsPageLoading(false);
-        
+
         // ✅ أول تحميل خلص
         isInitialLoadRef.current = false;
 
         // 3️⃣ تحميل المنتجات (بعد تحديد الفلاتر)
-        await loadProducts();
-
+        // await loadProducts();
       } catch (error) {
         console.error("Error loading data:", error);
         setIsPageLoading(false);
@@ -213,7 +251,15 @@ export default function ProductsContent() {
       if (sortBy !== "all") {
         filterParams.sort = sortBy;
       }
+      const categoryIds =
+        filters.categoryIds && filters.categoryIds.length > 0
+          ? filters.categoryIds
+          : categoryIdsFromUrl;
 
+      if (categoryIds.length > 0) {
+        filterParams.categories = categoryIds;
+        console.log("🔍 Filtering by category:", categoryIds);
+      }
       if (filters.categoryIds && filters.categoryIds.length > 0) {
         filterParams.categories = filters.categoryIds;
         console.log("🔍 Filtering by category:", filters.categoryIds);
@@ -228,12 +274,16 @@ export default function ProductsContent() {
         filterParams.brands = selectedBrands;
       }
       if (filters.minPrice !== undefined && filters.minPrice > 0) {
-        filterParams.price_range = [filters.minPrice, filters.maxPrice || 1000000];
+        filterParams.price_range = [
+          filters.minPrice,
+          filters.maxPrice || 1000000,
+        ];
       }
 
       console.log("📦 Fetching products with params:", filterParams);
 
-      const { products: productsData, pagination } = await getAllProducts(filterParams);
+      const { products: productsData, pagination } =
+        await getAllProducts(filterParams);
 
       if (!abortControllerRef.current?.signal.aborted) {
         setProducts(productsData);
@@ -254,20 +304,23 @@ export default function ProductsContent() {
     }
   };
 
-  // ✅ تحميل المنتجات عند تغيير الفلاتر (بس مش في أول تحميل)
   useEffect(() => {
-    // ✅ من أول تحميل، الكود اللي فوق هو اللي شغال
-    if (!isPageLoading && !isInitialLoadRef.current) {
-      loadProducts();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPageLoading, currentPage, filters, selectedBrands, sortBy]);
+    if (isPageLoading) return;
 
+    loadProducts();
+  }, [
+    isPageLoading,
+    currentPage,
+    filters,
+    selectedBrands,
+    sortBy,
+    categoryIdsFromUrl,
+  ]);
   // ✅ معالج اختيار البراند
   const handleBrandToggle = useCallback((brandId: number) => {
     setSelectedBrands((prev) => {
       if (brandId === -1) return [];
-      return prev.includes(brandId) 
+      return prev.includes(brandId)
         ? prev.filter((id) => id !== brandId)
         : [...prev, brandId];
     });
@@ -304,12 +357,16 @@ export default function ProductsContent() {
 
   const handleFilterChange = (newFilters: any) => {
     const updatedFilters: FiltersState = {};
-    if (newFilters.categoryIds) updatedFilters.categoryIds = newFilters.categoryIds;
+    if (newFilters.categoryIds)
+      updatedFilters.categoryIds = newFilters.categoryIds;
     if (newFilters.colors) updatedFilters.colors = newFilters.colors;
-    if (newFilters.attribute_values) updatedFilters.attribute_values = newFilters.attribute_values;
+    if (newFilters.attribute_values)
+      updatedFilters.attribute_values = newFilters.attribute_values;
     if (newFilters.brands) setSelectedBrands(newFilters.brands);
-    if (newFilters.minPrice !== undefined) updatedFilters.minPrice = newFilters.minPrice;
-    if (newFilters.maxPrice !== undefined) updatedFilters.maxPrice = newFilters.maxPrice;
+    if (newFilters.minPrice !== undefined)
+      updatedFilters.minPrice = newFilters.minPrice;
+    if (newFilters.maxPrice !== undefined)
+      updatedFilters.maxPrice = newFilters.maxPrice;
 
     isFilterChangeRef.current = true;
     setFilters(updatedFilters);
@@ -345,7 +402,7 @@ export default function ProductsContent() {
   const transformProductForCard = (product: ProductData) => {
     // ✅ استخدم transformProductBase من types/product
     const transformed = transformProductBase(product);
-    
+
     return {
       id: transformed.id,
       name: transformed.name,
@@ -362,7 +419,12 @@ export default function ProductsContent() {
       hasVariants: transformed.hasVariants || false,
       variants: transformed.variants || [],
       quantity: transformed.quantity || 0,
-      currency: transformed.currency || { code: "EGP", symbol: "ج.م", name: "Egyptian Pound", rate: 1 }
+      currency: transformed.currency || {
+        code: "EGP",
+        symbol: "ج.م",
+        name: "Egyptian Pound",
+        rate: 1,
+      },
     };
   };
 
@@ -428,7 +490,10 @@ export default function ProductsContent() {
               <div className="mt-12 flex justify-center">
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="w-10 h-10 bg-gray-200 rounded animate-pulse" />
+                    <div
+                      key={i}
+                      className="w-10 h-10 bg-gray-200 rounded animate-pulse"
+                    />
                   ))}
                 </div>
               </div>
@@ -443,7 +508,10 @@ export default function ProductsContent() {
                       <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
                       <div className="space-y-2">
                         {[1, 2, 3].map((j) => (
-                          <div key={j} className="h-3 bg-gray-200 rounded w-3/4" />
+                          <div
+                            key={j}
+                            className="h-3 bg-gray-200 rounded w-3/4"
+                          />
                         ))}
                       </div>
                     </div>
@@ -481,7 +549,10 @@ export default function ProductsContent() {
       `}</style>
 
       <div className="flex items-end gap-1 container page-with-padding">
-        <Link href="/" className="text-[#726C6C] text-lg lg:text-xl mb-2 lg:mb-5">
+        <Link
+          href="/"
+          className="text-[#726C6C] text-lg lg:text-xl mb-2 lg:mb-5"
+        >
           {t("products.home")}
         </Link>
         <span className="mb-2 lg:mb-5">/</span>
@@ -533,7 +604,12 @@ export default function ProductsContent() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
@@ -543,17 +619,23 @@ export default function ProductsContent() {
                 t("common.dir") === "rtl" ? "end-3" : "start-3"
               }`}
             >
-              {["all", "price_asc", "price_desc", "best_seller", "offers"].map((value) => (
-                <button
-                  key={value}
-                  onClick={() => handleSortChange(value)}
-                  className={`block w-full px-4 py-2 hover:bg-gray-100 transition-colors ${
-                    sortBy === value ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700" : "text-gray-700"
-                  }`}
-                >
-                  {t(`products.sort${value.charAt(0).toUpperCase() + value.slice(1)}`)}
-                </button>
-              ))}
+              {["all", "price_asc", "price_desc", "best_seller", "offers"].map(
+                (value) => (
+                  <button
+                    key={value}
+                    onClick={() => handleSortChange(value)}
+                    className={`block w-full px-4 py-2 hover:bg-gray-100 transition-colors ${
+                      sortBy === value
+                        ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {t(
+                      `products.sort${value.charAt(0).toUpperCase() + value.slice(1)}`,
+                    )}
+                  </button>
+                ),
+              )}
             </div>
           )}
         </div>
@@ -589,7 +671,12 @@ export default function ProductsContent() {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
@@ -599,15 +686,25 @@ export default function ProductsContent() {
                       t("common.dir") === "rtl" ? "end-3" : "start-3"
                     }`}
                   >
-                    {["all", "price_asc", "price_desc", "best_seller", "offers"].map((value) => (
+                    {[
+                      "all",
+                      "price_asc",
+                      "price_desc",
+                      "best_seller",
+                      "offers",
+                    ].map((value) => (
                       <button
                         key={value}
                         onClick={() => handleSortChange(value)}
                         className={`block w-full px-4 py-2 hover:bg-gray-100 transition-colors ${
-                          sortBy === value ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700" : "text-gray-700"
+                          sortBy === value
+                            ? "bg-[#2D93CA] text-white hover:bg-gray-500 hover:text-gray-700"
+                            : "text-gray-700"
                         }`}
                       >
-                        {t(`products.sort${value.charAt(0).toUpperCase() + value.slice(1)}`)}
+                        {t(
+                          `products.sort${value.charAt(0).toUpperCase() + value.slice(1)}`,
+                        )}
                       </button>
                     ))}
                   </div>
@@ -623,7 +720,10 @@ export default function ProductsContent() {
                   {sortedProducts.map((product) => {
                     const cardData = transformProductForCard(product);
                     return (
-                      <div key={cardData.id} className="flex justify-center w-full">
+                      <div
+                        key={cardData.id}
+                        className="flex justify-center w-full"
+                      >
                         <ProductCard
                           id={cardData.id}
                           name={cardData.name}
@@ -639,7 +739,11 @@ export default function ProductsContent() {
                           isMostRequested={cardData.isMostRequested}
                           hasVariants={cardData.hasVariants}
                           variants={cardData.variants}
-                          variantId={cardData.hasVariants && cardData.variants.length > 0 ? cardData.variants[0].id : null}
+                          variantId={
+                            cardData.hasVariants && cardData.variants.length > 0
+                              ? cardData.variants[0].id
+                              : null
+                          }
                           currency={cardData.currency}
                           quantity={cardData.quantity}
                         />
@@ -659,8 +763,12 @@ export default function ProductsContent() {
               </>
             ) : (
               <div className="text-center py-16">
-                <p className="text-xl text-gray-600">{t("products.noProducts")}</p>
-                <p className="text-gray-500 mt-2">{t("products.tryChangingFilters")}</p>
+                <p className="text-xl text-gray-600">
+                  {t("products.noProducts")}
+                </p>
+                <p className="text-gray-500 mt-2">
+                  {t("products.tryChangingFilters")}
+                </p>
               </div>
             )}
           </div>
@@ -693,7 +801,9 @@ export default function ProductsContent() {
             <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
           </div>
           <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-50 rounded-t-3xl">
-            <h2 className="text-lg font-bold">{t("products.filterProducts")}</h2>
+            <h2 className="text-lg font-bold">
+              {t("products.filterProducts")}
+            </h2>
             <button
               onClick={() => setIsMobileFilterOpen(false)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -701,7 +811,10 @@ export default function ProductsContent() {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="overflow-y-auto pb-8" style={{ maxHeight: "calc(85vh - 120px)" }}>
+          <div
+            className="overflow-y-auto pb-8"
+            style={{ maxHeight: "calc(85vh - 120px)" }}
+          >
             <ProductFilters
               onFilterChange={handleFilterChange}
               isMobile={true}
