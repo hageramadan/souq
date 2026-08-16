@@ -504,7 +504,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       return allImagesList[selectedImage];
     }
 
-    return "/images/placeholder.jpg";
+    return "/images/placeholder.png";
   };
 
   const availableColors = product.has_variants
@@ -674,7 +674,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
+    if (!url) return "/images/placeholder.png";
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }

@@ -93,7 +93,7 @@ const extractColorsFromVariants = (variants: ProductVariant[]): Array<{ color: s
 
 // ✅ دالة تنظيف رابط الصورة
 const cleanImageUrl = (url: string): string => {
-  if (!url) return '/images/placeholder.jpg';
+  if (!url) return '/images/placeholder.png';
   if (url.startsWith('/storage')) {
     return `https://admin.souqkaber.com${url}`;
   }
@@ -111,8 +111,8 @@ export const transformFavoriteToProductCard = (favorite: FavoriteProduct | null 
       price: 0,
       originalPrice: undefined,
       discount: undefined,
-      image: '/images/placeholder.jpg',
-      hoverImage: '/images/placeholder.jpg',
+      image: '/images/placeholder.png',
+      hoverImage: '/images/placeholder.png',
       href: '/',
       rating: 0,
       reviewsCount: 0,
@@ -135,7 +135,7 @@ export const transformFavoriteToProductCard = (favorite: FavoriteProduct | null 
   // معالجة الصور
   const mainImage = favorite.images && favorite.images.length > 0 
     ? cleanImageUrl(favorite.images[0])
-    : '/images/placeholder.jpg';
+    : '/images/placeholder.png';
     
   const hoverImage = favorite.images && favorite.images.length > 1 
     ? cleanImageUrl(favorite.images[1])

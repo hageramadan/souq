@@ -96,7 +96,7 @@ export const extractColorsFromVariants = (
 
 // ✅ دالة تنظيف رابط الصورة
 export const cleanImageUrl = (url: string): string => {
-  if (!url) return "/images/placeholder.jpg";
+  if (!url) return "/images/placeholder.png";
   if (url.startsWith("/storage")) {
     return `https://admin.souqkaber.com${url}`;
   }
@@ -109,7 +109,7 @@ export const transformProduct = (product: any): Product => {
   const mainImage =
     product.images && product.images.length > 0
       ? cleanImageUrl(product.images[0])
-      : "/images/placeholder.jpg";
+      : "/images/placeholder.png";
 
   const hoverImage =
     product.images && product.images.length > 1

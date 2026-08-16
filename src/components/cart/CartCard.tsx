@@ -242,7 +242,7 @@
 // //   name: string;
 // // }) => {
 // //   const cleanImageUrl = (url: string) => {
-// //     if (!url) return "/images/placeholder.jpg";
+// //     if (!url) return "/images/placeholder.png";
 // //     if (url.startsWith("/storage")) {
 // //       return `https://admin.souqkaber.com${url}`;
 // //     }
@@ -453,7 +453,7 @@
 // //   name: string;
 // // }) => {
 // //   const cleanImageUrl = (url: string) => {
-// //     if (!url) return "/images/placeholder.jpg";
+// //     if (!url) return "/images/placeholder.png";
 // //     if (url.startsWith("/storage")) {
 // //       return `https://admin.souqkaber.com${url}`;
 // //     }
@@ -899,7 +899,7 @@
 //   name: string;
 // }) => {
 //   const cleanImageUrl = (url: string) => {
-//     if (!url) return "/images/placeholder.jpg";
+//     if (!url) return "/images/placeholder.png";
 //     if (url.startsWith("/storage")) {
 //       return `https://admin.souqkaber.com${url}`;
 //     }
@@ -1112,7 +1112,7 @@
 //   name: string;
 // }) => {
 //   const cleanImageUrl = (url: string) => {
-//     if (!url) return "/images/placeholder.jpg";
+//     if (!url) return "/images/placeholder.png";
 //     if (url.startsWith("/storage")) {
 //       return `https://admin.souqkaber.com${url}`;
 //     }
@@ -1559,7 +1559,7 @@ const ProductImageLarge = ({
   name: string;
 }) => {
   const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
+    if (!url) return "/images/placeholder.png";
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }
@@ -1772,7 +1772,7 @@ const ProductImageMobile = ({
   name: string;
 }) => {
   const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
+    if (!url) return "/images/placeholder.png";
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }

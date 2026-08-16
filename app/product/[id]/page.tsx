@@ -61,7 +61,7 @@ const transformProductData = (apiProduct: ProductData, language: string) => {
   
   // تنظيف رابط الصورة
   const cleanImageUrl = (url: string) => {
-    if (!url) return "/images/placeholder.jpg";
+    if (!url) return "/images/placeholder.png";
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }
@@ -69,7 +69,7 @@ const transformProductData = (apiProduct: ProductData, language: string) => {
   };
 
   // معالجة الصور
-  const processedImages = apiProduct.images?.map(cleanImageUrl) || ["/images/placeholder.jpg"];
+  const processedImages = apiProduct.images?.map(cleanImageUrl) || ["/images/placeholder.png"];
   
   // إذا لم يكن هناك ألوان، أضف ألوان افتراضية حسب اللغة
   const finalColors = colors.length > 0 ? colors : [

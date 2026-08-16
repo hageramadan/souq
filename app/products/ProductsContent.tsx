@@ -24,20 +24,34 @@ import {
   Currency,
   transformProduct as transformProductBase,
 } from "@/types/product";
-
+import SubCategoriesSlider from "@/components/products/SubCategoriesSlider";
+import SubCategoryCard from "@/components/products/SubCategoryCard";
 // ============================================================================
 // Types
 // ============================================================================
-
+interface SubCategory {
+  id: number;
+  name: string;
+  image?: string;
+  slug?: string;
+  products_count?: number;
+}
+interface CategorySliderData {
+  id: number;
+  name: string;
+  sliders?: SliderImage[];
+  brands?: Array<{ id: number; name: string }>;
+  sub_categories?: SubCategory[]; // ✅ إضافة الفئات الفرعية
+}
 interface FiltersState {
   categoryIds?: number[];
+  subcategoryIds?: number[];
   colors?: string[];
   attribute_values?: number[];
   brands?: number[];
   minPrice?: number;
   maxPrice?: number;
 }
-
 interface SliderImage {
   id: number;
   title: string;
@@ -52,7 +66,7 @@ interface SliderImage {
 
 export default function ProductsContent() {
   const searchParams = useSearchParams();
-
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const { t } = useTranslation();
   const categoryIdsFromUrl = useMemo(() => {
     const value = searchParams.get("categories");
@@ -179,7 +193,14 @@ export default function ProductsContent() {
                 if (category.sliders && category.sliders.length > 0) {
                   setCategorySliders(category.sliders);
                 }
-
+                if (
+                  category.subcategories &&
+                  category.subcategories.length > 0
+                ) {
+                  setSubCategories(category.subcategories);
+                } else {
+                  setSubCategories([]);
+                }
                 if (category.brands && category.brands.length > 0) {
                   setCategoryBrands(category.brands);
                   setIsCategorySpecificBrands(true);
@@ -264,6 +285,13 @@ export default function ProductsContent() {
         filterParams.categories = filters.categoryIds;
         console.log("🔍 Filtering by category:", filters.categoryIds);
       }
+      if (filters.subcategoryIds && filters.subcategoryIds.length > 0) {
+  filterParams.subcategoryIds = filters.subcategoryIds;
+  console.log(
+    "🔍 Filtering by subcategory:",
+    filters.subcategoryIds
+  );
+}
       if (filters.colors && filters.colors.length > 0) {
         filterParams.colors = filters.colors;
       }
@@ -359,6 +387,8 @@ export default function ProductsContent() {
     const updatedFilters: FiltersState = {};
     if (newFilters.categoryIds)
       updatedFilters.categoryIds = newFilters.categoryIds;
+    if (newFilters.subcategoryIds)
+  updatedFilters.subcategoryIds = newFilters.subcategoryIds;
     if (newFilters.colors) updatedFilters.colors = newFilters.colors;
     if (newFilters.attribute_values)
       updatedFilters.attribute_values = newFilters.attribute_values;
@@ -574,18 +604,25 @@ export default function ProductsContent() {
             />
           </div>
         )}
-
-        {/* ✅ BrandSlider */}
-        {categoryBrands.length > 0 && (
-          <div className="mb-2 bg-white ps-1 py-4 lg:ps-4 lg:p-4">
-            <BrandSlider
-              brands={displayBrands}
-              selectedBrands={selectedBrands}
-              onBrandToggle={handleBrandToggle}
-              showCategoryBrandsLabel={isCategorySpecificBrands}
-              categoryName={categoryName || undefined}
+        {/* ✅ SubCategories Slider - جدداً */}
+        {subCategories.length > 0 && (
+          <div className=" ">
+            <SubCategoriesSlider
+              subCategories={subCategories}
+              lang={t("common.lang")}
+              showTitle={true}
             />
           </div>
+        )}
+        {/* ✅ BrandSlider */}
+        {categoryBrands.length > 0 && (
+          <BrandSlider
+            brands={displayBrands}
+            selectedBrands={selectedBrands}
+            onBrandToggle={handleBrandToggle}
+            showCategoryBrandsLabel={isCategorySpecificBrands}
+            categoryName={categoryName || undefined}
+          />
         )}
 
         {/* ✅ Sort - Desktop */}

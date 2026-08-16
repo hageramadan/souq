@@ -171,6 +171,7 @@ interface CategoryResponse {
 export interface SubCategory {
   id: number;
   name: string;
+  image?:string
 }
 
 export interface Brand {
@@ -469,9 +470,10 @@ export interface ProductFilters {
   price_range?: [number, number];
   brands?: number[];
   sizes?: string[];
-  attribute_values?: number[]; 
+  attribute_values?: number[];
   colors?: string[];
   categories?: number[];
+  subcategoryIds?: number[];
   page?: number;
   per_page?: number;
 }
@@ -527,7 +529,9 @@ function buildFiltersQueryString(filters: ProductFilters): string {
   if (filters.categories && filters.categories.length > 0) {
     queryParts.push(`categories=[${filters.categories.join(',')}]`);
   }
-  
+  if (filters.subcategoryIds && filters.subcategoryIds.length > 0) {
+  queryParts.push(`subcategoryIds=[${filters.subcategoryIds.join(',')}]`);
+}
   return queryParts.join('&');
 }
 

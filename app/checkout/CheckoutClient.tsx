@@ -246,7 +246,7 @@ const transformCartItems = (cart: any, t: any): CartItem[] => {
     }
 
     const cleanImageUrl = (url: string) => {
-      if (!url) return "/images/placeholder.jpg";
+      if (!url) return "/images/placeholder.png";
       if (url.startsWith("/storage")) {
         return `https://admin.souqkaber.com${url}`;
       }

@@ -24,44 +24,39 @@ import { useLanguage } from '@/contexts/LanguageContext';
 // Types
 // ============================================================================
 
-/** A single product category returned by the API */
 export interface CategoryOption {
   id: number;
   name: string;
   subcategories?: SubCategoryOption[];
-  brands?: BrandOption[]; // ✅ براندات القسم
+  brands?: BrandOption[];
 }
 
-/** ✅ إضافة نوع الفئات الفرعية */
 export interface SubCategoryOption {
   id: number;
   name: string;
+  image?: string;
 }
 
-/** A single color option returned by the API */
 export interface ColorOption {
   id: number;
   name: string;
   code: string;
 }
 
-/** SizeOption مع ID و type */
 export interface SizeOption {
   id: number;
   value: string;
   type?: 'ram' | 'hard-disk';
 }
 
-/** A single brand option returned by the API */
 export interface BrandOption {
   id: number;
   name: string;
 }
 
-/** Shape of the filters object emitted to the parent via onFilterChange. */
 export interface AppliedFilters {
   categoryIds?: number[];
-  subcategoryIds?: number[];
+  subcategoryIds?: number[]; // ✅ تم تغيير الاسم من subcategoryIds إلى subcategoryIds
   colors?: string[];
   attribute_values?: number[];
   brands?: number[];
@@ -85,7 +80,6 @@ interface FilterSectionProps {
 
 type PriceRange = [number, number];
 
-/** Internal selection state managed by the reducer. */
 interface FiltersSelectionState {
   selectedCategories: number[];
   selectedSubcategories: number[];
@@ -94,7 +88,6 @@ interface FiltersSelectionState {
   selectedBrands: number[];
   tempPriceRange: PriceRange;
   appliedPriceRange: PriceRange | undefined;
-  // ✅ متغير عشان نعرف إذا المستخدم غير السعر يدوياً
   isPriceManuallySet: boolean;
 }
 
@@ -105,10 +98,8 @@ interface FiltersSelectionState {
 const MIN_PRICE = 0;
 const MAX_PRICE = 100_000;
 const DEFAULT_PRICE_RANGE: PriceRange = [3000, 10000];
-const INITIAL_DISPLAY_COUNT = 4; // ✅ عدد العناصر المعروضة في البداية
+const INITIAL_DISPLAY_COUNT = 4;
 
-// Colors that need a different selection ring because they blend into a
-// white background (kept as Sets for O(1) lookups and easy extension).
 const WHITE_COLOR_CODES = new Set(['#FFFFFF', '#F9FAFB']);
 const WHITE_COLOR_NAMES = new Set(['أبيض', 'white']);
 
@@ -120,27 +111,21 @@ const initialFiltersState: FiltersSelectionState = {
   selectedBrands: [],
   tempPriceRange: DEFAULT_PRICE_RANGE,
   appliedPriceRange: undefined,
-  isPriceManuallySet: false, // ✅ ابتداءً السعر مش متغير يدوياً
+  isPriceManuallySet: false,
 };
 
 // ============================================================================
 // Pure helpers
 // ============================================================================
 
-/** Adds or removes a value from an array — used by every checkbox toggle. */
 function toggleInArray<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-/** True if a color swatch should be treated as "white" for ring styling. */
 function isWhiteColor(name: string, code: string): boolean {
   return WHITE_COLOR_NAMES.has(name) || WHITE_COLOR_CODES.has(code);
 }
 
-/**
- * Builds the filters object sent to the parent component.
- * ✅ السعر بيتبعت بس لو المستخدم حدده يدوياً
- */
 function buildAppliedFilters(state: FiltersSelectionState): AppliedFilters {
   const filters: AppliedFilters = {
     categoryIds: state.selectedCategories.length ? state.selectedCategories : undefined,
@@ -150,7 +135,6 @@ function buildAppliedFilters(state: FiltersSelectionState): AppliedFilters {
     brands: state.selectedBrands.length ? state.selectedBrands : undefined,
   };
 
-  // ✅ السعر بيتضاف بس لو المستخدم حدده يدوياً
   if (state.isPriceManuallySet && state.appliedPriceRange) {
     filters.minPrice = state.appliedPriceRange[0];
     filters.maxPrice = state.appliedPriceRange[1];
@@ -173,7 +157,7 @@ type FiltersAction =
   | { type: 'APPLY_PRICE_FILTER' }
   | { type: 'RESET_ALL' }
   | { type: 'APPLY_ALL_FILTERS' }
-  | { type: 'SET_PRICE_MANUALLY_SET'; payload: boolean }; // ✅ إضافة أكشن جديد
+  | { type: 'SET_PRICE_MANUALLY_SET'; payload: boolean };
 
 function filtersReducer(state: FiltersSelectionState, action: FiltersAction): FiltersSelectionState {
   switch (action.type) {
@@ -191,19 +175,19 @@ function filtersReducer(state: FiltersSelectionState, action: FiltersAction): Fi
       return { 
         ...state, 
         tempPriceRange: action.payload,
-        isPriceManuallySet: true // ✅ أي تغيير في السعر يعني إن المستخدم حدده
+        isPriceManuallySet: true
       };
     case 'APPLY_PRICE_FILTER':
       return { 
         ...state, 
         appliedPriceRange: state.tempPriceRange,
-        isPriceManuallySet: true // ✅ تأكيد إن السعر محدد
+        isPriceManuallySet: true
       };
     case 'APPLY_ALL_FILTERS':
       return { 
         ...state, 
         appliedPriceRange: state.tempPriceRange,
-        isPriceManuallySet: state.isPriceManuallySet // ✅ نحافظ على القيمة الحالية
+        isPriceManuallySet: state.isPriceManuallySet
       };
     case 'RESET_ALL':
       return initialFiltersState;
@@ -224,7 +208,7 @@ interface FilterOptionsState {
   colors: ColorOption[];
   sizes: SizeOption[];
   brands: BrandOption[];
-  categoryBrands: { [categoryId: number]: BrandOption[] }; // ✅ براندات كل قسم
+  categoryBrands: { [categoryId: number]: BrandOption[] };
 }
 
 const EMPTY_FILTER_OPTIONS: FilterOptionsState = {
@@ -233,7 +217,7 @@ const EMPTY_FILTER_OPTIONS: FilterOptionsState = {
   colors: [],
   sizes: [],
   brands: [],
-  categoryBrands: {}, // ✅ إضافة
+  categoryBrands: {},
 };
 
 function useFilterOptions(): FilterOptionsState {
@@ -252,12 +236,10 @@ function useFilterOptions(): FilterOptionsState {
         ]);
 
         if (isMounted) {
-          // ✅ استخراج جميع الفئات الفرعية من جميع الفئات الرئيسية
           const allSubcategories = categoriesData.flatMap(
             (cat: CategoryData) => cat.subcategories || []
           );
           
-          // ✅ بناء خريطة البراندات لكل قسم
           const categoryBrands: { [categoryId: number]: BrandOption[] } = {};
           categoriesData.forEach((cat: CategoryData) => {
             if (cat.brands && cat.brands.length > 0) {
@@ -273,13 +255,13 @@ function useFilterOptions(): FilterOptionsState {
               id: cat.id,
               name: cat.name,
               subcategories: cat.subcategories,
-              brands: cat.brands || [] // ✅ إضافة براندات القسم
+              brands: cat.brands || []
             })),
             allSubcategories,
             colors, 
             sizes, 
-            brands, // البراندات العامة
-            categoryBrands, // ✅ براندات كل قسم
+            brands,
+            categoryBrands,
           });
         }
       } catch (error) {
@@ -316,9 +298,6 @@ function FilterSection({ title, children, defaultOpen = true }: FilterSectionPro
   );
 }
 
-/**
- * ✅ CheckboxFilterList مع ميزة عرض 4 عناصر فقط + زر عرض المزيد ونص إضافي
- */
 interface CheckboxFilterListProps<T, K extends string | number> {
   items: T[];
   selectedValues: K[];
@@ -354,7 +333,6 @@ function CheckboxFilterListInner<T, K extends string | number>({
     return <p className="text-sm text-gray-400">{loadingMessage}</p>;
   }
 
-  // ✅ تحديد العناصر المعروضة
   const displayItems = showAll ? items : items.slice(0, initialDisplayCount);
   const hasMoreItems = items.length > initialDisplayCount;
   const hiddenCount = items.length - initialDisplayCount;
@@ -387,7 +365,6 @@ function CheckboxFilterListInner<T, K extends string | number>({
         })}
       </div>
 
-      {/* ✅ زر عرض المزيد/عرض أقل مع النص الإضافي */}
       {hasMoreItems && (
         <button
           onClick={() => setShowAll(!showAll)}
@@ -415,7 +392,6 @@ function CheckboxFilterListInner<T, K extends string | number>({
 
 const CheckboxFilterList = memo(CheckboxFilterListInner) as typeof CheckboxFilterListInner;
 
-/** Color swatch grid */
 interface ColorSwatchListProps {
   colors: ColorOption[];
   selectedColors: string[];
@@ -477,7 +453,6 @@ const ColorSwatchList = memo(function ColorSwatchList({
         })}
       </div>
 
-      {/* ✅ زر عرض المزيد/عرض أقل مع النص الإضافي للألوان */}
       {hasMoreColors && (
         <button
           onClick={() => setShowAll(!showAll)}
@@ -507,10 +482,10 @@ const ColorSwatchList = memo(function ColorSwatchList({
 // Main component
 // ============================================================================
 
-export default function ProductFilters({ onFilterChange, isMobile = false, onClose, lang: propLang ,categoryId: propCategoryId = null}: ProductFiltersProps) {
-  const { t } = useTranslation(); // ✅ استخدام hook الترجمة
-  const {language} = useLanguage(); // ✅ الحصول على اللغة الحالية
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null); // ✅ لتتبع الفئة المختارة
+export default function ProductFilters({ onFilterChange, isMobile = false, onClose, lang: propLang, categoryId: propCategoryId = null }: ProductFiltersProps) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const onFilterChangeRef = useRef(onFilterChange);
   const [currencySymbol, setCurrencySymbol] = useState<string>('ج.م');
@@ -546,23 +521,18 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
 
   const [tempMinPrice, tempMaxPrice] = state.tempPriceRange;
 
-  // ✅ الحصول على البراندات الخاصة بالقسم المختار - التعديل الرئيسي
   const getBrandsForSelectedCategory = useCallback(() => {
-    // إذا تم اختيار فئة
     if (selectedCategoryId !== null) {
-      // تحقق مما إذا كانت الفئة لديها براندات
       const categoryBrandsList = categoryBrands[selectedCategoryId];
       if (categoryBrandsList && categoryBrandsList.length > 0) {
-        return categoryBrandsList; // ✅ عرض براندات الفئة فقط
+        return categoryBrandsList;
       }
-      // إذا كانت الفئة ليس لديها براندات، ارجع مصفوفة فارغة
       return [];
     }
-    // إذا لم يتم اختيار فئة، استخدم البراندات العامة
     return brands;
   }, [selectedCategoryId, categoryBrands, brands]);
 
-  // ✅ تطبيق الفلاتر - السعر بيتبعت بس لو المستخدم حدده
+  // ✅ دالة تطبيق الفلاتر
   const applyFilters = useCallback(() => {
     dispatch({ type: 'APPLY_ALL_FILTERS' });
     
@@ -578,7 +548,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     }
   }, [state, isMobile, onClose]);
 
-  // ✅ للديسكتوب: تطبيق الفلاتر فوراً عند التغيير (بس السعر مش بيتحط إلا لما المستخدم يحدده)
+  // ✅ تأثير تطبيق الفلاتر للديسكتوب
   useEffect(() => {
     if (!isMobile && onFilterChangeRef.current) {
       const filters = buildAppliedFilters({
@@ -599,13 +569,11 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     isMobile,
   ]);
 
-  // ---- Instant filter toggles ----
+  // ---- معالجات النقر ----
   const handleCategoryToggle = useCallback((id: number) => {
     dispatch({ type: 'TOGGLE_CATEGORY', payload: id });
     
-    // ✅ تحديث الفئة المختارة لعرض برانداتها
     setSelectedCategoryId(prevId => {
-      // إذا كانت نفس الفئة تم إلغاء اختيارها
       if (prevId === id) {
         const isStillSelected = state.selectedCategories.includes(id);
         if (!isStillSelected) {
@@ -617,9 +585,32 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     });
   }, [state.selectedCategories]);
 
+  // ✅ معالج النقر على الفئة الفرعية - هنا يتم إرسال الـ ID
   const handleSubcategoryToggle = useCallback((id: number) => {
+    // ✅ 1. تحديث الحالة الداخلية
     dispatch({ type: 'TOGGLE_SUBCATEGORY', payload: id });
-  }, []);
+    
+    // ✅ 2. تطبيق الفلاتر على الفور (بما فيها الـ subcategory)
+    const newState = {
+      ...state,
+      selectedSubcategories: toggleInArray(state.selectedSubcategories, id),
+    };
+    
+    // ✅ 3. بناء الفلاتر وإرسالها للـ API
+    const filters = buildAppliedFilters({
+      ...newState,
+      appliedPriceRange: state.appliedPriceRange,
+      isPriceManuallySet: state.isPriceManuallySet,
+    });
+    
+    // ✅ 4. إرسال الفلاتر للـ parent component (اللي بدوره يستدعي الـ API)
+    onFilterChangeRef.current(filters);
+    
+    // ✅ 5. إذا كان في الموبايل، إغلاق الفلتر بعد النقر
+    if (isMobile && onClose) {
+      onClose();
+    }
+  }, [state, isMobile, onClose]);
 
   const handleColorToggle = useCallback((code: string) => {
     dispatch({ type: 'TOGGLE_COLOR', payload: code });
@@ -633,10 +624,9 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     dispatch({ type: 'TOGGLE_BRAND', payload: id });
   }, []);
 
-  // ---- Price handlers ----
+  // ---- معالجات السعر ----
   const handlePriceSliderChange = useCallback((value: number[]) => {
     dispatch({ type: 'SET_TEMP_PRICE_RANGE', payload: [value[0], value[1]] });
-    // ✅ isPriceManuallySet بيتغير تلقائياً في الـ reducer
   }, []);
 
   const handleMaxPriceInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -653,26 +643,24 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     }
   };
 
-  // ✅ زر تطبيق السعر - بيحدد السعر ويبعته
   const handleApplyPriceFilter = useCallback(() => {
     dispatch({ type: 'APPLY_PRICE_FILTER' });
     
     const filters = buildAppliedFilters({
       ...state,
       appliedPriceRange: state.tempPriceRange,
-      isPriceManuallySet: true, // ✅ تأكيد إن السعر محدد
+      isPriceManuallySet: true,
     });
     onFilterChangeRef.current(filters);
   }, [state]);
 
   const handleResetFilters = useCallback(() => {
     dispatch({ type: 'RESET_ALL' });
-    setSelectedCategoryId(null); // ✅ إعادة تعيين الفئة المختارة
+    setSelectedCategoryId(null);
     onFilterChangeRef.current({});
     if (onClose && isMobile) onClose();
   }, [onClose, isMobile]);
 
-  // ✅ دالة للحصول على لون الخلفية حسب النوع
   const getSizeBadgeColor = (size: SizeOption): string => {
     if (size.type === 'ram') return '#3B82F6';
     if (size.type === 'hard-disk') return '#10B981';
@@ -685,19 +673,12 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     return size.value;
   }, [t]);
 
-  // ✅ الحصول على النصوص المترجمة من الـ t
   const showMoreText = t('filter.showMore');
   const showLessText = t('filter.showLess');
   const moreCategoriesText = t('filter.moreCategories');
   const moreBrandsText = t('filter.moreBrands');
 
-  // ✅ الحصول على البراندات المعروضة
   const displayBrands = getBrandsForSelectedCategory();
-  
-  // ✅ التحقق مما إذا كانت البراندات خاصة بقسم معين
-  const isCategorySpecificBrands = selectedCategoryId !== null && categoryBrands[selectedCategoryId]?.length > 0;
-  
-  // ✅ الحصول على اسم القسم المختار
   const selectedCategoryName = categories.find(c => c.id === selectedCategoryId)?.name || '';
 
   return (
@@ -761,7 +742,6 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                 className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-blue-500"
               />
             </div>
-            {/* ✅ زر تطبيق السعر - للديسكتوب والموبايل */}
             <div className="mt-4">
               <button
                 onClick={handleApplyPriceFilter}
@@ -795,7 +775,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
         </FilterSection>
       )}
 
-      {/* ===== ✅ فلتر الفئات الفرعية ===== */}
+      {/* ===== ✅ فلتر الفئات الفرعية - مع الـ onToggle المخصص ===== */}
       {allSubcategories.length > 0 && (
         <FilterSection title={t('filter.subcategories')}>
           <CheckboxFilterList
@@ -803,7 +783,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
             selectedValues={state.selectedSubcategories}
             getKey={(sub) => sub.id}
             getLabel={(sub) => sub.name}
-            onToggle={handleSubcategoryToggle}
+            onToggle={handleSubcategoryToggle} // ✅ استخدم المعالج الجديد
             loadingMessage={t('filter.loadingSubcategories')}
             maxHeightClassName="max-h-64"
             showMoreText={showMoreText}
@@ -830,7 +810,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
         </FilterSection>
       )}
 
-      {/* ===== فلتر المواصفات (RAM / HDD) ===== */}
+      {/* ===== فلتر المواصفات ===== */}
       {sizes.length > 0 && (
         <FilterSection title={t('filter.specifications')}>
           <CheckboxFilterList
@@ -850,7 +830,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
         </FilterSection>
       )}
 
-      {/* ===== ✅ فلتر العلامات التجارية - براندات القسم المختار ===== */}
+      {/* ===== فلتر البراندات ===== */}
       {displayBrands.length > 0 && (
         <FilterSection title={t('filter.brands')}>
           <div className="space-y-2">
@@ -871,7 +851,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
         </FilterSection>
       )}
 
-      {/* ✅ زر تطبيق الفلاتر (يظهر فقط في الموبايل) */}
+      {/* ✅ زر تطبيق الفلاتر (للـ mobile) */}
       {isMobile && (
         <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-200 -mx-4 px-4 mt-4">
           <button

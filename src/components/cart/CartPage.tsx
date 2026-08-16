@@ -118,7 +118,7 @@ export function CartPage() {
   };
 
   const cleanImageUrl = (url: string | null | undefined) => {
-    if (!url) return "/images/placeholder.jpg";
+    if (!url) return "/images/placeholder.png";
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
     }

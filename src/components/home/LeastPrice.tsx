@@ -44,7 +44,7 @@
 //   const mainImage =
 //     product.images && product.images.length > 0
 //       ? cleanImageUrl(product.images[0])
-//       : "/images/placeholder.jpg";
+//       : "/images/placeholder.png";
 
 //   const hoverImage =
 //     product.images && product.images.length > 1

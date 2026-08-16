@@ -252,7 +252,7 @@ export default function WishlistPage() {
   }, []);
 
   const cleanImageUrl = useCallback((url: string) => {
-    if (!url) return "/images/placeholder.jpg";
+    if (!url) return "/images/placeholder.png";
     if (url.startsWith("http")) return url;
     if (url.startsWith("/storage")) {
       return `https://admin.souqkaber.com${url}`;
