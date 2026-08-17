@@ -16,21 +16,24 @@ interface SubCategory {
 
 interface SubCategoryCardProps {
   subCategory: SubCategory;
+  categoryId?: number | undefined;
   lang?: string;
   className?: string;
 }
-
 export default function SubCategoryCard({ 
   subCategory, 
-  lang = "en",
+  categoryId,
+  lang = "ar",
   className = "" 
 }: SubCategoryCardProps) {
   const router = useRouter();
   const imageUrl = subCategory.image ? cleanImageUrl(subCategory.image) : null;
 
-  const handleClick = () => {
-    router.push(`/products?categories=${JSON.stringify([subCategory.id])}`);
-  };
+ const handleClick = () => {
+  router.push(
+    `/products?categories=${JSON.stringify([categoryId])}&subcategories=${JSON.stringify([subCategory.id])}`
+  );
+};
 
   return (
     <div

@@ -16,6 +16,7 @@ interface SubCategory {
 
 interface SubCategoriesSliderProps {
   subCategories: SubCategory[];
+  categoryId?: number | undefined;
   lang?: string;
   title?: string;
   showTitle?: boolean;
@@ -25,6 +26,7 @@ interface SubCategoriesSliderProps {
 export default function SubCategoriesSlider({
   subCategories,
   lang = "ar",
+   categoryId,
   title = "الفئات الفرعية",
   showTitle = true,
   className = "",
@@ -147,6 +149,7 @@ export default function SubCategoriesSlider({
               className="flex-shrink-0"
             >
               <SubCategoryCard
+              categoryId={categoryId || undefined}
                 subCategory={subCategory}
                 lang={lang}
               />

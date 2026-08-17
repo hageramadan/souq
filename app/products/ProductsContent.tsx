@@ -68,18 +68,31 @@ export default function ProductsContent() {
   const searchParams = useSearchParams();
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const { t } = useTranslation();
-  const categoryIdsFromUrl = useMemo(() => {
-    const value = searchParams.get("categories");
+const categoryIdsFromUrl = useMemo(() => {
+  const value = searchParams.get("categories");
 
-    if (!value) return [];
+  if (!value) return [];
 
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }, [searchParams]);
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}, [searchParams]);
+
+const subcategoryIdsFromUrl = useMemo(() => {
+  const value = searchParams.get("subcategories");
+
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}, [searchParams]);
 
   // ✅ حالات التحميل
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -285,12 +298,15 @@ export default function ProductsContent() {
         filterParams.categories = filters.categoryIds;
         console.log("🔍 Filtering by category:", filters.categoryIds);
       }
-      if (filters.subcategoryIds && filters.subcategoryIds.length > 0) {
-  filterParams.subcategoryIds = filters.subcategoryIds;
-  console.log(
-    "🔍 Filtering by subcategory:",
-    filters.subcategoryIds
-  );
+      const subcategoryIds =
+  filters.subcategoryIds && filters.subcategoryIds.length > 0
+    ? filters.subcategoryIds
+    : subcategoryIdsFromUrl;
+
+if (subcategoryIds.length > 0) {
+  filterParams.subcategories = subcategoryIds;
+
+  console.log("🔍 Filtering by subcategory:", subcategoryIds);
 }
       if (filters.colors && filters.colors.length > 0) {
         filterParams.colors = filters.colors;
@@ -333,17 +349,18 @@ export default function ProductsContent() {
   };
 
   useEffect(() => {
-    if (isPageLoading) return;
+  if (isPageLoading) return;
 
-    loadProducts();
-  }, [
-    isPageLoading,
-    currentPage,
-    filters,
-    selectedBrands,
-    sortBy,
-    categoryIdsFromUrl,
-  ]);
+  loadProducts();
+}, [
+  isPageLoading,
+  currentPage,
+  filters,
+  selectedBrands,
+  sortBy,
+  categoryIdsFromUrl,
+  subcategoryIdsFromUrl,
+]);
   // ✅ معالج اختيار البراند
   const handleBrandToggle = useCallback((brandId: number) => {
     setSelectedBrands((prev) => {
@@ -611,6 +628,7 @@ export default function ProductsContent() {
               subCategories={subCategories}
               lang={t("common.lang")}
               showTitle={true}
+              categoryId={currentCategoryId || undefined}
             />
           </div>
         )}

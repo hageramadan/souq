@@ -473,7 +473,7 @@ export interface ProductFilters {
   attribute_values?: number[];
   colors?: string[];
   categories?: number[];
-  subcategoryIds?: number[];
+  subcategories?: number[];
   page?: number;
   per_page?: number;
 }
@@ -529,8 +529,9 @@ function buildFiltersQueryString(filters: ProductFilters): string {
   if (filters.categories && filters.categories.length > 0) {
     queryParts.push(`categories=[${filters.categories.join(',')}]`);
   }
-  if (filters.subcategoryIds && filters.subcategoryIds.length > 0) {
-  queryParts.push(`subcategoryIds=[${filters.subcategoryIds.join(',')}]`);
+  if (filters.subcategories && filters.subcategories.length > 0) {
+  queryParts.push(`subcategories=[${filters.subcategories.join(',')}]`);
+  
 }
   return queryParts.join('&');
 }
