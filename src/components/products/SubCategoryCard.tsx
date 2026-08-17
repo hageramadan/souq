@@ -53,7 +53,7 @@ export default function SubCategoryCard({
             alt={subCategory.name}
             width={112}
             height={112}
-            className="object-contain w-[56px] h-[56px] transition-transform duration-300 hover:scale-110"
+            className="object-contain w-[62px] h-[62px] lg:w-[90px] lg:h-[90px] transition-transform duration-300 hover:scale-110"
           />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
