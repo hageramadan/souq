@@ -266,7 +266,7 @@ export const Hero = ({ onLoad }: HeroProps) => {
                   </p>
                 )}
                 
-                <Button
+                {/* <Button
                   asChild
                   className="animate-in text-[16px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl"
                   style={{ 
@@ -282,7 +282,7 @@ export const Hero = ({ onLoad }: HeroProps) => {
                     {t.shopNow}
                     <FaArrowLeft className={`h-4 w-4 ${language === 'en' ? 'rotate-180' : ''}`} />
                   </Link>
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
